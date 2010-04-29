@@ -25,6 +25,7 @@ and that distinguish between text and binary files */
 # endif
 #endif /* O_BINARY */
 
+#include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
 #include "xdferror.h"
@@ -183,94 +184,6 @@ static int disk_transfer(struct xdffile* xdf)
 	return 0;
 }
 
-
-/*! \param xdf 	pointer to a valid xdffile structure
- *  \param ns	number of samples to be added
- *  \param other pointer to the arrays holding the input samples
- *
- * Add samples coming from one or several input arrays containing the
- * samples. The number of arrays that must be provided on the call depends
- * on the specification of the channels.
- *
- * \warning Make sure the mode of the xdf is XDF_WRITE 
- */
-int xdf_write(struct xdffile* xdf, unsigned int ns, ...)
-{
-	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
-	char* buffer = xdf->buff + xdf->sample_size * xdf->ns_buff;
-	const char** buff_in = xdf->array_pos;
-	struct data_batch* batch = xdf->batch;
-	va_list ap;
-
-	// Initialization of the input buffers
-	va_start(ap, ns);
-	for (ia=0; ia<xdf->num_array_input; ia++)
-		buff_in[ia] = va_arg(ap, const char*);
-	va_end(ap);
-
-	for (i=0; i<ns; i++) {
-		// Transfer the sample to the buffer by chunk
-		for (k=0; k<nbatch; k++) {
-			ia = batch[k].iarray;
-			memcpy(buffer+batch[k].foff, buff_in[ia], batch[k].len);
-			buff_in[ia] += batch[k].mskip;
-		}
-		buffer += xdf->sample_size;
-
-		// Write the content of the buffer if full
-		if (++ns_buff == xdf->ns_per_rec) {
-			disk_transfer(xdf);
-			buffer = xdf->buff;
-			ns_buff = 0;
-		}
-	}
-
-	xdf->ns_buff = ns_buff;
-	return 0;
-}
-
-int xdf_add_channel(struct xdffile* xdf, const struct xdf_channel* ch_in)
-{
-	unsigned int nch_added = 0;
-	struct xdf_channel** curr = &(xdf->channels);
-	struct xdf_channel* ch;
-
-	// go to the end of the list of channel of the xdffile
-	while (*curr)
-		curr = &((*curr)->next);
-
-	while (ch_in) {
-		// Allocate new channel
-		ch = calloc(sizeof(*ch), 1);
-
-		// Init the new channel
-		memcpy(ch, ch_in, sizeof(*ch));
-		ch->next = NULL;
-		*curr = ch;
-		nch_added++;
-
-		// continue with next channel
-		curr = &(ch->next);
-		ch_in = ch_in->next;
-	}
-	return nch_added;
-}
-
-int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides)
-{
-	unsigned int* newstrides;
-	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride)))))
-		return -1;
-
-	free(xdf->array_stride);
-	xdf->array_stride = newstrides;
-	xdf->narrays = numarrays;
-	memcpy(xdf->array_stride, strides, numarrays*sizeof(*(xdf->array_stride)));
-
-	return 0;
-}
-
-
 static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned int foff)
 {
 	memset(batch, 0, sizeof(*batch));
@@ -415,8 +328,25 @@ static int setup_transfer_thread(struct xdffile* xdf)
 
 	pthread_mutex_destroy(&(xdf->mtx));
 	pthread_cond_destroy(&(xdf->cond));
-	return ret;
+	set_xdf_error(xdf, ret);
+	return -1;
 }
+
+int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides)
+{
+	unsigned int* newstrides;
+	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride)))))
+		return -1;
+
+	free(xdf->array_stride);
+	xdf->array_stride = newstrides;
+	xdf->narrays = numarrays;
+	memcpy(xdf->array_stride, strides, numarrays*sizeof(*(xdf->array_stride)));
+
+	return 0;
+}
+
+
 
 /*!
  * xdf->array_pos, xdf->convdata and xdf->batch are assumed to be NULL
@@ -431,15 +361,17 @@ int xdf_prepare_transfer(struct xdffile* xdf)
 	// allocated for them in the xdf
 	if ( (nbatch = compute_batches(xdf, 0)) < 0 )
 		goto error;
-	xdf->nbatch = nbatch;
 
 	// Alloc of temporary entities needed for convertion
 	if ( !(xdf->array_pos = malloc(xdf->narrays*sizeof(*(xdf->array_pos))))
   	    || !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
-	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch)))) )
+	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch)))) ) {
+	    	
 		goto error;
+	}
 
 	// Setup batches, convertion parameters and thread
+	xdf->nbatch = nbatch;
 	compute_batches(xdf, 1); // assign batches: memory is now allocated
 	setup_convdata(xdf);
 	if (setup_transfer_thread(xdf))
@@ -449,7 +381,6 @@ int xdf_prepare_transfer(struct xdffile* xdf)
 	return 0;
 
 error:
-	// fail path
 	free(xdf->array_pos);
 	free(xdf->convdata);
 	free(xdf->batch);
@@ -459,6 +390,52 @@ error:
 	xdf->batch = NULL;
 	return -1;
 }
+
+/*! \param xdf 	pointer to a valid xdffile structure
+ *  \param ns	number of samples to be added
+ *  \param other pointer to the arrays holding the input samples
+ *
+ * Add samples coming from one or several input arrays containing the
+ * samples. The number of arrays that must be provided on the call depends
+ * on the specification of the channels.
+ *
+ * \warning Make sure the mode of the xdf is XDF_WRITE 
+ */
+int xdf_write(struct xdffile* xdf, unsigned int ns, ...)
+{
+	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
+	char* buffer = xdf->buff + xdf->sample_size * xdf->ns_buff;
+	const char** buff_in = xdf->array_pos;
+	struct data_batch* batch = xdf->batch;
+	va_list ap;
+
+	// Initialization of the input buffers
+	va_start(ap, ns);
+	for (ia=0; ia<xdf->num_array_input; ia++)
+		buff_in[ia] = va_arg(ap, const char*);
+	va_end(ap);
+
+	for (i=0; i<ns; i++) {
+		// Transfer the sample to the buffer by chunk
+		for (k=0; k<nbatch; k++) {
+			ia = batch[k].iarray;
+			memcpy(buffer+batch[k].foff, buff_in[ia], batch[k].len);
+			buff_in[ia] += batch[k].mskip;
+		}
+		buffer += xdf->sample_size;
+
+		// Write the content of the buffer if full
+		if (++ns_buff == xdf->ns_per_rec) {
+			disk_transfer(xdf);
+			buffer = xdf->buff;
+			ns_buff = 0;
+		}
+	}
+
+	xdf->ns_buff = ns_buff;
+	return 0;
+}
+
 
 const char* xdf_get_string(void)
 {

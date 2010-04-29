@@ -1,0 +1,20 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_COPY_CHANNEL 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_copy_channel - Configure a channel according to a template
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_copy_channel(hchxdf " dst ", hchxdf " src ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_copy_channel\fP() configure the channel referenced by \fIdst\fP using the information described by \fIsrc\fP.
+.SH "RETURN VALUE"
+.LP
+The function returns 0 in case of success, -1 otherwise.
+.SH "SEE ALSO"
+.BR xdf_setconf_channel (3),
+.BR xdf_getconf_channel (3)
+

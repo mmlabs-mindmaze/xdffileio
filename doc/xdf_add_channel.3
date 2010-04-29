@@ -1,0 +1,32 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_ADD_CHANNEL 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_add_channel - Append a channel to a XDF file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "hchxdf xdf_add_channel(hxdf " xdf ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_add_channel\fP() appends a channel to the file referenced by the handle
+\fIxdf\fP. The new channel is initialized with the configuration of the
+previous channel, .i.e assuming that the new channel is the i-th of the XDF
+file, it is initialized using configuration of the channel i-1 (if it exists).
+.LP
+However \fIone field is not copied\fP from the previous channel: the offset.
+The offset of the channel (the field referenced by XDF_CHFIELD_ARRAY_OFFSET) is
+computed so that the newly created channel is next to the previous channel in
+the array.
+.LP
+This type of initialization allows the user to add channels without having to
+specifically pack them: this is achieved by default.
+.SH "RETURN VALUE"
+.LP
+\fBxdf_add_channel\fP() returns the handle to newly created channel descriptor
+in case of success, NULL otherwise.
+.SH "SEE ALSO"
+.BR xdf_copy_channel (3)
+
+

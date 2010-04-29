@@ -5,7 +5,7 @@
 # include <config.h>
 #endif
 
-static int xdferrno = XDF_OK;
+static int xdferrno = 0;
 
 /*! \ingroup interface_XDF
  * \return 		Return the error code
@@ -24,6 +24,6 @@ int set_xdf_error(struct xdffile* xdf, int error)
 	if (xdf)
 		xdf->error = error;
 	xdferrno = error;
-	return (error == XDF_OK) ? 0 : -1;
+	return (error) ? 0 : -1;
 }
 

@@ -1,7 +1,7 @@
 #ifndef XDFTYPES_H
 #define XDFTYPES_H
 
-#include "xdfdatatypes.h"
+#include "xdfio.h"
 
 union generic_data {
 	double d;

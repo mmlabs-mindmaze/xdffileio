@@ -4,17 +4,12 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "xdfdatatypes.h"
-
-
-struct xdf_channel {
-	unsigned int iarray, offset;
-	enum xdftype inmemtype, infiletype;
-	double physical_mm[2], digital_mm[2];
-	struct xdf_channel* next;
-};
+#include <stdarg.h>
+#include "xdfchannels.h"
+#include "xdfio.h"
 
 struct xdffile {
+	enum xdffiletype ftype;
 	int fd;					
 	unsigned int ready, mode;			
 	long pointer;			
@@ -33,9 +28,18 @@ struct xdffile {
 	unsigned int narrays;
 	unsigned int* array_stride;	
 	const char** array_pos;	
-	
-	
 
+	/* Data format specific behavior */
+	int (*set_channel_proc)(struct xdf_channel*, enum xdfchfield, ...);
+	int (*get_channel_proc)(const struct xdf_channel*, enum xdfchfield, ...);
+	int (*copy_channel_proc)(struct xdf_channel*, const struct xdf_channel*);
+	struct xdf_channel* (*alloc_channel_proc)(void);
+	int (*set_info_proc)(struct xdffile*, enum xdffield, ...); 
+	int (*get_info_proc)(struct xdffile*, enum xdffield, ...); 
+	int (*copy_info_proc)(struct xdffile*, struct xdffile*); 
+	int (*write_header_proc)(struct xdffile*);
+	int (*close_file_proc)(struct xdffile*);
+	
 	/* Background thread synchronization object */
 	pthread_t thid;
 	pthread_mutex_t mtx;
@@ -43,11 +47,5 @@ struct xdffile {
 	sem_t sem;
 	int order;
 };
-
-int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides);
-int xdf_add_channel(struct xdffile* xdf, const struct xdf_channel* channel);
-int xdf_prepare_transfer(struct xdffile* xdf);
-int xdf_write(struct xdffile* xdf, unsigned int ns, ...);
-int xdf_read(struct xdffile* xdf, unsigned int ns, void* samples);
 
 #endif /* XDFFILE_H */
