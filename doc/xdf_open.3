@@ -1,0 +1,34 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_OPEN 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_open - Open a xDF file for reading or writing
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "hxdf xdf_open(const char* " filename ", int " mode ", enum xdffiletype " type ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_open\fP() opens a xDF the file refered by the path \fIfilename\fP for reading or writing.
+.LP
+If \fImode\fP is XDF_READ, the file is opened for reading. Thus it must
+exist and \fItype\fP should be either XDF_ANY or set to the type of the file
+refered by \fItype\fP. Otherwise, the function will fail.
+.LP
+If \fImode\fP is XDF_WRITE, the file is opened for writing. Thus the path
+\fIfilename\fP must not refered to an existing file: the function will fail
+if the file exist. This behavior prevents to overwrite any previous
+recording. \fItype\fP should be also be set to the desired type of data
+format (XDF_ANY will result in a error).
+.LP
+The possible file type values are defined in the header file \fI<xdfio.h>\fP
+.SH "RETURN VALUE"
+.LP
+The function returns an handle to xDF file opened in case of success.
+Otherwise, NULL is returned and the reason of failure can retrieved by a
+call to \fBxdf_get_error\fP() with a NULL argument.
+.SH "SEE ALSO"
+.BR xdf_close (3)
+
+

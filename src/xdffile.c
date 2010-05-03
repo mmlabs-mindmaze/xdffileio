@@ -32,9 +32,6 @@ and that distinguish between text and binary files */
 
 static const char xdffileio_string[] = PACKAGE_STRING;
 
-#define XDF_MODE_WRITE	0
-#define XDF_MODE_READ	1
-
 #define ORDER_QUIT	2
 #define ORDER_TRANSFER	1
 #define ORDER_NONE	0
@@ -85,9 +82,8 @@ static int write_record_to_disk(struct xdffile* xdf)
 		fbuff = dst;
 		do {
 			wsize = write(xdf->fd, fbuff, reqsize);
-			// TODO: handle write failure in a better way
-			if (wsize)
-				return -1;
+			if (wsize == -1)
+				return set_xdf_error(xdf, errno);
 			reqsize -= wsize;
 			fbuff += wsize;
 		} while (reqsize);
@@ -137,7 +133,7 @@ static void* transfer_thread_fn(void* ptr)
 
 		// Write/Read a record
 		// TODO handle failure in better way
-		if (xdf->mode == XDF_MODE_WRITE)
+		if (xdf->mode == XDF_WRITE)
 			ret = write_record_to_disk(xdf);
 		else
 			ret = read_record_from_disk(xdf);
@@ -285,7 +281,7 @@ static void setup_convdata(struct xdffile* xdf)
 	struct xdf_channel* ch = xdf->channels;
 
 	for (i=0; i<xdf->numch; i++) {
-		if (xdf->mode == XDF_MODE_WRITE) {
+		if (xdf->mode == XDF_WRITE) {
 			// In write mode, convertion in 
 			// from mem/physical to file/digital
 			in_tp = ch->inmemtype;
@@ -330,6 +326,65 @@ static int setup_transfer_thread(struct xdffile* xdf)
 	pthread_cond_destroy(&(xdf->cond));
 	set_xdf_error(xdf, ret);
 	return -1;
+}
+
+static int finish_record(struct xdffile* xdf)
+{
+	char* buffer = xdf->buff + xdf->sample_size * xdf->ns_buff;
+	unsigned int ns = xdf->ns_buff - xdf->ns_per_rec;
+	int retval;
+
+	if (!xdf->ns_buff)
+		return 0;
+
+	// Fill the remaining of the record with 0 values
+	do {
+		memset(buffer, 0, xdf->sample_size);
+		buffer += xdf->sample_size;
+	} while (--ns);
+
+	retval = disk_transfer(xdf);
+	xdf->ns_buff = 0;
+	return retval;
+}
+
+int xdf_close(struct xdffile* xdf)
+{
+	int fd;
+
+	if (!xdf)
+		return set_xdf_error(NULL, EBADF);
+
+	fd = xdf->fd;
+
+	if (xdf->ready) {
+		if (xdf->mode == XDF_WRITE) {
+			if (finish_record(xdf))
+				return -1;
+		}
+
+		// Wait for the last transfer to be done and 
+		sem_wait(&(xdf->sem));
+
+		// Signal the end of the transfer thread and wait for its end
+		pthread_mutex_lock(&(xdf->mtx));
+		xdf->order = ORDER_QUIT;
+		pthread_cond_signal(&(xdf->cond));
+		pthread_mutex_unlock(&(xdf->mtx));
+		pthread_join(xdf->thid, NULL);
+
+		pthread_mutex_destroy(&(xdf->mtx));
+		pthread_cond_destroy(&(xdf->cond));
+		sem_close(&(xdf->sem));
+	}
+
+	// Finish and close the file
+	xdf->ops->close_file(xdf);
+
+	// TODO Handle close failure
+	close(fd);
+
+	return 0;
 }
 
 int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides)

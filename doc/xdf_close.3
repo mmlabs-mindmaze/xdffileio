@@ -1,0 +1,23 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_CLOSE 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_close - Close a xDF file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_close(hxdf " xdf ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_close\fP() closes the xDF file referenced by the handle \fIxdf\fP. When
+the file is closed, if a record is not full, it will be completed by zeros.
+If the function fails, the handle \fIxdf\fP remains valid.
+.LP
+.SH "RETURN VALUE"
+.LP
+The function returns 0 in case of succes. Otherwise, -1 is returned and the
+reason of failure.
+
+
+

@@ -61,7 +61,7 @@ typedef struct xdffile* hxdf;
 typedef struct xdf_channel* hchxdf;
 
 hxdf xdf_open(const char* filename, int mode, enum xdffiletype type);
-void xdf_close(hxdf xdf);
+int xdf_close(hxdf xdf);
 
 int xdf_set_info(hxdf xdf, enum xdffield field, ...);
 int xdf_get_info(hxdf xdf, enum xdffield field, ...);

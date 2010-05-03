@@ -1,0 +1,39 @@
+#include "xdfformatops.h"
+#include <stddef.h>
+
+struct dataformat_entry {
+	enum xdffiletype type;
+	struct xdffile* (*alloc_file)(void);
+	int (*is_same_type)(const unsigned char*);
+};
+
+struct dataformat_entry support_datafmt[] = {
+};
+unsigned int num_support_datafmt = sizeof(support_datafmt) 
+				/ sizeof(support_datafmt[0]);
+
+
+enum xdffiletype guess_file_type(const unsigned char* magickey)
+{
+	unsigned int i;
+	enum xdffiletype type = XDF_ANY;
+
+	for (i=0; i<num_support_datafmt; i++) {
+		if (support_datafmt[i].is_same_type(magickey)) {
+			type = support_datafmt[i].type;
+			break;
+		}
+	}
+	return type;
+}
+
+struct xdffile* alloc_xdffile(enum xdffiletype type)
+{
+	unsigned int i;
+	for (i=0; i<num_support_datafmt; i++) {
+		if (type == support_datafmt[i].type)
+			return support_datafmt[i].alloc_file();
+	}
+
+	return NULL;
+}
