@@ -12,6 +12,45 @@
 #include "xdffile.h"
 #include "xdfformatops.h"
 
+#define TYPE_INT		0
+#define TYPE_STRING		1
+#define TYPE_DATATYPE		2
+#define TYPE_DOUBLE		3
+
+struct opt_detail
+{
+	int field;
+	unsigned int type;
+};
+
+/******************************************************
+ *                                                    *
+ ******************************************************/
+const struct opt_detail opts_ch_table[] = {
+	{XDF_CHFIELD_ARRAY_INDEX, TYPE_INT},
+	{XDF_CHFIELD_ARRAY_OFFSET, TYPE_INT},
+	{XDF_CHFIELD_ARRAY_TYPE, TYPE_DATATYPE},
+	{XDF_CHFIELD_STORED_TYPE, TYPE_DATATYPE},
+	{XDF_CHFIELD_LABEL, TYPE_STRING},
+	{XDF_CHFIELD_PHYSICAL_MIN, TYPE_DOUBLE},
+	{XDF_CHFIELD_PHYSICAL_MAX, TYPE_DOUBLE}, 
+	{XDF_CHFIELD_DIGITAL_MIN, TYPE_DOUBLE},	
+	{XDF_CHFIELD_DIGITAL_MAX, TYPE_DOUBLE},
+};
+#define num_opts_ch	(sizeof(opts_ch_table)/sizeof(opts_ch_table[0]))
+
+static int get_option_type(const struct opt_detail table[], unsigned int nmax, int field)
+{
+	int i = nmax-1;
+	while (--i) {
+		if (table[i].field == field)
+			break;
+	}
+	return i;
+}
+#define get_ch_opt_type(field)  (get_option_type(opts_ch_table, num_opts_ch, (field)))
+
+
 static void init_xdf_struct(struct xdffile* xdf, int fd, enum xdffiletype type, int mode)
 {
 	xdf->ready = 0;
@@ -120,51 +159,114 @@ struct xdf_channel* xdf_get_channel(struct xdffile* xdf, unsigned int index)
 	return ch;
 }
 
+static int setconf_channel_double(struct xdf_channel* ch, enum xdfchfield field, double dval)
+{
+	int retval = 0;
+	
+	if (field == XDF_CHFIELD_DIGITAL_MIN)
+		ch->digital_mm[0] = dval;
+	else if (field == XDF_CHFIELD_DIGITAL_MAX)
+		ch->digital_mm[1] = dval;
+	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
+		ch->digital_mm[0] = dval;
+	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
+		ch->digital_mm[1] = dval;
+	else
+		retval = ch->ops->set_channel(ch, field, dval);
+	
+	return retval;
+}
+
+
+static int setconf_channel_int(struct xdf_channel* ch, enum xdfchfield field, int ival)
+{
+	int retval = 0;
+	if (field == XDF_CHFIELD_ARRAY_INDEX)
+		ch->iarray = ival;
+	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
+		ch->offset = ival;
+	else if (field == XDF_CHFIELD_ARRAY_TYPE)
+		ch->inmemtype = ival;
+	else if (field == XDF_CHFIELD_STORED_TYPE)
+		ch->infiletype = ival;
+	else
+		retval = ch->ops->set_channel(ch, field, ival);
+	
+	return retval;
+}
 
 int xdf_setconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
-	int retval = 0;
-	const char* string = NULL;
-	double dval;
-	unsigned int ival;
-	enum xdftype type;
+	int type, retval = 0, out = 0;
+
 
 	if (ch == NULL) 
 		return set_xdf_error(NULL, EINVAL);
 
 	va_start(ap, field);
-	while (field != XDF_CHFIELD_NONE) {
+	while (!out && (field != XDF_CHFIELD_NONE)) {
+		type = get_ch_opt_type(field);
+
 		switch (field) {
-		case XDF_CHFIELD_ARRAY_INDEX:	/* unsigned int */
-		case XDF_CHFIELD_ARRAY_OFFSET:	/* unsigned int */
-			ival = va_arg(ap, unsigned int);
-			retval = ch->ops->set_channel(ch, field, ival);
+		case TYPE_INT:	
+		case TYPE_DATATYPE:	
+			retval = setconf_channel_int(ch, field, va_arg(ap, int));
 			break;
 
-		case XDF_CHFIELD_ARRAY_TYPE:		/* enum xdftype */
-		case XDF_CHFIELD_STORED_TYPE:		/* enum xdftype */
-			type = va_arg(ap, enum xdftype);
-			retval = ch->ops->set_channel(ch, field, type);
+		case TYPE_STRING:
+			retval = ch->ops->set_channel(ch, field, va_arg(ap, const char*));
 			break;
 
-		case XDF_CHFIELD_STORED_LABEL:       /* const char*  */
-			string = va_arg(ap, const char*);
-			retval = ch->ops->set_channel(ch, field, string);
+		case TYPE_DOUBLE:
+			retval = setconf_channel_double(ch, field, va_arg(ap, double));
 			break;
-
-		case XDF_CHFIELD_PHYSICAL_MIN:	/* double 	*/
-		case XDF_CHFIELD_PHYSICAL_MAX:	/* double 	*/
-		case XDF_CHFIELD_DIGITAL_MIN:	/* double 	*/
-		case XDF_CHFIELD_DIGITAL_MAX:	/* double 	*/
-			dval = va_arg(ap, double);
-			retval = ch->ops->set_channel(ch, field, dval);
-			break;
+			
 		default:
+			out = 1;
+			retval = EINVAL;
 			break;
 		}
+		field  = va_arg(ap, enum xdfchfield);
 	}
 	va_end(ap);
+	
+	return retval;
+}
+
+static int getconf_channel_double(struct xdf_channel* ch, enum xdfchfield field, double* dval)
+{
+	int retval = 0;
+	
+	if (field == XDF_CHFIELD_DIGITAL_MIN)
+		*dval = ch->digital_mm[0];
+	else if (field == XDF_CHFIELD_DIGITAL_MAX)
+		*dval = ch->digital_mm[1];
+	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
+		*dval = ch->digital_mm[0];
+	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
+		*dval = ch->digital_mm[1];
+	else
+		retval = ch->ops->get_channel(ch, field, dval);
+	
+	return retval;
+}
+
+
+static int getconf_channel_int(struct xdf_channel* ch, enum xdfchfield field, int* ival)
+{
+	int retval = 0;
+
+	if (field == XDF_CHFIELD_ARRAY_INDEX)
+		*ival = ch->iarray;
+	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
+		*ival = ch->offset;
+	else if (field == XDF_CHFIELD_ARRAY_TYPE)
+		*ival = ch->inmemtype;
+	else if (field == XDF_CHFIELD_STORED_TYPE)
+		*ival = ch->infiletype;
+	else
+		retval = ch->ops->get_channel(ch, field, ival);
 	
 	return retval;
 }
@@ -173,47 +275,35 @@ int xdf_setconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
 int xdf_getconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
-	int retval = 0, out = 0;
-	const char** string = NULL;
-	double* dval;
-	unsigned int* ival;
-	enum xdftype* type;
+	int type, retval = 0, out = 0;
 
 	if (ch == NULL) 
 		return set_xdf_error(NULL, EINVAL);
 
 	va_start(ap, field);
-	while (!out) {
+	while (!out && (field != XDF_CHFIELD_NONE)) {
+		type = get_ch_opt_type(field);
+
 		switch (field) {
-		case XDF_CHFIELD_NONE:
+		case TYPE_INT:	
+		case TYPE_DATATYPE:	
+			retval = getconf_channel_int(ch, field, va_arg(ap, int*));
+			break;
+
+		case TYPE_STRING:
+			retval = ch->ops->set_channel(ch, field, va_arg(ap, const char**));
+			break;
+
+		case TYPE_DOUBLE:
+			retval = getconf_channel_double(ch, field, va_arg(ap, double*));
+			break;
+			
+		default:
+			retval = EINVAL;
 			out = 1;
 			break;
-
-		case XDF_CHFIELD_ARRAY_INDEX:	/* unsigned int */
-		case XDF_CHFIELD_ARRAY_OFFSET:	/* unsigned int */
-			ival = va_arg(ap, unsigned int*);
-			retval = ch->ops->get_channel(ch, field, ival);
-			break;
-
-		case XDF_CHFIELD_ARRAY_TYPE:		/* enum xdftype */
-		case XDF_CHFIELD_STORED_TYPE:		/* enum xdftype */
-			type = va_arg(ap, enum xdftype*);
-			retval = ch->ops->get_channel(ch, field, type);
-			break;
-
-		case XDF_CHFIELD_STORED_LABEL:       /* const char*  */
-			string = va_arg(ap, const char**);
-			retval = ch->ops->get_channel(ch, field, string);
-			break;
-
-		case XDF_CHFIELD_PHYSICAL_MIN:	/* double 	*/
-		case XDF_CHFIELD_PHYSICAL_MAX:	/* double 	*/
-		case XDF_CHFIELD_DIGITAL_MIN:	/* double 	*/
-		case XDF_CHFIELD_DIGITAL_MAX:	/* double 	*/
-			dval = va_arg(ap, double*);
-			retval = ch->ops->get_channel(ch, field, dval);
-			break;
 		}
+		field  = va_arg(ap, enum xdfchfield);
 	}
 	va_end(ap);
 	
@@ -235,8 +325,6 @@ struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
 {
 	struct xdf_channel** curr = &(xdf->channels);
 	struct xdf_channel* ch;
-	unsigned int offset;
-	enum xdftype type;
 
 	// go to the end of the list of channel of the xdffile
 	while (*curr)
@@ -250,12 +338,7 @@ struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
 	// Init the new channel with the previous one
 	if (*curr) {
 		xdf_copy_channel(ch, *curr);
-		xdf_getconf_channel(ch, XDF_CHFIELD_ARRAY_OFFSET, &offset,
-		                        XDF_CHFIELD_ARRAY_TYPE, &type,
-					XDF_CHFIELD_NONE);
-		offset += get_data_size(type);
-		xdf_setconf_channel(ch, XDF_CHFIELD_ARRAY_OFFSET, offset,
-					XDF_CHFIELD_NONE);
+		ch->offset += get_data_size(ch->inmemtype);
 	}
 
 	// Link the channel to the end

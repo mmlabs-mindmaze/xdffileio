@@ -42,11 +42,11 @@ enum xdffield
 enum xdfchfield
 {
 	XDF_CHFIELD_NONE = 0,
-	XDF_CHFIELD_ARRAY_INDEX,	/* unsigned int */
-	XDF_CHFIELD_ARRAY_OFFSET,	/* unsigned int */
+	XDF_CHFIELD_ARRAY_INDEX,	/* int		*/
+	XDF_CHFIELD_ARRAY_OFFSET,	/* int 		*/
 	XDF_CHFIELD_ARRAY_TYPE,		/* enum xdftype */
 	XDF_CHFIELD_STORED_TYPE,	/* enum xdftype */
-	XDF_CHFIELD_STORED_LABEL,       /* const char*  */
+	XDF_CHFIELD_LABEL,	        /* const char*  */
 	XDF_CHFIELD_PHYSICAL_MIN,	/* double 	*/
 	XDF_CHFIELD_PHYSICAL_MAX,	/* double 	*/
 	XDF_CHFIELD_DIGITAL_MIN,	/* double 	*/
