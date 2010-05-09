@@ -1,0 +1,74 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_SET_INFO 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_set_info, xdf_get_info - set or get the configuration of xDF file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_set_info(hxdf " xdf ", enum xdffield " field ", ...);"
+.br
+.BI "int xdf_get_info(hxdf " ch ", enum xdffield " field ", ...);"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_set_info\fP() sets the configuration (usually one of the field file
+header) of xDF file referenced by \fIxdf\fP according to the variable list
+of argument. This list is composed of successive couple grouping one
+variable of type enum xdffield defining the feature to be set and a value
+whose type depends on the previous field type. The list \fBmust finish\fP by
+XDF_FIELD_NONE.
+.LP
+\fBxdf_get_info\fP() gets the configuration of the channel referenced by
+\fIxdf\fP according to the variable list of argument. The list is the same
+XDF_CHFIELD_NONE-terminated list as for \fBxdf_set_info\fP() excepting that
+the second part of the couple is not that value but a \fBpointer to the
+value\fP.
+.LP
+Here is the list of admissible value. The type of value expected is provided
+in the parenthesis (the expected type of the value for \fBxdf_set_info\fP(),
+or a pointer to this type for \fBxdf_get_info\fP()):
+.TP 7
+\fBXDF_FIELD_RECORD_DURATION\fP (double)
+Specify the duration of one record. The value should be positive.
+.TP 7
+\fBXDF_FIELD_NSAMPLE_PER_RECORD\fP (int)
+Specify the number of time points contained in each record. The value should
+be positive.
+.TP 7
+\fBXDF_FIELD_SUBJ_DESC\fP (const char*)
+Specify the string describing the subject.
+.TP 7
+\fBXDF_FIELD_REC_DESC\fP (const char*)
+Specify the string describing the session of recording.
+.SH "RETURN VALUE"
+.LP
+The two functions returns 0 in case of success. Otherwise -1 is returned and
+\fBxdf_get_error\fP() can be used to retrieve the error number.
+.SH EXAMPLES
+.LP
+Example of usage of \fBxdf_set_info\fP() and \fBxdf_get_info\fP():
+.sp
+.RS
+.nf
+\fB
+/* Assume xdfr and xdfw reference 2 XDF files opened respectively
+ * for reading and for writing */
+const char *subjstr, *sessstr;
+
+xdf_get_info(xdfr, XDF_FIELD_SUBJ_DESC, &subjstr,
+                   XDF_FIELD_REC_DESC, &sessstr,
+                   XDF_FILED_NONE);
+
+printf("subject: %s\\nrecording: %s\\n", subjstr, sessstr);
+
+xdf_set_info(xdfw, XDF_FIELD_SUBJ_DESC, subjstr,
+                   XDF_FIELD_REC_DESC, sessstr,
+                   XDF_FILED_NONE);
+\fP
+.fi
+.RE
+.SH "SEE ALSO"
+.BR xdf_copy_info (3)
+
+

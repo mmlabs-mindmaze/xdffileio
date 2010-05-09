@@ -19,6 +19,7 @@ struct xdffile {
 	int fd;					
 	unsigned int ready, mode;			
 	long pointer;			
+	double rec_duration;
 	unsigned int ns_buff, ns_per_rec, sample_size;
 	unsigned int num_array_input;
 	int nrecord;

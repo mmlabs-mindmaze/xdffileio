@@ -7,9 +7,11 @@ struct dataformat_entry {
 	int (*is_same_type)(const unsigned char*);
 };
 
-struct dataformat_entry support_datafmt[] = {
+static struct dataformat_entry support_datafmt[] = {
+	{.type = XDF_ANY}
 };
-unsigned int num_support_datafmt = sizeof(support_datafmt) 
+
+static unsigned int num_support_datafmt = sizeof(support_datafmt) 
 				/ sizeof(support_datafmt[0]);
 
 

@@ -35,6 +35,8 @@ enum xdffiletype
 enum xdffield
 {
 	XDF_FIELD_NONE = 0,
+	XDF_FIELD_RECORD_DURATION,	/* double      */
+	XDF_FIELD_NSAMPLE_PER_RECORD,	/* int         */
 	XDF_FIELD_SUBJ_DESC,		/* const char* */
 	XDF_FIELD_REC_DESC		/* const char* */
 };

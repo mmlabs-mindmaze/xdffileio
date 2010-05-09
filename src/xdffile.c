@@ -330,7 +330,7 @@ static int setup_transfer_thread(struct xdffile* xdf)
 
 static int finish_record(struct xdffile* xdf)
 {
-	char* buffer = xdf->buff + xdf->sample_size * xdf->ns_buff;
+	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
 	unsigned int ns = xdf->ns_buff - xdf->ns_per_rec;
 	int retval;
 
@@ -366,13 +366,14 @@ int xdf_close(struct xdffile* xdf)
 		// Wait for the last transfer to be done and 
 		sem_wait(&(xdf->sem));
 
-		// Signal the end of the transfer thread and wait for its end
+		// Stop the transfer thread and wait for its end
 		pthread_mutex_lock(&(xdf->mtx));
 		xdf->order = ORDER_QUIT;
 		pthread_cond_signal(&(xdf->cond));
 		pthread_mutex_unlock(&(xdf->mtx));
 		pthread_join(xdf->thid, NULL);
 
+		// Destroy synchronization primitives
 		pthread_mutex_destroy(&(xdf->mtx));
 		pthread_cond_destroy(&(xdf->cond));
 		sem_close(&(xdf->sem));
@@ -425,10 +426,16 @@ int xdf_prepare_transfer(struct xdffile* xdf)
 		goto error;
 	}
 
-	// Setup batches, convertion parameters and thread
+	// Setup batches, convertion parameters
 	xdf->nbatch = nbatch;
 	compute_batches(xdf, 1); // assign batches: memory is now allocated
 	setup_convdata(xdf);
+
+	// Write header if open for writing 
+	if (xdf->mode == XDF_WRITE)
+		if (xdf->ops->write_header(xdf))
+			goto error;
+
 	if (setup_transfer_thread(xdf))
 		goto error;
 
@@ -459,7 +466,7 @@ error:
 int xdf_write(struct xdffile* xdf, unsigned int ns, ...)
 {
 	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
-	char* buffer = xdf->buff + xdf->sample_size * xdf->ns_buff;
+	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
 	const char** buff_in = xdf->array_pos;
 	struct data_batch* batch = xdf->batch;
 	va_list ap;
