@@ -40,8 +40,10 @@ static const struct opt_detail opts_ch_table[] = {
 #define num_opts_ch	(sizeof(opts_ch_table)/sizeof(opts_ch_table[0]))
 
 static const struct opt_detail opts_info_table[] = {
+	{XDF_FIELD_RECORD_DURATION, TYPE_DOUBLE},
+	{XDF_FIELD_NSAMPLE_PER_RECORD, TYPE_INT},
 	{XDF_FIELD_SUBJ_DESC, TYPE_STRING},
-	{XDF_FIELD_REC_DESC, TYPE_STRING}
+	{XDF_FIELD_REC_DESC, TYPE_STRING},
 };
 #define num_opts_info	(sizeof(opts_info_table)/sizeof(opts_info_table[0]))
 
