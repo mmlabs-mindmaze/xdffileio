@@ -81,6 +81,7 @@ int xdf_prepare_transfer(hxdf xdf);
 int xdf_write(hxdf xdf, unsigned int ns, ...);
 int xdf_read(hxdf xdf, unsigned int ns, ...);
 
+int xdf_get_error(hxdf xdf);
 const char* xdf_get_string(void);
 
 #ifdef __cplusplus

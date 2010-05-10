@@ -313,17 +313,27 @@ static void setup_convdata(struct xdffile* xdf)
 static int setup_transfer_thread(struct xdffile* xdf)
 {
 	int ret;
+	int minit = 0, cinit = 0;
 
 	xdf->order = ORDER_NONE;
-	if ( (ret = pthread_mutex_init(&(xdf->mtx), NULL))
-            || (ret = pthread_cond_init(&(xdf->cond), NULL))
-            || (ret = pthread_create(&(xdf->thid), NULL,
-	                       transfer_thread_fn, xdf)) ) {
-		return 0;
-	}
+	if ((ret = pthread_mutex_init(&(xdf->mtx), NULL)))
+		goto error;
+	minit = 1;
 
-	pthread_mutex_destroy(&(xdf->mtx));
-	pthread_cond_destroy(&(xdf->cond));
+	if ((ret = pthread_cond_init(&(xdf->cond), NULL)))
+		goto error;
+	cinit = 1;
+
+	if ((ret = pthread_create(&(xdf->thid), NULL, transfer_thread_fn, xdf)))
+		goto error;
+
+	return 0;
+
+error:
+	if (minit)
+		pthread_mutex_destroy(&(xdf->mtx));
+	if (cinit)
+		pthread_cond_destroy(&(xdf->cond));
 	set_xdf_error(xdf, ret);
 	return -1;
 }

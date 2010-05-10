@@ -76,12 +76,19 @@ static void init_xdf_struct(struct xdffile* xdf, int fd, enum xdffiletype type, 
 	xdf->array_pos = NULL;
 }
 
-static struct xdffile* init_read_xdf(int fd, enum xdffiletype type)
+static struct xdffile* init_read_xdf(enum xdffiletype type, const char* filename)
 {
 	unsigned char magickey[8];
 	enum xdffiletype gtype;
 	struct xdffile* xdf = NULL;
 	int errnum = 0;
+	int fd;
+
+	// Open the file
+	if ((fd = open(filename, O_RDONLY)) == -1) {
+		set_xdf_error(NULL, errno);
+		return NULL;
+	}
 
 	// Guess file type
 	if ( (read(fd, magickey, sizeof(magickey)) == -1)
@@ -114,10 +121,19 @@ error:
 }
 
 
-static struct xdffile* init_write_xdf(int fd, enum xdffiletype type)
+static struct xdffile* init_write_xdf(enum xdffiletype type, const char* filename)
 {
 	struct xdffile* xdf = NULL;
+	int fd;
+	mode_t mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
 
+	// Create the file
+	if ((fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) {
+		set_xdf_error(NULL, errno);
+		return NULL;
+	}
+
+	// Allocates the xdffile structure
 	if (!(xdf = alloc_xdffile(type))) {
 		set_xdf_error(NULL, ENOMEM);
 		return NULL;
@@ -131,25 +147,18 @@ static struct xdffile* init_write_xdf(int fd, enum xdffiletype type)
 struct xdffile* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
 	struct xdffile* xdf = NULL;
-	int oflags, fd = -1;
 
 	// Argument validation
 	if (((mode != XDF_WRITE)&&(mode != XDF_READ)) || !filename) {
 		set_xdf_error(NULL, EINVAL);
 		return NULL;
 	}
-	oflags = (mode == XDF_WRITE) ? O_WRONLY : O_RDONLY; 
 
-
-	if ((fd = open(filename, oflags)) == -1) {
-		set_xdf_error(NULL, errno);
-		return NULL;
-	}
-
+	// Structure creation 
 	if (mode == XDF_READ)
-		xdf = init_read_xdf(fd, type);
+		xdf = init_read_xdf(type, filename);
 	else
-		xdf = init_write_xdf(fd, type);
+		xdf = init_write_xdf(type, filename);
 
 	return xdf;
 }
@@ -347,6 +356,7 @@ struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
 	// Link the channel to the end
 	ch->next = NULL;
 	*curr = ch;
+	xdf->numch++;
 
 	return ch;
 }
