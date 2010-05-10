@@ -52,7 +52,11 @@ enum xdfchfield
 	XDF_CHFIELD_PHYSICAL_MIN,	/* double 	*/
 	XDF_CHFIELD_PHYSICAL_MAX,	/* double 	*/
 	XDF_CHFIELD_DIGITAL_MIN,	/* double 	*/
-	XDF_CHFIELD_DIGITAL_MAX		/* double 	*/
+	XDF_CHFIELD_DIGITAL_MAX,	/* double 	*/
+	XDF_CHFIELD_UNIT,		/* const char*  */
+	XDF_CHFIELD_TRANSDUCTER,	/* const char*  */
+	XDF_CHFIELD_PREFILTERING,	/* const char*  */
+	XDF_CHFIELD_RESERVED,		/* const char*	*/
 };
 
 

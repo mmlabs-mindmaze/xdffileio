@@ -6,7 +6,8 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c 		\
 			  xdferror.h xdferror.c 	\
 			  xdfformatops.h xdfconfig.c	\
 			  formatdecl.c			\
-			  xdfio.h
+			  xdfio.h			\
+			  bdffile.c bdf.h
 
 
 #libxdffileio_la_LDFLAGS = -release $(RELEASE) -version-info $(CURRENT):$(REVISION):$(AGE)

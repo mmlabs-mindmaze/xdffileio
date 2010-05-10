@@ -36,6 +36,10 @@ static const struct opt_detail opts_ch_table[] = {
 	{XDF_CHFIELD_PHYSICAL_MAX, TYPE_DOUBLE}, 
 	{XDF_CHFIELD_DIGITAL_MIN, TYPE_DOUBLE},	
 	{XDF_CHFIELD_DIGITAL_MAX, TYPE_DOUBLE},
+	{XDF_CHFIELD_UNIT, TYPE_STRING},
+	{XDF_CHFIELD_TRANSDUCTER, TYPE_STRING},
+	{XDF_CHFIELD_PREFILTERING, TYPE_STRING},
+	{XDF_CHFIELD_RESERVED, TYPE_STRING},
 };
 #define num_opts_ch	(sizeof(opts_ch_table)/sizeof(opts_ch_table[0]))
 

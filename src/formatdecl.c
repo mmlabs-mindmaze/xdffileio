@@ -1,3 +1,4 @@
+#include "bdf.h"
 #include "xdfformatops.h"
 #include <stddef.h>
 
@@ -7,8 +8,13 @@ struct dataformat_entry {
 	int (*is_same_type)(const unsigned char*);
 };
 
-static struct dataformat_entry support_datafmt[] = {
-	{.type = XDF_ANY}
+// Declaration array
+struct dataformat_entry support_datafmt[] = {
+	{
+		.type=XDF_BDF,
+		.alloc_file = bdf_alloc_xdffile,
+		.is_same_type = bdf_is_same_type
+	}
 };
 
 static unsigned int num_support_datafmt = sizeof(support_datafmt) 
