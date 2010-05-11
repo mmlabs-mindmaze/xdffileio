@@ -16,25 +16,25 @@ struct data_information {
 union ui24 {
 	int32_t i32;
 	uint32_t u32;
-	uint8_t p24[3];
+	uint8_t p24[4];
 };
 
 #ifdef WORDS_BIGENDIAN
 
 #  define copy_ui24_p8(src, pdst) 	\
 	do { 					\
-		(src).p24[1] = pdst[0];		\
-		(src).p24[2] = pdst[1];		\
-		(src).p24[3] = pdst[2];		\
+		pdst[0] = (src).p24[1];		\
+		pdst[1] = (src).p24[2];		\
+		pdst[2] = (src).p24[3];		\
 	} while (0)
 
 #else /* WORDS_BIGENDIAN */
 
 #  define copy_ui24_p8(src, pdst) 	\
 	do { 					\
-		(src).p24[0] = pdst[0];		\
-		(src).p24[1] = pdst[1];		\
-		(src).p24[2] = pdst[2];		\
+		pdst[0] = (src).p24[0];		\
+		pdst[1] = (src).p24[1];		\
+		pdst[2] = (src).p24[2];		\
 	} while (0)
 
 #endif /* WORDS_BIGENDIAN */
@@ -265,7 +265,7 @@ int setup_transform(struct convprm* prm,
 	// Initialize convertion structure
 	memset(prm, 0, sizeof(*prm));
 	prm->stride1 = in_str;
-	prm->stride2 = out_str;
+	prm->stride3 = out_str;
 
 	// Test for the need of scaling function
 	if (!in_mm || !out_mm || !memcmp(in_mm, out_mm, sizeof(in_mm)))
@@ -275,12 +275,13 @@ int setup_transform(struct convprm* prm,
 	ti =  (data_info[out_tp].is_int) ? in_tp : out_tp;
 	if (data_info[ti].is_int && scaling)
 		ti = XDFDOUBLE;
+	prm->stride2 = data_info[ti].size;
 	
 	// Setup the convertion functions if needed
 	if ((in_tp != ti) || (data_info[in_tp].size != in_str))
 		prm->cvfn1 = convtable[in_tp][ti];
 	if ((ti != out_tp) || (data_info[out_tp].size != out_str))
-		prm->cvfn3 = convtable[ti][out_str];
+		prm->cvfn3 = convtable[ti][out_tp];
 	
 	// Setup scaling
 	if (scaling) {

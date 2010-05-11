@@ -54,11 +54,11 @@ static const struct opt_detail opts_info_table[] = {
 static int get_option_type(const struct opt_detail table[], unsigned int nmax, int field)
 {
 	int i = nmax-1;
-	while (--i) {
+	do {
 		if (table[i].field == field)
-			break;
-	}
-	return i;
+			return table[i].type;
+	} while (i--);
+	return -1;
 }
 #define get_ch_opt_type(field)  (get_option_type(opts_ch_table, num_opts_ch, (field)))
 #define get_info_opt_type(field)  (get_option_type(opts_info_table, num_opts_info, (field)))
@@ -189,9 +189,9 @@ static int setconf_channel_double(struct xdf_channel* ch, enum xdfchfield field,
 	else if (field == XDF_CHFIELD_DIGITAL_MAX)
 		ch->digital_mm[1] = dval;
 	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
-		ch->digital_mm[0] = dval;
+		ch->physical_mm[0] = dval;
 	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
-		ch->digital_mm[1] = dval;
+		ch->physical_mm[1] = dval;
 	else
 		retval = ch->ops->set_channel(ch, field, dval);
 	
@@ -261,9 +261,9 @@ static int getconf_channel_double(struct xdf_channel* ch, enum xdfchfield field,
 	else if (field == XDF_CHFIELD_DIGITAL_MAX)
 		*dval = ch->digital_mm[1];
 	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
-		*dval = ch->digital_mm[0];
+		*dval = ch->physical_mm[0];
 	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
-		*dval = ch->digital_mm[1];
+		*dval = ch->physical_mm[1];
 	else
 		retval = ch->ops->get_channel(ch, field, dval);
 	

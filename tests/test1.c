@@ -17,7 +17,8 @@
 #define scaled_t	float
 static const enum xdftype arrtype = XDFFLOAT;
 static const enum xdftype sttype = XDFINT24;
-static const enum xdftype trigtype = XDFUINT24;
+static const enum xdftype trigsttype = XDFUINT24;
+static const enum xdftype trigarrtype = XDFUINT32;
 
 int TestResultingFile(const char* testfilename, const char* reffilename)
 {
@@ -90,13 +91,9 @@ void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, uint32_t* tridata, in
 int add_activeelec_channel(hxdf xdf, const char* label, int iarr, int ind)
 {
 	hchxdf ch;
-	int isexg = 0;
 	if (!(ch = xdf_add_channel(xdf)))
 		return -1;
 
-	if (!memcmp(label, "EXG", 3))
-		isexg = 1;
-		
 	xdf_setconf_channel(ch, 
 		XDF_CHFIELD_ARRAY_TYPE, arrtype,
 		XDF_CHFIELD_STORED_TYPE, sttype,
@@ -110,7 +107,7 @@ int add_activeelec_channel(hxdf xdf, const char* label, int iarr, int ind)
 		XDF_CHFIELD_DIGITAL_MIN, -8388608.0,
 		XDF_CHFIELD_DIGITAL_MAX, 8388607.0,
 		XDF_CHFIELD_UNIT, "uV",
-		XDF_CHFIELD_RESERVED, (const char*)(isexg ? "EXG" : "EEG"),
+		XDF_CHFIELD_RESERVED, "EEG",
 		XDF_CHFIELD_NONE);
 
 	return 0;
@@ -123,8 +120,8 @@ int add_trigger_channel(hxdf xdf, const char* label, int iarr, int ind)
 		return -1;
 
 	xdf_setconf_channel(ch, 
-		XDF_CHFIELD_ARRAY_TYPE, trigtype,
-		XDF_CHFIELD_STORED_TYPE, trigtype,
+		XDF_CHFIELD_ARRAY_TYPE, trigarrtype,
+		XDF_CHFIELD_STORED_TYPE, trigsttype,
 		XDF_CHFIELD_ARRAY_INDEX, iarr,
 		XDF_CHFIELD_ARRAY_OFFSET, (ind*sizeof(uint32_t)),
 		XDF_CHFIELD_LABEL, label,
@@ -179,18 +176,18 @@ int generate_xdffile(const char* filename)
 			  XDF_FIELD_NONE);
 
 	for (j=0; j<NEEG; j++) {
-		sprintf(tmpstr, "eeg%i", j);
+		sprintf(tmpstr, "EEG%i", j);
 		if (add_activeelec_channel(xdf, tmpstr, 0, j) < 0)
 			goto exit;
 	}
 	for (j=0; j<NEXG; j++) {
-		sprintf(tmpstr, "exg%i", j);
+		sprintf(tmpstr, "EXG%i", j);
 		if (add_activeelec_channel(xdf, tmpstr, 1, j) < 0)
 			goto exit;
 	}
 	for (j=0; j<NTRI; j++) {
-		sprintf(tmpstr, "tri%i", j);
-		if (add_trigger_channel(xdf, tmpstr, 1, j) < 0)
+		sprintf(tmpstr, "TRI%i", j);
+		if (add_trigger_channel(xdf, tmpstr, 2, j) < 0)
 			goto exit;
 	}
 
@@ -216,7 +213,8 @@ exit:
 	if (phase) 
 		fprintf(stderr, "\terror: %s\n", strerror(xdf_get_error(xdf)));
 	// Clean the structures and ressources
-	xdf_close(xdf);
+	if (xdf_close(xdf))
+		fprintf(stderr, "\terror: %s\n", strerror(xdf_get_error(NULL)));
 	free(eegdata);
 	free(exgdata);
 	free(tridata);

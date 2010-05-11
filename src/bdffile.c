@@ -17,6 +17,7 @@ static int bdf_set_channel(struct xdf_channel*, enum xdfchfield, ...);
 static int bdf_get_channel(const struct xdf_channel*, enum xdfchfield, ...);
 static int bdf_copy_channel(struct xdf_channel*, const struct xdf_channel*);
 static struct xdf_channel* bdf_alloc_channel(void);
+static void bdf_free_channel(struct xdf_channel* xdfch);
 static int bdf_set_info(struct xdffile*, enum xdffield, ...); 
 static int bdf_get_info(const struct xdffile*, enum xdffield, ...); 
 static int bdf_copy_info(struct xdffile*, const struct xdffile*); 
@@ -29,6 +30,7 @@ static const struct format_operations bdf_ops = {
 	.get_channel = bdf_get_channel,
 	.copy_channel = bdf_copy_channel,
 	.alloc_channel = bdf_alloc_channel,
+	.free_channel = bdf_free_channel,
 	.set_info = bdf_set_info,
 	.get_info = bdf_get_info,
 	.copy_info = bdf_copy_info,
@@ -54,7 +56,7 @@ struct bdf_channel {
 };
 
 static const unsigned char bdf_magickey[] = {255, 'B', 'I', 'O', 'S', 'E', 'M', 'I'};
-#define HDRSIZE_FIELD_LOC	184
+#define NUMREC_FIELD_LOC 236
 
 #define get_bdf(xdf_p) \
 	((struct bdf_file*)(((char*)(xdf_p))-offsetof(struct bdf_file, xdf)))
@@ -178,6 +180,11 @@ static struct xdf_channel* bdf_alloc_channel(void)
 		ch->xdfch.ops = &bdf_ops;
 	}
 	return &(ch->xdfch);
+}
+
+static void bdf_free_channel(struct xdf_channel* xdfch)
+{
+	free(get_bdfch(xdfch));
 }
 
 static int bdf_set_info(struct xdffile* xdf, enum xdffield field, ...)
@@ -335,6 +342,9 @@ static int bdf_write_header(struct xdffile* xdf)
 	if (bdf_write_channels_header(bdf, file))
 		return -1;
 
+	fflush(file);
+	fclose(file);
+
 	return 0;
 }
 
@@ -348,20 +358,21 @@ static int bdf_read_header(struct xdffile* xdf)
 static int bdf_close_file(struct xdffile* xdf)
 {
 	int errnum = 0;
-	char numrecstr[8];
+	char numrecstr[9];
 	struct bdf_file* bdf = get_bdf(xdf);
 
 	// Write the number of records
 	if (xdf->ready && (xdf->mode == XDF_WRITE)) {
-		snprintf(numrecstr, 8, "%-8i", xdf->nrecord);
-		if ( (lseek(xdf->fd, SEEK_SET, HDRSIZE_FIELD_LOC) < 0)
+		snprintf(numrecstr, 9, "%-8i", xdf->nrecord);
+		if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
 		    || (write(xdf->fd, numrecstr, 8) < 0) )
-		  	errnum = 0;
+		  	errnum = errno;
 	}
 	
 	// Free resources
 	free(bdf);
 
-	return set_xdf_error(xdf, errnum);
+	// TODO handle failure  in close in a better way
+	return set_xdf_error(NULL, errnum);
 }
 

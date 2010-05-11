@@ -23,6 +23,6 @@ int set_xdf_error(struct xdffile* xdf, int error)
 	if (xdf)
 		xdf->error = error;
 	errno = error;
-	return (error) ? 0 : -1;
+	return (error) ? -1 : 0;
 }
 

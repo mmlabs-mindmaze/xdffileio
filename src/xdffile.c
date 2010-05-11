@@ -87,10 +87,12 @@ static int write_record_to_disk(struct xdffile* xdf)
 			reqsize -= wsize;
 			fbuff += wsize;
 		} while (reqsize);
+		src += ch->memtypesize;
 	}
 
 	// Make sure that the whole record has been sent to hardware
 	fsync(xdf->fd);
+	xdf->nrecord++;
 
 	return 0;
 }
@@ -237,18 +239,18 @@ static void link_batches(struct xdffile* xdf, unsigned int nbatch)
 static int compute_batches(struct xdffile* xdf, int assign)
 {
 	struct data_batch curr, *currb;
-	unsigned int nbatch = 0, iarr, moff, foff, dlen;
+	unsigned int nbatch = 1, iarr, moff, foff, dlen;
 	const struct xdf_channel* ch;
 
 	currb = assign ? xdf->batch : &curr;
-	reset_batch(&curr, 0, 0);
+	reset_batch(currb, 0, 0);
 
 	for (iarr=0; iarr < xdf->narrays; iarr++) {
 		moff = foff = 0;
 		
 		// Scan channels in the xdffile order to find different batches
 		for (ch=xdf->channels; ch; ch=ch->next) {
-			foff += dlen = get_data_size(ch->inmemtype);
+			dlen = get_data_size(ch->inmemtype);
 
 			// Consistency checks
 			if (ch->iarray > xdf->narrays
@@ -265,12 +267,25 @@ static int compute_batches(struct xdffile* xdf, int assign)
 				reset_batch(currb, iarr, foff);
 				add_to_batch(currb, ch, foff);
 			}
+			foff += dlen;
 		}
 	}
 	if (assign)
 		link_batches(xdf, nbatch);
 
 	return nbatch;
+}
+
+// channels in the buffer are assumed to be packed
+// TODO: verify this assumption
+static unsigned int compute_sample_size(const struct xdffile* xdf)
+{
+	unsigned int sample_size = 0;
+	struct xdf_channel* ch = xdf->channels;
+
+	for (ch=xdf->channels; ch; ch = ch->next) 
+		sample_size += 	get_data_size(ch->inmemtype);
+	return sample_size;
 }
 
 static void setup_convdata(struct xdffile* xdf)
@@ -313,27 +328,28 @@ static void setup_convdata(struct xdffile* xdf)
 static int setup_transfer_thread(struct xdffile* xdf)
 {
 	int ret;
-	int minit = 0, cinit = 0;
+	int done = 0;
 
 	xdf->order = ORDER_NONE;
 	if ((ret = pthread_mutex_init(&(xdf->mtx), NULL)))
 		goto error;
-	minit = 1;
+	done++;
 
 	if ((ret = pthread_cond_init(&(xdf->cond), NULL)))
 		goto error;
-	cinit = 1;
+	done++;
 
+	sem_init(&(xdf->sem), 0, 0);
 	if ((ret = pthread_create(&(xdf->thid), NULL, transfer_thread_fn, xdf)))
 		goto error;
 
 	return 0;
 
 error:
-	if (minit)
-		pthread_mutex_destroy(&(xdf->mtx));
-	if (cinit)
+	if (done-- > 0)
 		pthread_cond_destroy(&(xdf->cond));
+	if (done-- > 0)
+		pthread_mutex_destroy(&(xdf->mtx));
 	set_xdf_error(xdf, ret);
 	return -1;
 }
@@ -341,7 +357,7 @@ error:
 static int finish_record(struct xdffile* xdf)
 {
 	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
-	unsigned int ns = xdf->ns_buff - xdf->ns_per_rec;
+	unsigned int ns = xdf->ns_per_rec - xdf->ns_buff;
 	int retval;
 
 	if (!xdf->ns_buff)
@@ -360,7 +376,8 @@ static int finish_record(struct xdffile* xdf)
 
 int xdf_close(struct xdffile* xdf)
 {
-	int fd;
+	int fd, retval = 0;
+	struct xdf_channel *ch, *prev;
 
 	if (!xdf)
 		return set_xdf_error(NULL, EBADF);
@@ -386,16 +403,34 @@ int xdf_close(struct xdffile* xdf)
 		// Destroy synchronization primitives
 		pthread_mutex_destroy(&(xdf->mtx));
 		pthread_cond_destroy(&(xdf->cond));
-		sem_close(&(xdf->sem));
+
+		// Free all allocated buffers
+		free(xdf->array_pos);
+		free(xdf->convdata);
+		free(xdf->batch);
+		free(xdf->buff);
+		free(xdf->backbuff);
+		free(xdf->tmpbuff[0]);
+		free(xdf->tmpbuff[1]);
 	}
 
+	free(xdf->array_stride);
+	ch=xdf->channels;
+	while (ch) {
+		prev = ch;
+		ch = ch->next;
+		xdf->ops->free_channel(prev);
+	}
+	
+
 	// Finish and close the file
-	xdf->ops->close_file(xdf);
+	retval = xdf->ops->close_file(xdf);
 
 	// TODO Handle close failure
-	close(fd);
+	if (close(fd) < 0)
+		retval = set_xdf_error(NULL, errno);
 
-	return 0;
+	return retval;
 }
 
 int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides)
@@ -420,31 +455,40 @@ int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int*
 int xdf_prepare_transfer(struct xdffile* xdf)
 {
 	int nbatch;
+	unsigned int samsize;
+
 	if (xdf->ready)
 		return -1;
 
-	// Compute the number of batches. Don't assign since no memory is
-	// allocated for them in the xdf
+	// Just compute the number of batch (no mem allocated for them yet)
 	if ( (nbatch = compute_batches(xdf, 0)) < 0 )
 		goto error;
+	xdf->nbatch = nbatch;
 
 	// Alloc of temporary entities needed for convertion
+	xdf->sample_size = samsize = compute_sample_size(xdf);
 	if ( !(xdf->array_pos = malloc(xdf->narrays*sizeof(*(xdf->array_pos))))
   	    || !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
-	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch)))) ) {
-	    	
+	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))  
+	    || !(xdf->buff = malloc(xdf->ns_per_rec * samsize)) 
+	    || !(xdf->backbuff = malloc(xdf->ns_per_rec * samsize)) 
+	    || !(xdf->tmpbuff[0] = malloc(xdf->ns_per_rec * 8)) 
+	    || !(xdf->tmpbuff[1] = malloc(xdf->ns_per_rec * 8)) ) { 
 		goto error;
 	}
 
 	// Setup batches, convertion parameters
-	xdf->nbatch = nbatch;
 	compute_batches(xdf, 1); // assign batches: memory is now allocated
 	setup_convdata(xdf);
 
-	// Write header if open for writing 
-	if (xdf->mode == XDF_WRITE)
+	if (xdf->mode == XDF_WRITE) {
 		if (xdf->ops->write_header(xdf))
 			goto error;
+		if (fsync(xdf->fd)) {
+			set_xdf_error(xdf, errno);
+			goto error;
+		}
+	}
 
 	if (setup_transfer_thread(xdf))
 		goto error;
@@ -456,10 +500,15 @@ error:
 	free(xdf->array_pos);
 	free(xdf->convdata);
 	free(xdf->batch);
+	free(xdf->buff);
+	free(xdf->backbuff);
+	free(xdf->tmpbuff[0]);
+	free(xdf->tmpbuff[1]);
 	xdf->nbatch = 0;
 	xdf->array_pos = NULL;
 	xdf->convdata = NULL;
 	xdf->batch = NULL;
+	xdf->buff = xdf->backbuff = xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
 	return -1;
 }
 
@@ -483,7 +532,7 @@ int xdf_write(struct xdffile* xdf, unsigned int ns, ...)
 
 	// Initialization of the input buffers
 	va_start(ap, ns);
-	for (ia=0; ia<xdf->num_array_input; ia++)
+	for (ia=0; ia<xdf->narrays; ia++)
 		buff_in[ia] = va_arg(ap, const char*);
 	va_end(ap);
 
