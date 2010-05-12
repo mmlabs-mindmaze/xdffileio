@@ -49,8 +49,8 @@ struct convertion_data {
 };
 
 
-static int write_record_to_disk(struct xdffile* xdf);
-static int read_record_from_disk(struct xdffile* xdf);
+static int write_record_to_disk(struct xdf* xdf);
+static int read_record_from_disk(struct xdf* xdf);
 static void* transfer_thread_fn(void* ptr);
 
 /*! \param xdf	pointer to a valid xdffile structure
@@ -59,7 +59,7 @@ static void* transfer_thread_fn(void* ptr);
  * organisation, performs any necessary conversion and write the record on
  * the file.
  */
-static int write_record_to_disk(struct xdffile* xdf)
+static int write_record_to_disk(struct xdf* xdf)
 {
 	ssize_t wsize;
 	size_t reqsize;
@@ -97,7 +97,7 @@ static int write_record_to_disk(struct xdffile* xdf)
 	return 0;
 }
 
-static int read_record_from_disk(struct xdffile* xdf)
+static int read_record_from_disk(struct xdf* xdf)
 {
 	(void)xdf;
 	return 0;
@@ -115,7 +115,7 @@ static int read_record_from_disk(struct xdffile* xdf)
 static void* transfer_thread_fn(void* ptr)
 {
 	int ret;
-	struct xdffile* xdf = ptr;
+	struct xdf* xdf = ptr;
 
 	// Once the routine hold the mutex, it is in a ready state, notify
 	// the main thread with the semaphore
@@ -156,7 +156,7 @@ static void* transfer_thread_fn(void* ptr)
  * depending on the mode of the xdf structure. This function will block if
  * the previous transfer is still being performed.
  */
-static int disk_transfer(struct xdffile* xdf)
+static int disk_transfer(struct xdf* xdf)
 {
 	void* buffer;
 
@@ -190,7 +190,7 @@ static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned 
 	batch->len = 0;
 }
 
-static int add_to_batch(struct data_batch *curr, const struct xdf_channel *ch, unsigned int foff)
+static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, unsigned int foff)
 {
 	unsigned int datalen = get_data_size(ch->inmemtype);
 
@@ -218,7 +218,7 @@ static int add_to_batch(struct data_batch *curr, const struct xdf_channel *ch, u
 	return 0;
 }
 
-static void link_batches(struct xdffile* xdf, unsigned int nbatch)
+static void link_batches(struct xdf* xdf, unsigned int nbatch)
 {
 	unsigned int i;
 	struct data_batch* batch = xdf->batch;
@@ -236,11 +236,11 @@ static void link_batches(struct xdffile* xdf, unsigned int nbatch)
 	batch[nbatch-1].mskip = stride[batch[nbatch-1].iarray] - batch[nbatch-1].moff;
 }
 
-static int compute_batches(struct xdffile* xdf, int assign)
+static int compute_batches(struct xdf* xdf, int assign)
 {
 	struct data_batch curr, *currb;
 	unsigned int nbatch = 1, iarr, moff, foff, dlen;
-	const struct xdf_channel* ch;
+	const struct xdfch* ch;
 
 	currb = assign ? xdf->batch : &curr;
 	reset_batch(currb, 0, 0);
@@ -278,22 +278,22 @@ static int compute_batches(struct xdffile* xdf, int assign)
 
 // channels in the buffer are assumed to be packed
 // TODO: verify this assumption
-static unsigned int compute_sample_size(const struct xdffile* xdf)
+static unsigned int compute_sample_size(const struct xdf* xdf)
 {
 	unsigned int sample_size = 0;
-	struct xdf_channel* ch = xdf->channels;
+	struct xdfch* ch = xdf->channels;
 
 	for (ch=xdf->channels; ch; ch = ch->next) 
 		sample_size += 	get_data_size(ch->inmemtype);
 	return sample_size;
 }
 
-static void setup_convdata(struct xdffile* xdf)
+static void setup_convdata(struct xdf* xdf)
 {
 	unsigned int i, in_str, out_str;
 	enum xdftype in_tp, out_tp;
 	const double *in_mm, *out_mm;
-	struct xdf_channel* ch = xdf->channels;
+	struct xdfch* ch = xdf->channels;
 
 	for (i=0; i<xdf->numch; i++) {
 		if (xdf->mode == XDF_WRITE) {
@@ -325,7 +325,7 @@ static void setup_convdata(struct xdffile* xdf)
 	}
 }
 
-static int setup_transfer_thread(struct xdffile* xdf)
+static int setup_transfer_thread(struct xdf* xdf)
 {
 	int ret;
 	int done = 0;
@@ -354,7 +354,7 @@ error:
 	return -1;
 }
 
-static int finish_record(struct xdffile* xdf)
+static int finish_record(struct xdf* xdf)
 {
 	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
 	unsigned int ns = xdf->ns_per_rec - xdf->ns_buff;
@@ -374,10 +374,10 @@ static int finish_record(struct xdffile* xdf)
 	return retval;
 }
 
-int xdf_close(struct xdffile* xdf)
+int xdf_close(struct xdf* xdf)
 {
 	int fd, retval = 0;
-	struct xdf_channel *ch, *prev;
+	struct xdfch *ch, *prev;
 
 	if (!xdf)
 		return set_xdf_error(NULL, EBADF);
@@ -433,7 +433,7 @@ int xdf_close(struct xdffile* xdf)
 	return retval;
 }
 
-int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int* strides)
+int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* strides)
 {
 	unsigned int* newstrides;
 	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride)))))
@@ -452,7 +452,7 @@ int xdf_define_arrays(struct xdffile* xdf, unsigned int numarrays, unsigned int*
 /*!
  * xdf->array_pos, xdf->convdata and xdf->batch are assumed to be NULL
  */
-int xdf_prepare_transfer(struct xdffile* xdf)
+int xdf_prepare_transfer(struct xdf* xdf)
 {
 	int nbatch;
 	unsigned int samsize;
@@ -522,7 +522,7 @@ error:
  *
  * \warning Make sure the mode of the xdf is XDF_WRITE 
  */
-int xdf_write(struct xdffile* xdf, unsigned int ns, ...)
+int xdf_write(struct xdf* xdf, unsigned int ns, ...)
 {
 	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
 	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;

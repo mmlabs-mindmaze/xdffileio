@@ -6,48 +6,50 @@
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
+#include <stdarg.h>
+
 #include "xdfio.h"
 #include "xdffile.h"
 #include "xdferror.h"
-#include "xdfformatops.h"
 #include "bdf.h"
 
 
-static int bdf_set_channel(struct xdf_channel*, enum xdfchfield, ...);
-static int bdf_get_channel(const struct xdf_channel*, enum xdfchfield, ...);
-static int bdf_copy_channel(struct xdf_channel*, const struct xdf_channel*);
-static struct xdf_channel* bdf_alloc_channel(void);
-static void bdf_free_channel(struct xdf_channel* xdfch);
-static int bdf_set_info(struct xdffile*, enum xdffield, ...); 
-static int bdf_get_info(const struct xdffile*, enum xdffield, ...); 
-static int bdf_copy_info(struct xdffile*, const struct xdffile*); 
-static int bdf_write_header(struct xdffile*);
-static int bdf_read_header(struct xdffile*);
-static int bdf_close_file(struct xdffile*);
+static int bdf_set_channel(struct xdfch*, enum xdfchfield, union optval);
+static int bdf_get_channel(const struct xdfch*, enum xdfchfield, union
+optval*);
+static int bdf_copy_chconf(struct xdfch*, const struct xdfch*);
+static struct xdfch* bdf_alloc_channel(void);
+static void bdf_free_channel(struct xdfch* xdfch);
+static int bdf_set_conf(struct xdf*, enum xdffield, union optval); 
+static int bdf_get_conf(const struct xdf*, enum xdffield, union optval*); 
+static int bdf_copy_conf(struct xdf*, const struct xdf*); 
+static int bdf_write_header(struct xdf*);
+static int bdf_read_header(struct xdf*);
+static int bdf_close_file(struct xdf*);
 
 static const struct format_operations bdf_ops = {
 	.set_channel = bdf_set_channel,
 	.get_channel = bdf_get_channel,
-	.copy_channel = bdf_copy_channel,
+	.copy_chconf = bdf_copy_chconf,
 	.alloc_channel = bdf_alloc_channel,
 	.free_channel = bdf_free_channel,
-	.set_info = bdf_set_info,
-	.get_info = bdf_get_info,
-	.copy_info = bdf_copy_info,
+	.set_conf = bdf_set_conf,
+	.get_conf = bdf_get_conf,
+	.copy_conf = bdf_copy_conf,
 	.write_header = bdf_write_header,
 	.read_header = bdf_read_header,
 	.close_file = bdf_close_file
 };
 
 struct bdf_file {
-	struct xdffile xdf;
+	struct xdf xdf;
 	char subj_ident[81];
 	char rec_ident[81];
 	struct tm rectime;
 };
 
 struct bdf_channel {
-	struct xdf_channel xdfch;
+	struct xdfch xdfch;
 	char label[17];
 	char transducter[81];
 	char unit[9];
@@ -64,7 +66,7 @@ static const unsigned char bdf_magickey[] = {255, 'B', 'I', 'O', 'S', 'E', 'M', 
 	((struct bdf_channel*)(((char*)(xdfch_p))	\
 		- offsetof(struct bdf_channel, xdfch)))
 
-struct xdffile* bdf_alloc_xdffile()
+struct xdf* bdf_alloc_xdffile()
 {
 	struct bdf_file* bdf;
 
@@ -82,62 +84,57 @@ int bdf_is_same_type(const unsigned char* magickey)
 }
 
 
-static int bdf_set_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
+static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval val)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
-	va_list ap;
 	int retval = 0;
 
-	va_start(ap, field);
 	if (field == XDF_CHFIELD_LABEL)
-		strncpy(bdfch->label, va_arg(ap, const char*), sizeof(bdfch->label)-1);
+		strncpy(bdfch->label, val.str, sizeof(bdfch->label)-1);
 	else if (field == XDF_CHFIELD_UNIT)
-		strncpy(bdfch->unit, va_arg(ap, const char*), sizeof(bdfch->unit)-1);
+		strncpy(bdfch->unit, val.str, sizeof(bdfch->unit)-1);
 	else if (field == XDF_CHFIELD_TRANSDUCTER)
-		strncpy(bdfch->transducter, va_arg(ap, const char*), sizeof(bdfch->transducter)-1);
+		strncpy(bdfch->transducter, val.str, sizeof(bdfch->transducter)-1);
 	else if (field == XDF_CHFIELD_PREFILTERING)
-		strncpy(bdfch->prefiltering, va_arg(ap, const char*), sizeof(bdfch->prefiltering)-1);
+		strncpy(bdfch->prefiltering, val.str, sizeof(bdfch->prefiltering)-1);
 	else if (field == XDF_CHFIELD_RESERVED)
-		strncpy(bdfch->reserved, va_arg(ap, const char*), sizeof(bdfch->reserved)-1);
+		strncpy(bdfch->reserved, val.str, sizeof(bdfch->reserved)-1);
 	else
 		retval = -1;
-	va_end(ap);
 
 	return retval;
 }
 
-static int bdf_get_channel(const struct xdf_channel* ch, enum xdfchfield field, ...)
+static int bdf_get_channel(const struct xdfch* ch, enum xdfchfield
+field, union optval *val)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
-	va_list ap;
 	int retval = 0;
 
-	va_start(ap, field);
 	if (field == XDF_CHFIELD_LABEL)
-		*va_arg(ap, const char**) = bdfch->label;
+		val->str = bdfch->label;
 	else if (field == XDF_CHFIELD_UNIT)
-		*va_arg(ap, const char**) = bdfch->unit;
+		val->str = bdfch->unit;
 	else if (field == XDF_CHFIELD_TRANSDUCTER)
-		*va_arg(ap, const char**) = bdfch->transducter;
+		val->str = bdfch->transducter;
 	else if (field == XDF_CHFIELD_PREFILTERING)
-		*va_arg(ap, const char**) = bdfch->prefiltering;
+		val->str = bdfch->prefiltering;
 	else if (field == XDF_CHFIELD_RESERVED)
-		*va_arg(ap, const char**) = bdfch->reserved;
+		val->str = bdfch->reserved;
 	else
 		retval = -1;
-	va_end(ap);
 
 	return retval;
 }
 
-static int bdf_copy_channel(struct xdf_channel* dst, const struct xdf_channel* src)
+static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	double dmin, dmax, pmin, pmax;
 	enum xdftype ts, ta;
 	unsigned int offset, index;
 	const char *label, *unit, *transducter, *filtinfo, *reserved;
 
-	src->ops->get_channel(src, XDF_CHFIELD_PHYSICAL_MIN, &pmin,
+	xdf_get_chconf(src, XDF_CHFIELD_PHYSICAL_MIN, &pmin,
 				   XDF_CHFIELD_PHYSICAL_MAX, &pmax,
 				   XDF_CHFIELD_DIGITAL_MIN, &dmin,
 				   XDF_CHFIELD_DIGITAL_MAX, &dmax,
@@ -152,7 +149,7 @@ static int bdf_copy_channel(struct xdf_channel* dst, const struct xdf_channel* s
 				   XDF_CHFIELD_RESERVED, &reserved,
 				   XDF_CHFIELD_NONE);
 
-	src->ops->set_channel(dst, XDF_CHFIELD_PHYSICAL_MIN, pmin,
+	xdf_set_chconf(dst, XDF_CHFIELD_PHYSICAL_MIN, pmin,
 				   XDF_CHFIELD_PHYSICAL_MAX, pmax,
 				   XDF_CHFIELD_DIGITAL_MIN, dmin,
 				   XDF_CHFIELD_DIGITAL_MAX, dmax,
@@ -170,7 +167,7 @@ static int bdf_copy_channel(struct xdf_channel* dst, const struct xdf_channel* s
 	return 0;
 }
 
-static struct xdf_channel* bdf_alloc_channel(void)
+static struct xdfch* bdf_alloc_channel(void)
 {
 	struct bdf_channel* ch;
 	
@@ -182,60 +179,56 @@ static struct xdf_channel* bdf_alloc_channel(void)
 	return &(ch->xdfch);
 }
 
-static void bdf_free_channel(struct xdf_channel* xdfch)
+static void bdf_free_channel(struct xdfch* xdfch)
 {
 	free(get_bdfch(xdfch));
 }
 
-static int bdf_set_info(struct xdffile* xdf, enum xdffield field, ...)
+static int bdf_set_conf(struct xdf* xdf, enum xdffield field, union
+optval val)
 {
 	struct bdf_file* bdf = get_bdf(xdf);
-	va_list ap;
 	int retval = 0;
 	
-	va_start(ap, field);
 	if (field == XDF_FIELD_SUBJ_DESC)
-		strncpy(bdf->subj_ident, va_arg(ap, const char*), sizeof(bdf->subj_ident)-1);
+		strncpy(bdf->subj_ident, val.str, sizeof(bdf->subj_ident)-1);
 	else if (field == XDF_FIELD_REC_DESC)
-		strncpy(bdf->rec_ident, va_arg(ap, const char*), sizeof(bdf->rec_ident)-1);
+		strncpy(bdf->rec_ident, val.str, sizeof(bdf->rec_ident)-1);
 	else
 		retval = -1;
-	va_end(ap);
 
 	return retval;
 }
 
-static int bdf_get_info(const struct xdffile* xdf, enum xdffield field, ...)
+static int bdf_get_conf(const struct xdf* xdf, enum xdffield field,
+union optval *val)
 {
 	struct bdf_file* bdf = get_bdf(xdf);
-	va_list ap;
 	int retval = 0;
 	
-	va_start(ap, field);
 	if (field == XDF_FIELD_SUBJ_DESC)
-		*va_arg(ap, const char**) = bdf->subj_ident;
+		val->str = bdf->subj_ident;
 	else if (field == XDF_FIELD_REC_DESC)
-		*va_arg(ap, const char**) = bdf->rec_ident;
+		val->str = bdf->rec_ident;
 	else
 		retval = -1;
-	va_end(ap);
 
 	return retval;
 }
 
-static int bdf_copy_info(struct xdffile* dst, const struct xdffile* src)
+static int bdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	double recduration;
 	int ns_rec;
 	const char *subj, *rec;
 
-	src->ops->get_info(src, XDF_FIELD_RECORD_DURATION, &recduration,
+	xdf_get_conf(src, XDF_FIELD_RECORD_DURATION, &recduration,
 				XDF_FIELD_NSAMPLE_PER_RECORD, &ns_rec,
 				XDF_FIELD_SUBJ_DESC, &subj,
 				XDF_FIELD_REC_DESC, &rec,
 				XDF_FIELD_NONE);
 
-	src->ops->set_info(dst, XDF_FIELD_RECORD_DURATION, recduration,
+	xdf_set_conf(dst, XDF_FIELD_RECORD_DURATION, recduration,
 				XDF_FIELD_NSAMPLE_PER_RECORD, ns_rec,
 				XDF_FIELD_SUBJ_DESC, subj,
 				XDF_FIELD_REC_DESC, rec,
@@ -277,7 +270,7 @@ static int bdf_write_file_header(struct bdf_file* bdf, FILE* file)
 
 static int bdf_write_channels_header(struct bdf_file* bdf, FILE* file)
 {
-	struct xdf_channel* ch;
+	struct xdfch* ch;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-16.16s", get_bdfch(ch)->label) < 0)
@@ -327,7 +320,7 @@ error:
 }
 
 
-static int bdf_write_header(struct xdffile* xdf)
+static int bdf_write_header(struct xdf* xdf)
 {
 	struct bdf_file* bdf = get_bdf(xdf);
 	FILE* file = fdopen(dup(xdf->fd), "w");
@@ -348,14 +341,14 @@ static int bdf_write_header(struct xdffile* xdf)
 	return 0;
 }
 
-static int bdf_read_header(struct xdffile* xdf)
+static int bdf_read_header(struct xdf* xdf)
 {
 	(void)xdf;
 	return -1;
 }
 
 
-static int bdf_close_file(struct xdffile* xdf)
+static int bdf_close_file(struct xdf* xdf)
 {
 	int errnum = 0;
 	char numrecstr[9];

@@ -4,8 +4,8 @@
 #include "xdffile.h"
 
 
-int xdf_get_error(struct xdffile* xdf);
-int set_xdf_error(struct xdffile* xdf, int error);
+int xdf_get_error(const struct xdf* xdf);
+int set_xdf_error(struct xdf* xdf, int error);
 
 
 #endif //XDFERROR_H

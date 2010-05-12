@@ -10,12 +10,7 @@
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
-#include "xdfformatops.h"
 
-#define TYPE_INT		0
-#define TYPE_STRING		1
-#define TYPE_DATATYPE		2
-#define TYPE_DOUBLE		3
 
 struct opt_detail
 {
@@ -61,10 +56,10 @@ static int get_option_type(const struct opt_detail table[], unsigned int nmax, i
 	return -1;
 }
 #define get_ch_opt_type(field)  (get_option_type(opts_ch_table, num_opts_ch, (field)))
-#define get_info_opt_type(field)  (get_option_type(opts_info_table, num_opts_info, (field)))
+#define get_conf_opt_type(field)  (get_option_type(opts_info_table, num_opts_info, (field)))
 
 
-static void init_xdf_struct(struct xdffile* xdf, int fd, enum xdffiletype type, int mode)
+static void init_xdf_struct(struct xdf* xdf, int fd, enum xdffiletype type, int mode)
 {
 	xdf->ready = 0;
 	xdf->error = 0;
@@ -80,11 +75,11 @@ static void init_xdf_struct(struct xdffile* xdf, int fd, enum xdffiletype type, 
 	xdf->array_pos = NULL;
 }
 
-static struct xdffile* init_read_xdf(enum xdffiletype type, const char* filename)
+static struct xdf* init_read_xdf(enum xdffiletype type, const char* filename)
 {
 	unsigned char magickey[8];
 	enum xdffiletype gtype;
-	struct xdffile* xdf = NULL;
+	struct xdf* xdf = NULL;
 	int errnum = 0;
 	int fd;
 
@@ -125,9 +120,9 @@ error:
 }
 
 
-static struct xdffile* init_write_xdf(enum xdffiletype type, const char* filename)
+static struct xdf* init_write_xdf(enum xdffiletype type, const char* filename)
 {
-	struct xdffile* xdf = NULL;
+	struct xdf* xdf = NULL;
 	int fd;
 	mode_t mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
 
@@ -148,9 +143,9 @@ static struct xdffile* init_write_xdf(enum xdffiletype type, const char* filenam
 }
 
 
-struct xdffile* xdf_open(const char* filename, int mode, enum xdffiletype type)
+struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
-	struct xdffile* xdf = NULL;
+	struct xdf* xdf = NULL;
 
 	// Argument validation
 	if (((mode != XDF_WRITE)&&(mode != XDF_READ)) || !filename) {
@@ -167,9 +162,9 @@ struct xdffile* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	return xdf;
 }
 
-struct xdf_channel* xdf_get_channel(struct xdffile* xdf, unsigned int index)
+struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 {
-	struct xdf_channel* ch = xdf->channels;
+	struct xdfch* ch = xdf->channels;
 	unsigned int ich = 0;
 
 	while (ch && (ich<index)) {
@@ -180,145 +175,66 @@ struct xdf_channel* xdf_get_channel(struct xdffile* xdf, unsigned int index)
 	return ch;
 }
 
-static int setconf_channel_double(struct xdf_channel* ch, enum xdfchfield field, double dval)
+
+static int default_set_chconf(struct xdfch* ch, enum xdfchfield
+field, union optval val)
 {
 	int retval = 0;
-	
+
 	if (field == XDF_CHFIELD_DIGITAL_MIN)
-		ch->digital_mm[0] = dval;
+		ch->digital_mm[0] = val.d;
 	else if (field == XDF_CHFIELD_DIGITAL_MAX)
-		ch->digital_mm[1] = dval;
+		ch->digital_mm[1] = val.d;
 	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
-		ch->physical_mm[0] = dval;
+		ch->physical_mm[0] = val.d;
 	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
-		ch->physical_mm[1] = dval;
-	else
-		retval = ch->ops->set_channel(ch, field, dval);
-	
-	return retval;
-}
-
-
-static int setconf_channel_int(struct xdf_channel* ch, enum xdfchfield field, int ival)
-{
-	int retval = 0;
-	if (field == XDF_CHFIELD_ARRAY_INDEX)
-		ch->iarray = ival;
+		ch->physical_mm[1] = val.d;
+	else if (field == XDF_CHFIELD_ARRAY_INDEX)
+		ch->iarray = val.i;
 	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
-		ch->offset = ival;
+		ch->offset = val.i;
 	else if (field == XDF_CHFIELD_ARRAY_TYPE)
-		ch->inmemtype = ival;
+		ch->inmemtype = val.i;
 	else if (field == XDF_CHFIELD_STORED_TYPE)
-		ch->infiletype = ival;
+		ch->infiletype = val.i;
 	else
-		retval = ch->ops->set_channel(ch, field, ival);
+		retval = -1;
 	
 	return retval;
 }
 
-int xdf_setconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
+int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
-	int retval = 0, out = 0;
+	int r1, r2, argtype, retval = 0;
+	union optval val;
 
-	if (ch == NULL) 
-		return set_xdf_error(NULL, EINVAL);
-
-	va_start(ap, field);
-	while (!out && (field != XDF_CHFIELD_NONE)) {
-		switch (get_ch_opt_type(field)) {
-		case TYPE_INT:	
-		case TYPE_DATATYPE:	
-			retval = setconf_channel_int(ch, field, va_arg(ap, int));
-			break;
-
-		case TYPE_STRING:
-			retval = ch->ops->set_channel(ch, field, va_arg(ap, const char*));
-			break;
-
-		case TYPE_DOUBLE:
-			retval = setconf_channel_double(ch, field, va_arg(ap, double));
-			break;
-			
-		default:
-			out = 1;
-			retval = EINVAL;
-			break;
-		}
-		field  = va_arg(ap, enum xdfchfield);
-	}
-	va_end(ap);
-	
-	return retval;
-}
-
-static int getconf_channel_double(struct xdf_channel* ch, enum xdfchfield field, double* dval)
-{
-	int retval = 0;
-	
-	if (field == XDF_CHFIELD_DIGITAL_MIN)
-		*dval = ch->digital_mm[0];
-	else if (field == XDF_CHFIELD_DIGITAL_MAX)
-		*dval = ch->digital_mm[1];
-	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
-		*dval = ch->physical_mm[0];
-	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
-		*dval = ch->physical_mm[1];
-	else
-		retval = ch->ops->get_channel(ch, field, dval);
-	
-	return retval;
-}
-
-
-static int getconf_channel_int(struct xdf_channel* ch, enum xdfchfield field, int* ival)
-{
-	int retval = 0;
-
-	if (field == XDF_CHFIELD_ARRAY_INDEX)
-		*ival = ch->iarray;
-	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
-		*ival = ch->offset;
-	else if (field == XDF_CHFIELD_ARRAY_TYPE)
-		*ival = ch->inmemtype;
-	else if (field == XDF_CHFIELD_STORED_TYPE)
-		*ival = ch->infiletype;
-	else
-		retval = ch->ops->get_channel(ch, field, ival);
-	
-	return retval;
-}
-
-
-int xdf_getconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
-{
-	va_list ap;
-	int retval = 0, out = 0;
-
-	if (ch == NULL) 
-		return set_xdf_error(NULL, EINVAL);
+	if (ch == NULL)
+		return set_xdf_error(NULL, EFAULT);
 
 	va_start(ap, field);
-	while (!out && (field != XDF_CHFIELD_NONE)) {
-		switch (get_ch_opt_type(field)) {
-		case TYPE_INT:	
-		case TYPE_DATATYPE:	
-			retval = getconf_channel_int(ch, field, va_arg(ap, int*));
-			break;
-
-		case TYPE_STRING:
-			retval = ch->ops->set_channel(ch, field, va_arg(ap, const char**));
-			break;
-
-		case TYPE_DOUBLE:
-			retval = getconf_channel_double(ch, field, va_arg(ap, double*));
-			break;
-			
-		default:
-			retval = EINVAL;
-			out = 1;
+	while (field != XDF_CHFIELD_NONE) {
+		argtype = get_ch_opt_type(field);
+		if (argtype == TYPE_INT)
+			val.i = va_arg(ap, int);
+		else if (argtype == TYPE_DATATYPE)
+			val.type = va_arg(ap, enum xdftype);
+		else if (argtype == TYPE_STRING)
+			val.str = va_arg(ap, const char*);
+		else if (argtype == TYPE_DOUBLE)
+			val.d = va_arg(ap, double);
+		else {
+			retval = set_xdf_error(NULL, EINVAL);
 			break;
 		}
+		
+		r1 = default_set_chconf(ch, field, val);
+		r2 = ch->ops->set_channel(ch, field, val);
+		if (r1 && r2) {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
 		field  = va_arg(ap, enum xdfchfield);
 	}
 	va_end(ap);
@@ -327,24 +243,94 @@ int xdf_getconf_channel(struct xdf_channel* ch, enum xdfchfield field, ...)
 }
 
 
-int xdf_copy_channel(struct xdf_channel* dst, struct xdf_channel* src)
+static int default_get_chconf(const struct xdfch* ch, enum xdfchfield
+field, union optval* val)
+{
+	int retval = 0;
+
+	if (field == XDF_CHFIELD_DIGITAL_MIN)
+		val->d = ch->digital_mm[0];
+	else if (field == XDF_CHFIELD_DIGITAL_MAX)
+		val->d = ch->digital_mm[1];
+	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
+		val->d = ch->physical_mm[0];
+	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
+		val->d = ch->physical_mm[1];
+	else if (field == XDF_CHFIELD_ARRAY_INDEX)
+		val->i = ch->iarray;
+	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
+		val->i = ch->offset;
+	else if (field == XDF_CHFIELD_ARRAY_TYPE)
+		val->type = ch->inmemtype;
+	else if (field == XDF_CHFIELD_STORED_TYPE)
+		val->type = ch->infiletype;
+	else
+		retval = -1;
+	
+	return retval;
+}
+
+
+int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
+{
+	va_list ap;
+	int r1, r2, argtype, retval = 0;
+	union optval val;
+
+	if (ch == NULL)
+		return set_xdf_error(NULL, EFAULT);
+
+	va_start(ap, field);
+	while (field != XDF_CHFIELD_NONE) {
+		r1 = default_get_chconf(ch, field, &val);
+		r2 = ch->ops->get_channel(ch, field, &val);
+		if (r1 && r2) {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
+		argtype = get_ch_opt_type(field);
+		if (argtype == TYPE_INT)
+			*(va_arg(ap, int*)) = val.i;
+		else if (argtype == TYPE_DATATYPE)
+			*(va_arg(ap, enum xdftype*)) = val.type;
+		else if (argtype == TYPE_STRING)
+			*(va_arg(ap, const char**)) = val.str;
+		else if (argtype == TYPE_DOUBLE)
+			*(va_arg(ap, double*)) = val.d;
+		else {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
+		field  = va_arg(ap, enum xdfchfield);
+	}
+	va_end(ap);
+	
+	return retval;
+}
+
+
+int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	
 	if (!dst || !src)
 		return set_xdf_error(NULL, EINVAL);
 
-	return dst->ops->copy_channel(dst, src);
+	return dst->ops->copy_chconf(dst, src);
 }
 
 
-struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
+struct xdfch* xdf_add_channel(struct xdf* xdf)
 {
-	struct xdf_channel** curr = &(xdf->channels);
-	struct xdf_channel* ch;
+	struct xdfch** curr = &(xdf->channels);
+	struct xdfch *ch, *prev = NULL;
 
 	// go to the end of the list of channel of the xdffile
-	while (*curr)
+	while (*curr) {
+		prev = *curr;
 		curr = &((*curr)->next);
+	}
 
 	// Allocate new channel
 	ch = xdf->ops->alloc_channel();
@@ -352,8 +338,8 @@ struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
 		return NULL;
 
 	// Init the new channel with the previous one
-	if (*curr) {
-		xdf_copy_channel(ch, *curr);
+	if (prev) {
+		xdf_copy_chconf(ch, prev);
 		ch->offset += get_data_size(ch->inmemtype);
 	}
 
@@ -365,134 +351,54 @@ struct xdf_channel* xdf_add_channel(struct xdffile* xdf)
 	return ch;
 }
 
-static int set_info_int(struct xdffile* xdf, enum xdffield field, int ival)
-{
-	int retval = 0;
 
-	if (field == XDF_FIELD_NSAMPLE_PER_RECORD) {
-		if (ival <= 0)
-			retval = -EINVAL;
-		else
-			xdf->ns_per_rec = ival;
-	}
-	else
-		retval = xdf->ops->set_info(xdf, field, ival);
-	
-	return retval;
-}
-
-
-static int set_info_double(struct xdffile* xdf, enum xdffield field, double dval)
-{
-	int retval = 0;
-
-	if (field == XDF_FIELD_RECORD_DURATION)
-		if (dval <= 0.0)
-			retval = -EINVAL;
-		else
-			xdf->rec_duration = dval;
-	else
-		retval = xdf->ops->set_info(xdf, field, dval);
-	
-	return retval;
-}
-
-
-int xdf_set_info(struct xdffile* xdf, enum xdffield field, ...)
-{
-	va_list ap;
-	int retval = 0, out = 0;
-
-	if (xdf == NULL) 
-		return set_xdf_error(NULL, EINVAL);
-
-	va_start(ap, field);
-	while (!out && (field != XDF_FIELD_NONE)) {
-		switch (get_info_opt_type(field)) {
-		case TYPE_INT:	
-			retval = set_info_int(xdf, field, 
-					      va_arg(ap, int));
-			break;
-
-		case TYPE_STRING:
-			retval = xdf->ops->set_info(xdf, field, 
-						va_arg(ap, const char*));
-			break;
-
-		case TYPE_DOUBLE:
-			retval = set_info_double(xdf, field, 
-						va_arg(ap, double));
-			break;
-			
-		default:
-			out = 1;
-			retval = EINVAL;
-			break;
-		}
-		field  = va_arg(ap, enum xdffield);
-	}
-	va_end(ap);
-	
-	return retval;
-}
-
-
-static int get_info_int(struct xdffile* xdf, enum xdffield field, int *ival)
+static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval val)
 {
 	int retval = 0;
 
 	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
-		*ival = xdf->ns_per_rec;
+		xdf->ns_per_rec = val.i;
+	else if (field == XDF_FIELD_RECORD_DURATION) 
+		xdf->rec_duration = val.d;
 	else
-		retval = xdf->ops->set_info(xdf, field, ival);
+		retval = -1;
 	
 	return retval;
 }
 
 
-static int get_info_double(const struct xdffile* xdf, enum xdffield field, double *dval)
-{
-	int retval = 0;
-
-	if (field == XDF_FIELD_RECORD_DURATION)
-		*dval = xdf->rec_duration;
-	else
-		retval = xdf->ops->get_info(xdf, field, dval);
-	
-	return retval;
-}
-
-int xdf_get_info(struct xdffile* xdf, enum xdffield field, ...)
+int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
-	int retval = 0, out = 0;
+	int r1, r2, argtype, retval = 0;
+	union optval val;
 
-	if (xdf == NULL) 
-		return set_xdf_error(NULL, EINVAL);
+	if (xdf == NULL)
+		return set_xdf_error(NULL, EFAULT);
 
 	va_start(ap, field);
-	while (!out && (field != XDF_FIELD_NONE)) {
-		switch (get_info_opt_type(field)) {
-		case TYPE_INT:	
-			retval = get_info_int(xdf, field, 
-					      va_arg(ap, int*));
-			break;
-
-		case TYPE_STRING:
-			retval = xdf->ops->get_info(xdf, field, 
-						va_arg(ap, const char**));
-			break;
-
-		case TYPE_DOUBLE:
-			retval = get_info_double(xdf, field, 
-						va_arg(ap, double*));
-			break;
-			
-		default:
-			out = 1;
-			retval = EINVAL;
+	while (field != XDF_FIELD_NONE) {
+		argtype = get_conf_opt_type(field);
+		if (argtype == TYPE_INT)
+			val.i = va_arg(ap, int);
+		else if (argtype == TYPE_DATATYPE)
+			val.type = va_arg(ap, enum xdftype);
+		else if (argtype == TYPE_STRING)
+			val.str = va_arg(ap, const char*);
+		else if (argtype == TYPE_DOUBLE)
+			val.d = va_arg(ap, double);
+		else {
+			retval = set_xdf_error(NULL, EINVAL);
 			break;
 		}
+		
+		r1 = default_set_conf(xdf, field, val);
+		r2 = xdf->ops->set_conf(xdf, field, val);
+		if (r1 && r2) {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
 		field  = va_arg(ap, enum xdffield);
 	}
 	va_end(ap);
@@ -501,11 +407,65 @@ int xdf_get_info(struct xdffile* xdf, enum xdffield field, ...)
 }
 
 
-int xdf_copy_info(struct xdffile* dst, struct xdffile* src)
+static int default_get_conf(const struct xdf* xdf, enum xdffield field, union optval *val)
+{
+	int retval = 0;
+
+	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
+		val->i = xdf->ns_per_rec;
+	else if (field == XDF_FIELD_RECORD_DURATION)
+		val->d = xdf->rec_duration;
+	else
+		retval = -1;
+	
+	return retval;
+}
+
+int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
+{
+	va_list ap;
+	int r1, r2, argtype, retval = 0;
+	union optval val;
+
+	if (xdf == NULL)
+		return set_xdf_error(NULL, EFAULT);
+
+	va_start(ap, field);
+	while (field != XDF_FIELD_NONE) {
+		r1 = default_get_conf(xdf, field, &val);
+		r2 = xdf->ops->get_conf(xdf, field, &val);
+		if (r1 && r2) {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
+		argtype = get_conf_opt_type(field);
+		if (argtype == TYPE_INT)
+			*(va_arg(ap, int*)) = val.i;
+		else if (argtype == TYPE_DATATYPE)
+			*(va_arg(ap, enum xdftype*)) = val.type;
+		else if (argtype == TYPE_STRING)
+			*(va_arg(ap, const char**)) = val.str;
+		else if (argtype == TYPE_DOUBLE)
+			*(va_arg(ap, double*)) = val.d;
+		else {
+			retval = set_xdf_error(NULL, EINVAL);
+			break;
+		}
+
+		field  = va_arg(ap, enum xdffield);
+	}
+	va_end(ap);
+	
+	return retval;
+}
+
+
+int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)
 		return set_xdf_error(NULL, EINVAL);
 
-	return dst->ops->copy_info(dst, src);
+	return dst->ops->copy_conf(dst, src);
 }
 

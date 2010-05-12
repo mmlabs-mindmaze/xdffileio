@@ -4,17 +4,45 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-#include "xdfformatops.h"
 
-struct xdf_channel {
+#include "xdfio.h"
+
+#define TYPE_INT		0
+#define TYPE_STRING		1
+#define TYPE_DATATYPE		2
+#define TYPE_DOUBLE		3
+
+union optval {
+	int i;
+	const char* str;
+	enum xdftype type;
+	double d;
+};
+
+struct format_operations {
+	int (*set_channel)(struct xdfch*, enum xdfchfield, union optval);
+	int (*get_channel)(const struct xdfch*, enum xdfchfield, union
+optval*);
+	int (*copy_chconf)(struct xdfch*, const struct xdfch*);
+	struct xdfch* (*alloc_channel)(void);
+	void (*free_channel)(struct xdfch*);
+	int (*set_conf)(struct xdf*, enum xdffield, union optval); 
+	int (*get_conf)(const struct xdf*, enum xdffield, union optval*); 
+	int (*copy_conf)(struct xdf*, const struct xdf*); 
+	int (*write_header)(struct xdf*);
+	int (*read_header)(struct xdf*);
+	int (*close_file)(struct xdf*);
+};
+
+struct xdfch {
 	unsigned int iarray, offset;
 	enum xdftype inmemtype, infiletype;
 	double physical_mm[2], digital_mm[2];
-	struct xdf_channel* next;
+	struct xdfch* next;
 	const struct format_operations* ops;
 };
 
-struct xdffile {
+struct xdf {
 	enum xdffiletype ftype;
 	int fd;					
 	unsigned int ready, mode;			
@@ -27,7 +55,7 @@ struct xdffile {
 	int error;
 	
 	unsigned int numch;
-	struct xdf_channel* channels;
+	struct xdfch* channels;
 	struct convertion_data* convdata;
 	unsigned int nbatch;
 	struct data_batch* batch;
@@ -45,5 +73,9 @@ struct xdffile {
 	sem_t sem;
 	int order;
 };
+
+enum xdffiletype guess_file_type(const unsigned char* magickey);
+struct xdf* alloc_xdffile(enum xdffiletype type);
+
 
 #endif /* XDFFILE_H */

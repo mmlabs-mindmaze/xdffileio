@@ -88,13 +88,13 @@ void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, uint32_t* tridata, in
 	isample += NSAMPLE;
 }
 
-int add_activeelec_channel(hxdf xdf, const char* label, int iarr, int ind)
+int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 {
-	hchxdf ch;
+	struct xdfch* ch;
 	if (!(ch = xdf_add_channel(xdf)))
 		return -1;
 
-	xdf_setconf_channel(ch, 
+	xdf_set_chconf(ch, 
 		XDF_CHFIELD_ARRAY_TYPE, arrtype,
 		XDF_CHFIELD_STORED_TYPE, sttype,
 		XDF_CHFIELD_ARRAY_INDEX, iarr,
@@ -113,13 +113,13 @@ int add_activeelec_channel(hxdf xdf, const char* label, int iarr, int ind)
 	return 0;
 }
 
-int add_trigger_channel(hxdf xdf, const char* label, int iarr, int ind)
+int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 {
-	hchxdf ch;
+	struct xdfch* ch;
 	if (!(ch = xdf_add_channel(xdf)))
 		return -1;
 
-	xdf_setconf_channel(ch, 
+	xdf_set_chconf(ch, 
 		XDF_CHFIELD_ARRAY_TYPE, trigarrtype,
 		XDF_CHFIELD_STORED_TYPE, trigsttype,
 		XDF_CHFIELD_ARRAY_INDEX, iarr,
@@ -144,7 +144,7 @@ int generate_xdffile(const char* filename)
 	scaled_t* exgdata;
 	uint32_t* tridata;
 	int phase;
-	hxdf xdf = NULL;
+	struct xdf* xdf = NULL;
 	int i,j;
 	char tmpstr[16];
 	unsigned int strides[3] = {
@@ -171,7 +171,7 @@ int generate_xdffile(const char* filename)
 	
 	// Specify the structure (channels and sampling rate)
 	phase--;
-	xdf_set_info(xdf, XDF_FIELD_RECORD_DURATION, (double)1.0,
+	xdf_set_conf(xdf, XDF_FIELD_RECORD_DURATION, (double)1.0,
 			  XDF_FIELD_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
 			  XDF_FIELD_NONE);
 

@@ -1,5 +1,5 @@
 AM_CFLAGS = -I$(top_srcdir)/src
-#EXTRA_DIST = ref128-13-97-17-11-7-1.bdf
+EXTRA_DIST = ref128-13-97-17-11-7-1.bdf
 
 check_PROGRAMS = test1
 

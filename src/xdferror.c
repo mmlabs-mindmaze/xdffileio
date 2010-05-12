@@ -11,14 +11,14 @@
  *
  * Return the error code of the last error that has occured in the library.
  */
-int xdf_get_error(struct xdffile* xdf)
+int xdf_get_error(const struct xdf* xdf)
 {
 	if (xdf)
 		return xdf->error;
 	return errno;
 }
 
-int set_xdf_error(struct xdffile* xdf, int error)
+int set_xdf_error(struct xdf* xdf, int error)
 {
 	if (xdf)
 		xdf->error = error;

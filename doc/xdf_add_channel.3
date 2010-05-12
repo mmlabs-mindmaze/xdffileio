@@ -6,7 +6,7 @@ xdf_add_channel - Append a channel to a XDF file
 .LP
 .B #include <xdfio.h>
 .sp
-.BI "hchxdf xdf_add_channel(hxdf " xdf ");"
+.BI "struct xdfch* xdf_add_channel(struct xdf* " xdf ");"
 .br
 .SH DESCRIPTION
 .LP
@@ -27,6 +27,6 @@ specifically pack them: this is achieved by default.
 \fBxdf_add_channel\fP() returns the handle to newly created channel descriptor
 in case of success, NULL otherwise.
 .SH "SEE ALSO"
-.BR xdf_copy_channel (3)
+.BR xdf_copy_chconf (3)
 
 

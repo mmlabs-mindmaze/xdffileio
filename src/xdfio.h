@@ -63,29 +63,29 @@ enum xdfchfield
 #define XDF_WRITE	0
 #define XDF_READ	1
 
-typedef struct xdffile* hxdf;
-typedef struct xdf_channel* hchxdf;
+struct xdf;
+struct xdfch;
 
-hxdf xdf_open(const char* filename, int mode, enum xdffiletype type);
-int xdf_close(hxdf xdf);
+struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type);
+int xdf_close(struct xdf* xdf);
 
-int xdf_set_info(hxdf xdf, enum xdffield field, ...);
-int xdf_get_info(hxdf xdf, enum xdffield field, ...);
-int xdf_copy_info(hxdf dst, hxdf src);
+int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
+int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
+int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
 
-hchxdf xdf_get_channel(hxdf xdf, unsigned int index);
-hchxdf xdf_add_channel(hxdf xdf);
-int xdf_setconf_channel(hchxdf ch, enum xdfchfield field, ...);
-int xdf_getconf_channel(hchxdf ch, enum xdfchfield field, ...);
-int xdf_copy_channel(hchxdf dst, hchxdf src);
+struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index);
+struct xdfch* xdf_add_channel(struct xdf* xdf);
+int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...);
+int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...);
+int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
-int xdf_define_arrays(hxdf xdf, unsigned int narrays, unsigned int* strides);
-int xdf_prepare_transfer(hxdf xdf);
+int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);
+int xdf_prepare_transfer(struct xdf* xdf);
 
-int xdf_write(hxdf xdf, unsigned int ns, ...);
-int xdf_read(hxdf xdf, unsigned int ns, ...);
+int xdf_write(struct xdf* xdf, unsigned int ns, ...);
+int xdf_read(struct xdf* xdf, unsigned int ns, ...);
 
-int xdf_get_error(hxdf xdf);
+int xdf_get_error(const struct xdf* xdf);
 const char* xdf_get_string(void);
 
 #ifdef __cplusplus

@@ -6,7 +6,9 @@ xdf_get_channel - Get the channel descriptor handle of a particular index
 .LP
 .B #include <xdfio.h>
 .sp
-.BI "hchxdf xdf_get_channel(hxdf " xdf ", unsigned int " index ");"
+.BI "struct xdfch* xdf_get_channel(const struct xdf* " xdf ","
+.br
+.BI "                              unsigned int " index ");"
 .br
 .SH DESCRIPTION
 .LP

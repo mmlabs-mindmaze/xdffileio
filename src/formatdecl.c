@@ -1,10 +1,10 @@
+#include "xdffile.h"
 #include "bdf.h"
-#include "xdfformatops.h"
 #include <stddef.h>
 
 struct dataformat_entry {
 	enum xdffiletype type;
-	struct xdffile* (*alloc_file)(void);
+	struct xdf* (*alloc_file)(void);
 	int (*is_same_type)(const unsigned char*);
 };
 
@@ -35,7 +35,7 @@ enum xdffiletype guess_file_type(const unsigned char* magickey)
 	return type;
 }
 
-struct xdffile* alloc_xdffile(enum xdffiletype type)
+struct xdf* alloc_xdffile(enum xdffiletype type)
 {
 	unsigned int i;
 	for (i=0; i<num_support_datafmt; i++) {
