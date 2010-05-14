@@ -76,15 +76,15 @@ static void scale_data_f(unsigned int ns, void* data, const union generic_data f
 }
 
 // Prototype of a generic type conversion function
-#define DEFINE_CONV_FN(fnname, t1, t2)				\
+#define DEFINE_CONV_FN(fnname, tsrc, tdst)				\
 static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, unsigned int sts)	\
 {								\
-	const t2* src = s;					\
-	t1* dst = d;						\
+	const tsrc* src = s;					\
+	tdst* dst = d;						\
 	while(ns--) {						\
 		*dst = *src;					\
-		dst = (t1*)((char*)dst + std);			\
-		src = (const t2*)((const char*)src + sts);	\
+		dst = (tdst*)((char*)dst + std);			\
+		src = (const tsrc*)((const char*)src + sts);	\
 	}							\
 }						
 
@@ -209,7 +209,7 @@ static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 	[XDFUINT24] = {[XDFUINT24] = conv_ui24_ui24, [XDFUINT32] = conv_u24_u32, [XDFUINT64] = conv_u24_u64, [XDFFLOAT] = conv_u24_f, [XDFDOUBLE] = conv_u24_d},
 	[XDFINT24] =  {[XDFINT24] = conv_ui24_ui24, [XDFINT32] = conv_i24_i32, [XDFINT64] = conv_i24_i64, [XDFFLOAT] = conv_i24_f, [XDFDOUBLE] = conv_i24_d},
 	[XDFUINT32] = {[XDFUINT24] = conv_ui32_ui24, [XDFUINT32] = conv_ui32_ui32, [XDFUINT64] = conv_u32_u64, [XDFFLOAT] = conv_u32_f, [XDFDOUBLE] = conv_u32_d},
-	[XDFINT32] =  {[XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64, [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
+	[XDFINT32] =  {[XDFINT24] = conv_ui32_ui24, [XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64, [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
 	[XDFUINT64] = {[XDFUINT8] = conv_u64_u8, [XDFUINT16] = conv_u64_u16, 
 	               [XDFUINT24] = conv_ui64_ui24, [XDFUINT32] = conv_u64_u32, 
 		       [XDFUINT64] = conv_ui64_ui64,
