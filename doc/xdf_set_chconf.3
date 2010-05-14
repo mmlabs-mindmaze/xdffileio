@@ -30,12 +30,18 @@ in the parenthesis (the expected type of the value for
 \fBxdf_set_chconf\fP(), or a pointer to this type for
 \fBxdf_getconf_channek\fP()):
 .TP 7
-\fBXDF_CHFIELD_ARRAY_INDEX\fP (unsigned int)
+\fBXDF_CHFIELD_ARRAY_INDEX\fP (int)
 Specify the array from/to which the channel value should be transfered.
 .TP 7
-\fBXDF_CHFIELD_ARRAY_OFFSET\fP (unsigned int)
+\fBXDF_CHFIELD_ARRAY_OFFSET\fP (int)
 Specify the offset in the array from/to which the channel value should be
 transfered.
+.TP 7
+\fBXDF_CHFIELD_ARRAY_DIGITAL\fP (int)
+Indicate that the data in the array from/to which the channel value should be
+transfered is provided in digital unit. This means in practice that no scaling
+is performed during the transfer from/to the disk (non zero indicate no
+scaling).
 .TP 7
 \fBXDF_CHFIELD_ARRAY_TYPE\fP (enum xdftype)
 specify the type in the channel should casted to/from when accessed in the

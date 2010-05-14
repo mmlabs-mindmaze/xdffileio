@@ -131,13 +131,14 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	double dmin, dmax, pmin, pmax;
 	enum xdftype ts, ta;
-	unsigned int offset, index;
+	unsigned int offset, index, digital_inmem;
 	const char *label, *unit, *transducter, *filtinfo, *reserved;
 
 	xdf_get_chconf(src, XDF_CHFIELD_PHYSICAL_MIN, &pmin,
 				   XDF_CHFIELD_PHYSICAL_MAX, &pmax,
 				   XDF_CHFIELD_DIGITAL_MIN, &dmin,
 				   XDF_CHFIELD_DIGITAL_MAX, &dmax,
+				   XDF_CHFIELD_ARRAY_DIGITAL, &digital_inmem,
 				   XDF_CHFIELD_STORED_TYPE, &ts,
 				   XDF_CHFIELD_ARRAY_TYPE, &ta,
 				   XDF_CHFIELD_ARRAY_OFFSET, &offset,
@@ -153,6 +154,7 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 				   XDF_CHFIELD_PHYSICAL_MAX, pmax,
 				   XDF_CHFIELD_DIGITAL_MIN, dmin,
 				   XDF_CHFIELD_DIGITAL_MAX, dmax,
+				   XDF_CHFIELD_ARRAY_DIGITAL, digital_inmem,
 				   XDF_CHFIELD_STORED_TYPE, ts,
 				   XDF_CHFIELD_ARRAY_TYPE, ta,
 				   XDF_CHFIELD_ARRAY_OFFSET, offset,

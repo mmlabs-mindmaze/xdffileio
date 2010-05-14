@@ -46,6 +46,7 @@ enum xdfchfield
 	XDF_CHFIELD_NONE = 0,
 	XDF_CHFIELD_ARRAY_INDEX,	/* int		*/
 	XDF_CHFIELD_ARRAY_OFFSET,	/* int 		*/
+	XDF_CHFIELD_ARRAY_DIGITAL,	/* int		*/
 	XDF_CHFIELD_ARRAY_TYPE,		/* enum xdftype */
 	XDF_CHFIELD_STORED_TYPE,	/* enum xdftype */
 	XDF_CHFIELD_LABEL,	        /* const char*  */

@@ -24,6 +24,7 @@ struct opt_detail
 static const struct opt_detail opts_ch_table[] = {
 	{XDF_CHFIELD_ARRAY_INDEX, TYPE_INT},
 	{XDF_CHFIELD_ARRAY_OFFSET, TYPE_INT},
+	{XDF_CHFIELD_ARRAY_DIGITAL, TYPE_INT},
 	{XDF_CHFIELD_ARRAY_TYPE, TYPE_DATATYPE},
 	{XDF_CHFIELD_STORED_TYPE, TYPE_DATATYPE},
 	{XDF_CHFIELD_LABEL, TYPE_STRING},
@@ -195,6 +196,8 @@ field, union optval val)
 		ch->offset = val.i;
 	else if (field == XDF_CHFIELD_ARRAY_TYPE)
 		ch->inmemtype = val.i;
+	else if (field == XDF_CHFIELD_ARRAY_DIGITAL)
+		ch->digital_inmem = val.i;
 	else if (field == XDF_CHFIELD_STORED_TYPE)
 		ch->infiletype = val.i;
 	else
@@ -260,6 +263,8 @@ field, union optval* val)
 		val->i = ch->iarray;
 	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
 		val->i = ch->offset;
+	else if (field == XDF_CHFIELD_ARRAY_DIGITAL)
+		val->i = ch->digital_inmem;
 	else if (field == XDF_CHFIELD_ARRAY_TYPE)
 		val->type = ch->inmemtype;
 	else if (field == XDF_CHFIELD_STORED_TYPE)

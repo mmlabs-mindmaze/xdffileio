@@ -315,6 +315,10 @@ static void setup_convdata(struct xdf* xdf)
 			out_str = xdf->sample_size;
 			out_mm = ch->physical_mm;
 		}
+			
+		// If data manipulated in memory is digital => no scaling
+		if (ch->digital_inmem)
+			in_mm = out_mm = NULL;
 		
 		xdf->convdata[i].filetypesize = get_data_size(ch->infiletype);
 		xdf->convdata[i].memtypesize = get_data_size(ch->inmemtype);

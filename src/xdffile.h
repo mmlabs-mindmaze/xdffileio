@@ -35,7 +35,7 @@ optval*);
 };
 
 struct xdfch {
-	unsigned int iarray, offset;
+	unsigned int iarray, offset, digital_inmem;
 	enum xdftype inmemtype, infiletype;
 	double physical_mm[2], digital_mm[2];
 	struct xdfch* next;
