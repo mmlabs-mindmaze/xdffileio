@@ -1,0 +1,35 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_PREPARE_TRANSFER 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_prepare_transfer - Setup the internals of the xDF file to be ready to
+receive or send data.
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_prepare_transfer(struct xdf* " xdf ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_prepare_transfer\fP() set up the internal structures of the xDF file
+referenced by \fIxdf\fP to be ready to receive or send data. After a successful
+call to it, you can call \fBxdf_write\fP() or \fBxdf_read\fP() depending of the
+mode of the xDF file.
+.LP
+Since this function prepares the transfer, no call to any function which
+configures it will be allowed anymore after \fBxdf_define_arrays\fP() succeed.
+In particular, \fBxdf_set_conf\fP(), \fBxdf_setchconf\fP() and
+\fBxdf_define_arrays\fP() will fail afterwards.
+.SH "RETURN VALUE"
+.LP
+\fBxdf_define_arrays\fP() returns 0 in case of success, -1 otherwise.
+.SH "SEE ALSO"
+.BR xdf_define_arrays (3),
+.BR xdf_set_conf (3), 
+.BR xdf_set_chconf (3),
+.BR xdf_read (3),
+.BR xdf_write (3)
+
+
+
+

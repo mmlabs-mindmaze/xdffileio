@@ -1,0 +1,65 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_READ 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_read - Read samples from a xDF file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_read(struct xdf* " xdf ", unsigned int " ns ", ...);"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_read\fP() reads \fIns\fP samples from the xDF file referenced by
+\fIxdf\fP. This file should have been opened with mode \fBXDF_READ\fP and
+\fBxdf_prepare_arrays\fP() should have been successfully called on it.
+\fBxdf_read\fP() will fail otherwise).
+.LP
+The data to be read will be transferred into arrays specified by pointers
+provided in the variable list of arguments of the function.  The function
+expects the same number of arrays as specified by previous call to
+\fBxdf_define_arrays\fP(). The internal organisation of the data in the
+arrays should have been specified previously with calls to
+\fBxdf_set_chconf\fP().
+.SH "RETURN VALUE"
+.LP
+The function returns 0 in case of success, -1 otherwise.
+.SH EXAMPLE
+.RS
+.nf
+\fB
+/* Assume xdf references a xDF file opened for reading whose
+channels source their data in 2 arrays of float whose strides
+are the length of respectively 4 and 6 float values,
+i.e. 16 and 24 bytes (in most platforms)*/
+#define NS    3
+float array1[NS][4], array2[NS][6];
+unsigned int strides = {4*sizeof(float), 6*sizeof(float)};
+unsigned int i;
+
+xdf_define_arrays(xdf, 2, strides);
+if (xdf_prepare_transfer(xdf))
+	return 1;
+
+for (i=0; i<45; i+=NS) {
+	/* Write the values to the file */
+        if (xdf_write(xdf, NS, array1, array2))
+		return 1;
+
+	/* Use the values contained in array1 and array2*/
+	...
+
+}
+
+xdf_close(xdf);
+\fP
+.fi
+.RE
+
+.SH "SEE ALSO"
+.BR xdf_set_chconf (3),
+.BR xdf_define_arrays (3),
+.BR xdf_prepare_transfer (3)
+
+
+

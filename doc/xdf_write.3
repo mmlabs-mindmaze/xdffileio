@@ -1,0 +1,83 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_WRITE 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_write - Write samples to a xDF file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_write(struct xdf* " xdf ", unsigned int " ns ", ...);"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_write\fP() writes \fIns\fP samples to the xDF file referenced by
+\fIxdf\fP. This file should have been opened with mode \fBXDF_WRITE\fP and
+\fBxdf_prepare_arrays\fP() should have been successfully called on it.
+\fBxdf_write\fP() will fail otherwise).
+.LP
+The data to be added should be contained in arrays specified by pointers
+provided in the variable list of arguments of the function.  The function
+expects the same number of arrays as specified by previous call to
+\fBxdf_define_arrays\fP(). The internal organisation of the data in the
+arrays should have been specified previously with calls to
+\fBxdf_set_chconf\fP().
+.SH "RETURN VALUE"
+.LP
+The function returns 0 in case of success, -1 otherwise.
+.SH "PERFORMANCE CONSIDERATION"
+.LP
+By design of the library, a call to \fBxdf_write\fP() is "almost" ensured
+to be executed in a linear time, i.e. given a fixed configuration of an xDF
+file, for the same number of samples to be passed, a call \fBxdf_write\fP
+will almost take always the same time to complete. This time increases
+linearly with the number of samples. This insurance is particularly useful
+for realtime processing of data, since storing the data will impact the main
+loop in a predictible way.
+.LP
+This is achieved by double buffering the data for writing. A front and a
+back buffer are available: the front buffer is filled with the incoming
+data, and swapped with the back buffer when full. This swap signals a
+background thread to convert, reorganise, scale and save to the disk the
+data contained in the full buffer making it afterwards available for the
+next swap.
+.LP
+This approach ensures a linear calltime of \fBxdf_write\fP() \fIproviding\fP
+that I/O subsystem is not saturated neither all processing units (cores or
+processors).
+.SH EXAMPLE
+.RS
+.nf
+\fB
+/* Assume xdf references a xDF file opened for writing whose
+channels source their data in 2 arrays of float whose strides
+are the length of respectively 4 and 6 float values,
+i.e. 16 and 24 bytes (in most platforms)*/
+#define NS    3
+float array1[NS][4], array2[NS][6];
+unsigned int strides = {4*sizeof(float), 6*sizeof(float)};
+unsigned int i;
+
+xdf_define_arrays(xdf, 2, strides);
+if (xdf_prepare_transfer(xdf))
+	return 1;
+
+for (i=0; i<45; i+=NS) {
+	/* Update the values contained in array1 and array2*/
+	...
+
+	/* Write the values to the file */
+        if (xdf_write(xdf, NS, array1, array2))
+		return 1;
+}
+
+xdf_close(xdf);
+\fP
+.fi
+.RE
+
+.SH "SEE ALSO"
+.BR xdf_set_chconf (3),
+.BR xdf_define_arrays (3),
+.BR xdf_prepare_transfer (3)
+
+
