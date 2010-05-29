@@ -21,8 +21,7 @@ union optval {
 
 struct format_operations {
 	int (*set_channel)(struct xdfch*, enum xdfchfield, union optval);
-	int (*get_channel)(const struct xdfch*, enum xdfchfield, union
-optval*);
+	int (*get_channel)(const struct xdfch*, enum xdfchfield, union optval*);
 	int (*copy_chconf)(struct xdfch*, const struct xdfch*);
 	struct xdfch* (*alloc_channel)(void);
 	void (*free_channel)(struct xdfch*);
@@ -32,6 +31,7 @@ optval*);
 	int (*write_header)(struct xdf*);
 	int (*read_header)(struct xdf*);
 	int (*close_file)(struct xdf*);
+	void (*free_file)(struct xdf*);
 };
 
 struct xdfch {
@@ -52,7 +52,7 @@ struct xdf {
 	int nrecord;
 	void *buff, *backbuff;		
 	void *tmpbuff[2];
-	int error;
+	int err_signaled, error;
 	
 	unsigned int numch;
 	struct xdfch* channels;
@@ -76,6 +76,7 @@ struct xdf {
 
 enum xdffiletype guess_file_type(const unsigned char* magickey);
 struct xdf* alloc_xdffile(enum xdffiletype type);
+int set_xdf_error(int error);
 
 
 #endif /* XDFFILE_H */

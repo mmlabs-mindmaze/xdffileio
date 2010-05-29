@@ -10,7 +10,6 @@
 
 #include "xdfio.h"
 #include "xdffile.h"
-#include "xdferror.h"
 #include "bdf.h"
 
 
@@ -26,6 +25,7 @@ static int bdf_copy_conf(struct xdf*, const struct xdf*);
 static int bdf_write_header(struct xdf*);
 static int bdf_read_header(struct xdf*);
 static int bdf_close_file(struct xdf*);
+static void bdf_free_file(struct xdf*);
 
 static const struct format_operations bdf_ops = {
 	.set_channel = bdf_set_channel,
@@ -38,7 +38,8 @@ static const struct format_operations bdf_ops = {
 	.copy_conf = bdf_copy_conf,
 	.write_header = bdf_write_header,
 	.read_header = bdf_read_header,
-	.close_file = bdf_close_file
+	.close_file = bdf_close_file,
+	.free_file = bdf_free_file
 };
 
 struct bdf_file {
@@ -71,8 +72,10 @@ struct xdf* bdf_alloc_xdffile()
 	struct bdf_file* bdf;
 
 	bdf = calloc(1, sizeof(*bdf));
-	if (bdf)
-		bdf->xdf.ops = &bdf_ops;
+	if (!bdf)
+		return NULL;
+
+	bdf->xdf.ops = &bdf_ops;
 	return &(bdf->xdf);
 }
 
@@ -174,10 +177,10 @@ static struct xdfch* bdf_alloc_channel(void)
 	struct bdf_channel* ch;
 	
 	ch = malloc(sizeof(*ch));
-	if (ch) {
-		memset(ch, 0, sizeof(*ch));
-		ch->xdfch.ops = &bdf_ops;
-	}
+	if (!ch)
+		return NULL;
+	memset(ch, 0, sizeof(*ch));
+	ch->xdfch.ops = &bdf_ops;
 	return &(ch->xdfch);
 }
 
@@ -251,7 +254,7 @@ static int bdf_write_file_header(struct bdf_file* bdf, FILE* file)
 
 	// Write data format identifier
 	if (fwrite(bdf_magickey, sizeof(bdf_magickey), 1, file) < 1)
-		return set_xdf_error(&(bdf->xdf), errno);
+		return -1;
 
 	// Write all the general file header
 	retval = fprintf(file, 
@@ -264,9 +267,10 @@ static int bdf_write_file_header(struct bdf_file* bdf, FILE* file)
 			(int)-1,
 			(unsigned int)1,
 			bdf->xdf.numch);
-	if (retval < -1)
-		return set_xdf_error(&(bdf->xdf), errno);
-
+	
+	if (retval < 0)
+		return -1;
+	
 	return 0;
 }
 
@@ -276,49 +280,45 @@ static int bdf_write_channels_header(struct bdf_file* bdf, FILE* file)
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-16.16s", get_bdfch(ch)->label) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-80.80s", get_bdfch(ch)->transducter) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8.8s", get_bdfch(ch)->unit) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8i", (int)(ch->physical_mm[0])) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8i", (int)(ch->physical_mm[1])) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8i", (int)(ch->digital_mm[0])) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8i", (int)(ch->digital_mm[1])) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-80.80s", get_bdfch(ch)->prefiltering) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-8u", bdf->xdf.ns_per_rec) < 0)
-			goto error;
+			return -1;
 
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-32.32s", get_bdfch(ch)->reserved) < 0)
-			goto error;
+			return -1;
 
 	return 0;
-
-error:
-	set_xdf_error(&(bdf->xdf), errno);
-	return -1;
 }
 
 
@@ -327,7 +327,7 @@ static int bdf_write_header(struct xdf* xdf)
 	struct bdf_file* bdf = get_bdf(xdf);
 	FILE* file = fdopen(dup(xdf->fd), "w");
 	if (!file)
-		return set_xdf_error(xdf, errno);
+		return -1;
 
 	// Write file header
 	if (bdf_write_file_header(bdf, file))
@@ -349,25 +349,24 @@ static int bdf_read_header(struct xdf* xdf)
 	return -1;
 }
 
+static void bdf_free_file(struct xdf* xdf)
+{
+	free(get_bdf(xdf));
+}
 
 static int bdf_close_file(struct xdf* xdf)
 {
-	int errnum = 0;
+	int retval = 0;
 	char numrecstr[9];
-	struct bdf_file* bdf = get_bdf(xdf);
 
 	// Write the number of records
 	if (xdf->ready && (xdf->mode == XDF_WRITE)) {
 		snprintf(numrecstr, 9, "%-8i", xdf->nrecord);
 		if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
 		    || (write(xdf->fd, numrecstr, 8) < 0) )
-		  	errnum = errno;
+		  	retval = -1;
 	}
-	
-	// Free resources
-	free(bdf);
 
-	// TODO handle failure  in close in a better way
-	return set_xdf_error(NULL, errnum);
+	return retval;
 }
 

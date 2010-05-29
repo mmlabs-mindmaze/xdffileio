@@ -12,18 +12,45 @@ xdf_write - Write samples to a xDF file
 .LP
 \fBxdf_write\fP() writes \fIns\fP samples to the xDF file referenced by
 \fIxdf\fP. This file should have been opened with mode \fBXDF_WRITE\fP and
-\fBxdf_prepare_arrays\fP() should have been successfully called on it.
+\fBxdf_prepare_arrays\fP(3) should have been successfully called on it.
 \fBxdf_write\fP() will fail otherwise).
 .LP
 The data to be added should be contained in arrays specified by pointers
 provided in the variable list of arguments of the function.  The function
 expects the same number of arrays as specified by previous call to
-\fBxdf_define_arrays\fP(). The internal organisation of the data in the
+\fBxdf_define_arrays\fP(3). The internal organisation of the data in the
 arrays should have been specified previously with calls to
-\fBxdf_set_chconf\fP().
+\fBxdf_set_chconf\fP(3).
 .SH "RETURN VALUE"
 .LP
-The function returns 0 in case of success, -1 otherwise.
+The function returns 0 in case of success. Otherwise -1 is returned and
+\fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL
+.TP
+.B EPERM
+No successfull call to \fBxdf_prepare_transfer\fP(3) have been done on
+\fIxdf\fP or it has been opened using the mode \fBXDF_READ\fP.
+.TP
+.B EFBIG
+An attempt was made to write a file that exceeds the implementation-defined
+maximum file size or the process's file size limit,
+or to write at a position past the maximum allowed offset.
+.TP
+.B EINTR
+The call was interrupted by a signal before any data was written; see
+\fBsignal\fP(7).
+.TP
+.B EIO
+A low-level I/O error occurred while modifying the inode.
+.TP
+.B ENOSPC
+The device containing the xDF file has no room for the data.
+.TP
+.B ESTALE
+Stale file handle. This error can occur for NFS and for other file systems
 .SH "PERFORMANCE CONSIDERATION"
 .LP
 By design of the library, a call to \fBxdf_write\fP() is "almost" ensured
@@ -43,7 +70,21 @@ next swap.
 .LP
 This approach ensures a linear calltime of \fBxdf_write\fP() \fIproviding\fP
 that I/O subsystem is not saturated neither all processing units (cores or
-processors).
+processors), i.e. the application is neither I/O bound nor CPU bound.
+.SH "DATA SAFETY"
+.LP
+The library makes sure that data written to xDF files are safely stored on
+stable storage on a regular basis but because of double buffering, there is
+a risk to loose data in case of problem. However, the design of the
+\fBxdf_write\fP() \fIensures\fP that if a problem occurs (no more disk
+space, power supply cut), \fIat most\fP two records of data plus the size
+of the chunks of data supplied to the function will be lost.
+.LP
+As an example, assuming you record a xDF file at 256Hz using records of 256
+samples and you feed \fBxdf_write\fP() with chunks of 8 samples, you are
+ensured to receive notification of failure after at most 520 samples
+corresponding to a lose of at most a little more than 2s of data in case of
+problems.
 .SH EXAMPLE
 .RS
 .nf

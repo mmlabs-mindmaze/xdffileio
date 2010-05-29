@@ -12,17 +12,47 @@ receive or send data.
 .SH DESCRIPTION
 .LP
 \fBxdf_prepare_transfer\fP() set up the internal structures of the xDF file
-referenced by \fIxdf\fP to be ready to receive or send data. After a successful
-call to it, you can call \fBxdf_write\fP() or \fBxdf_read\fP() depending of the
-mode of the xDF file.
+referenced by \fIxdf\fP to be ready to receive or send data. After a
+successful call to it, you can call \fBxdf_write\fP(3) or \fBxdf_read\fP(3)
+depending of the mode of the xDF file.
 .LP
 Since this function prepares the transfer, no call to any function which
-configures it will be allowed anymore after \fBxdf_define_arrays\fP() succeed.
-In particular, \fBxdf_set_conf\fP(), \fBxdf_setchconf\fP() and
-\fBxdf_define_arrays\fP() will fail afterwards.
+configures it will be allowed anymore after \fBxdf_define_arrays\fP(3)
+succeed. In particular, \fBxdf_set_conf\fP(3), \fBxdf_setchconf\fP(3) and
+\fBxdf_define_arrays\fP(3) will fail afterwards.
+.LP
+In case of failure due to I/O (file to big, connection to file system
+lost...), the best procedure is to close the file since the underlying file
+will be in a undertermined stated.
 .SH "RETURN VALUE"
 .LP
-\fBxdf_define_arrays\fP() returns 0 in case of success, -1 otherwise.
+\fBxdf_define_arrays\fP() returns 0 in case of success. Otherwise -1 is
+returned and \fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL.
+.TP
+.B ENOMEM
+The system is unable to allocate memory resources.
+.TP
+.B EFBIG
+An attempt was made to write a file that exceeds the implementation-defined
+maximum file size or the process's file size limit,
+or to write at a position past the maximum allowed offset.
+.TP
+.B EINTR
+The call was interrupted by a signal before any data was written; see
+\fBsignal\fP(7).
+.TP
+.B EIO
+A low-level I/O error occurred while modifying the inode.
+.TP
+.B ENOSPC
+The device containing the xDF file has no room for the data.
+.TP
+.B ESTALE
+Stale file handle. This error can occur for NFS and for other file systems
 .SH "SEE ALSO"
 .BR xdf_define_arrays (3),
 .BR xdf_set_conf (3), 

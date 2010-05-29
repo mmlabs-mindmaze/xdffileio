@@ -17,18 +17,18 @@ channel descriptor handle
 by \fIch\fP according to the variable list of argument. This list is
 composed of successive couple grouping one variable of type enum xdfchfield
 defining the feature to be set and a value whose type depends on the
-previous field type. The list \fBmust finish\fP by XDF_CHFIELD_NONE.
+previous field type. The list \fBmust finish\fP by i\fBXDF_CHFIELD_NONE\fP.
 .LP
 \fBxdf_get_chconf\fP() gets the configuration of the channel referenced
-by \fIch\fP according to the variable list of argument. The list is the same
-XDF_CHFIELD_NONE terminated list as for \fBxdf_set_chconf\fP()
-excepting that the second part of the couple is not that value but a \fBpointer
-to the value\fP.
+by \fIch\fP according to the variable list of argument. The variable list is
+the same list terminated by \fBXDF_CHFIELD_NONE\fP as for
+\fBxdf_set_chconf\fP() excepting that the second part of the couple is not
+that value but a \fBpointer to the value\fP.
 .LP
 Here is the list of admissible value. The type of value expected is provided
 in the parenthesis (the expected type of the value for
 \fBxdf_set_chconf\fP(), or a pointer to this type for
-\fBxdf_getconf_channek\fP()):
+\fBxdf_get_chconf\fP()):
 .TP 7
 \fBXDF_CHFIELD_ARRAY_INDEX\fP (int)
 Specify the array from/to which the channel value should be transfered.
@@ -75,7 +75,16 @@ XDF_READ.
 .SH "RETURN VALUE"
 .LP
 The two functions returns 0 in case of success. Otherwise -1 is returned and
-\fBxdf_get_error\fP() can be used to retrieve the error number.
+\fIerrno\fP is set appropriately.
+.SH ERROR
+.TP 7
+.B EINVAL
+\fIch\fP is NULL or \fIfield\fP is not a proper value of the enumeration
+xdfchfield
+.TP 7
+.B EPERM
+The request submitted to \fBxdf_set_chconf\fP() is not allowed for this
+channel or is forbidden for file opened with the mode \fBXDF_READ\fP.
 .SH EXAMPLES
 .LP
 Example of usage of \fBxdf_set_chconf\fP():

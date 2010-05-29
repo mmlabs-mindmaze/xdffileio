@@ -14,22 +14,34 @@ xdf_open - Open a xDF file for reading or writing
 .LP
 \fBxdf_open\fP() opens a xDF the file refered by the path \fIfilename\fP for reading or writing.
 .LP
-If \fImode\fP is XDF_READ, the file is opened for reading. Thus it must
-exist and \fItype\fP should be either XDF_ANY or set to the type of the file
-refered by \fItype\fP. Otherwise, the function will fail.
+If \fImode\fP is \fBXDF_READ\fP, the file is opened for reading. Thus it
+must exist and \fItype\fP should be either \fBXDF_ANY\fP or set to the type
+of the file refered by \fItype\fP. Otherwise, the function will fail.
 .LP
-If \fImode\fP is XDF_WRITE, the file is opened for writing. Thus the path
-\fIfilename\fP must not refered to an existing file: the function will fail
-if the file exist. This behavior prevents to overwrite any previous
+If \fImode\fP is \fBXDF_WRITE\fP, the file is opened for writing. Thus the
+path \fIfilename\fP must not refered to an existing file: the function will
+fail if the file exist. This behavior prevents to overwrite any previous
 recording. \fItype\fP should be also be set to the desired type of data
-format (XDF_ANY will result in a error).
+format (\fBXDF_ANY\fP will result in a error).
 .LP
 The possible file type values are defined in the header file \fI<xdfio.h>\fP
 .SH "RETURN VALUE"
 .LP
 The function returns an handle to xDF file opened in case of success.
-Otherwise, NULL is returned and the reason of failure can retrieved by a
-call to \fBxdf_get_error\fP() with a NULL argument.
+Otherwise, NULL is returned and \fIerrno\fP is set appropriately.
+.SH ERRORS
+In addition to the errors related to calls to \fBopen\fP(3) or
+\fBread\fP(3), the following errors can occur:
+.TP 7
+.B EMEDIUMTYPE
+The file that is being opened corresponds to an unsupported file format.
+.TP 7
+.B ENOMEM
+The system is unable to allocate resources.
+.TP 7
+.B EINVAL
+\fImode\fP is neither \fBXDF_READ\fP nor \fBXDF_WRITE\fP, or \fIfilename\fP
+is NULL.
 .SH "SEE ALSO"
 .BR xdf_close (3)
 

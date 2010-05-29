@@ -7,7 +7,10 @@
 #include <xdfio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
+#define MAXFSIZE	60000
 #define SAMPLINGRATE	128
 #define DURATION	13
 #define NITERATION	((SAMPLINGRATE*DURATION)/NSAMPLE)
@@ -41,7 +44,7 @@ int TestResultingFile(const char* testfilename, const char* reffilename)
 	while (!retcode) {
 		if ((n1 = fread(&chunktest, sizeof(chunktest), 1, testfile))
 		    != (n2 = fread(&chunkref, sizeof(chunkref), 1, reffile))) {
-		    	fprintf(stderr, "\tThe files differ by their size\n");
+		    	fprintf(stderr, "\tThe files differ by their size at position 0x%08x\n", pointer);
 			retcode = 12;
 			break;
 		}
@@ -51,7 +54,7 @@ int TestResultingFile(const char* testfilename, const char* reffilename)
 
 		// Check that the ref and test are the same
 		// excepting for time and date field
-		if ( (chunkref != chunktest) && !((pointer >= 168)&&(pointer < 184)) ) {
+		if ( (chunkref != chunktest) && !(((pointer >= 168)&&(pointer < 184)) || ((pointer >= 236)&&(pointer < 244))) ) {
 		    	fprintf(stderr, "\tThe files differ by their content at position 0x%08x\n", pointer);
 			retcode = 13;
 			break;
@@ -64,10 +67,8 @@ int TestResultingFile(const char* testfilename, const char* reffilename)
 	if (testfile)
 		fclose(testfile);
 	
-	if (!retcode)
-		fprintf(stderr, "\tThe files are identical\n");
 
-	return retcode;
+	return (retcode) ? (int)pointer : -1;
 }
 
 
@@ -141,12 +142,12 @@ int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 	return 0;
 }
 
-int generate_xdffile(const char* filename)
+int generate_xdffile(const char* filename, unsigned int fsize)
 {
 	scaled_t* eegdata;
 	scaled_t* exgdata;
 	uint32_t* tridata;
-	int phase;
+	int phase, retval = 0;
 	struct xdf* xdf = NULL;
 	int i,j;
 	char tmpstr[16];
@@ -155,7 +156,9 @@ int generate_xdffile(const char* filename)
 		NEXG*sizeof(*exgdata),
 		NTRI*sizeof(*tridata)
 	};
+	int samwarn, currns = 0;
 
+	samwarn = (fsize-(256*(1+NEEG+NTRI+NEXG)))/((NEEG+NTRI+NEXG)*3);
 
 	phase = 5;
 
@@ -198,7 +201,7 @@ int generate_xdffile(const char* filename)
 	// Make the the file ready for accepting samples
 	phase--;	
 	xdf_define_arrays(xdf, 3, strides);
-	if (xdf_prepare_transfer(xdf) < 0)
+	if (xdf_prepare_transfer(xdf) < 0) 
 		goto exit;
 	
 	// Feed with samples
@@ -206,15 +209,19 @@ int generate_xdffile(const char* filename)
 	for (i=0; i<NITERATION; i++) {
 		// Set data signals and unscaled them
 		WriteSignalData(eegdata, exgdata, tridata, i);
-		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata) < 0)
+		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata))
 			goto exit;
+		currns += NSAMPLE;
 	}
-	phase--;
 
 exit:
-	// if phase is non zero, a problem occured
-	if (phase) 
-		fprintf(stderr, "\terror: %s\n", strerror(errno));
+	if ( (currns <= samwarn) || (currns>=samwarn+2*SAMPLINGRATE) ) 
+		retval = 1;
+	if (errno != EFBIG)
+		retval = 1;
+
+	fprintf(stderr, "\tError caught: %s\n\t\twhen adding %i samples after %i samples\n\t\tsample lost: %i (record length: %i samples)\n", 
+	                   strerror(errno), NSAMPLE, currns, currns+NSAMPLE - samwarn, SAMPLINGRATE);
 
 	// Clean the structures and ressources
 	xdf_close(xdf);
@@ -222,15 +229,15 @@ exit:
 	free(exgdata);
 	free(tridata);
 
-	return phase;
+	return retval;
 }
-
 
 int main(int argc, char *argv[])
 {
-	int retcode = 0, keep_file = 0, opt;
+	int retcode = 0, keep_file = 0, opt, pos;
 	char genfilename[] = "essaiw.bdf";
 	char reffilename[128];
+	struct rlimit lim;
 
 	while ((opt = getopt(argc, argv, "k")) != -1) {
 		switch (opt) {
@@ -254,9 +261,19 @@ int main(int argc, char *argv[])
 		 NITERATION, NSAMPLE, NEEG, NEXG, NTRI);
 
 
-	retcode = generate_xdffile(genfilename);
-	if (!retcode)
-		retcode = TestResultingFile(genfilename, reffilename);
+
+	getrlimit(RLIMIT_FSIZE, &lim);
+	lim.rlim_cur = MAXFSIZE; 
+	setrlimit(RLIMIT_FSIZE, &lim);
+
+	unlink(genfilename);
+
+	retcode = generate_xdffile(genfilename, MAXFSIZE);
+	if (!retcode) {
+		pos = TestResultingFile(genfilename, reffilename);
+		if (pos != MAXFSIZE)
+			retcode = 2;
+	}
 
 	if (!keep_file)
 		unlink(genfilename);

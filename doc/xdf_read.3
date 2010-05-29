@@ -23,7 +23,12 @@ arrays should have been specified previously with calls to
 \fBxdf_set_chconf\fP().
 .SH "RETURN VALUE"
 .LP
-The function returns 0 in case of success, -1 otherwise.
+The function returns 0 in case of success. Otherwise -1 is returned and
+\fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP 7
+.B EINVAL
+\fIxdf\fP is NULL
 .SH EXAMPLE
 .RS
 .nf

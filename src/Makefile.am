@@ -3,7 +3,6 @@ include_HEADERS = xdfio.h
 
 libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdftypes.c xdftypes.h 		\
-			  xdferror.h xdferror.c 		\
 			  xdfio.h formatdecl.c			\
 			  bdffile.c bdf.h
 

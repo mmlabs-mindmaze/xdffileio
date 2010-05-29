@@ -17,13 +17,13 @@ header) of xDF file referenced by \fIxdf\fP according to the variable list
 of argument. This list is composed of successive couple grouping one
 variable of type enum xdffield defining the feature to be set and a value
 whose type depends on the previous field type. The list \fBmust finish\fP by
-XDF_FIELD_NONE.
+\fBXDF_FIELD_NONE\fP.
 .LP
 \fBxdf_get_conf\fP() gets the configuration of the channel referenced by
-\fIxdf\fP according to the variable list of argument. The list is the same
-XDF_CHFIELD_NONE-terminated list as for \fBxdf_set_conf\fP() excepting that
-the second part of the couple is not that value but a \fBpointer to the
-value\fP.
+\fIxdf\fP according to the variable list of argument. The variable list is
+the same list terminated by \fBXDF_CHFIELD_NONE\fP as for
+\fBxdf_set_conf\fP() excepting that the second part of the couple is not
+that value but a \fBpointer to the value\fP.
 .LP
 Here is the list of admissible value. The type of value expected is provided
 in the parenthesis (the expected type of the value for \fBxdf_set_conf\fP(),
@@ -44,7 +44,16 @@ Specify the string describing the session of recording.
 .SH "RETURN VALUE"
 .LP
 The two functions returns 0 in case of success. Otherwise -1 is returned and
-\fBxdf_get_error\fP() can be used to retrieve the error number.
+\fIerrno\fP is set appropriately.
+.SH ERROR
+.TP 7
+.B EINVAL
+\fIxdf\fP is NULL or \fIfield\fP is not a proper value of the enumeration
+xdffield
+.TP 7
+.B EPERM
+The request submitted to \fBxdf_set_conf\fP() is not allowed for this type
+of xDF file or is not supported with the mode \fBXDF_READ\fP.
 .SH EXAMPLES
 .LP
 Example of usage of \fBxdf_set_conf\fP() and \fBxdf_get_conf\fP():
@@ -58,13 +67,13 @@ const char *subjstr, *sessstr;
 
 xdf_get_conf(xdfr, XDF_FIELD_SUBJ_DESC, &subjstr,
                    XDF_FIELD_REC_DESC, &sessstr,
-                   XDF_FILED_NONE);
+                   XDF_FIELD_NONE);
 
 printf("subject: %s\\nrecording: %s\\n", subjstr, sessstr);
 
 xdf_set_conf(xdfw, XDF_FIELD_SUBJ_DESC, subjstr,
                    XDF_FIELD_REC_DESC, sessstr,
-                   XDF_FILED_NONE);
+                   XDF_FIELD_NONE);
 \fP
 .fi
 .RE

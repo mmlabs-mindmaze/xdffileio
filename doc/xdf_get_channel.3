@@ -18,6 +18,10 @@ index \fIindex\fP in the XDF file referenced by the handle \fIxdf\fP.
 .LP
 \fBxdf_get_channel\fP() returns the handle to requested channel descriptor in
 case of success, NULL otherwise.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL or \fIindex\fP is bigger than the number of channel.
 .SH "SEE ALSO"
 .BR xdf_add_channel (3)
 

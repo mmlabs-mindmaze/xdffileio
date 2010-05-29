@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 
 /* To support those $!%@!!! systems that are not POSIX compliant
@@ -28,7 +29,6 @@ and that distinguish between text and binary files */
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
-#include "xdferror.h"
 
 static const char xdffileio_string[] = PACKAGE_STRING;
 
@@ -49,8 +49,8 @@ struct convertion_data {
 };
 
 
-static int write_record_to_disk(struct xdf* xdf);
-static int read_record_from_disk(struct xdf* xdf);
+static int write_diskrec(struct xdf* xdf);
+static int read_diskrec(struct xdf* xdf);
 static void* transfer_thread_fn(void* ptr);
 
 /*! \param xdf	pointer to a valid xdffile structure
@@ -59,7 +59,7 @@ static void* transfer_thread_fn(void* ptr);
  * organisation, performs any necessary conversion and write the record on
  * the file.
  */
-static int write_record_to_disk(struct xdf* xdf)
+static int write_diskrec(struct xdf* xdf)
 {
 	ssize_t wsize;
 	size_t reqsize;
@@ -82,8 +82,8 @@ static int write_record_to_disk(struct xdf* xdf)
 		fbuff = dst;
 		do {
 			wsize = write(xdf->fd, fbuff, reqsize);
-			if (wsize == -1)
-				return set_xdf_error(xdf, errno);
+			if (wsize == -1) 
+				return -1;
 			reqsize -= wsize;
 			fbuff += wsize;
 		} while (reqsize);
@@ -91,13 +91,14 @@ static int write_record_to_disk(struct xdf* xdf)
 	}
 
 	// Make sure that the whole record has been sent to hardware
-	fsync(xdf->fd);
+	if (fsync(xdf->fd))
+		return -1;
 	xdf->nrecord++;
 
 	return 0;
 }
 
-static int read_record_from_disk(struct xdf* xdf)
+static int read_diskrec(struct xdf* xdf)
 {
 	(void)xdf;
 	return 0;
@@ -114,8 +115,13 @@ static int read_record_from_disk(struct xdf* xdf)
  */
 static void* transfer_thread_fn(void* ptr)
 {
-	int ret;
+	sigset_t mask;
 	struct xdf* xdf = ptr;
+	int ret = 0, wmode = (xdf->mode == XDF_WRITE) ? 1 : 0;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGXFSZ);
+	pthread_sigmask(SIG_BLOCK, &mask, NULL);
 
 	// Once the routine hold the mutex, it is in a ready state, notify
 	// the main thread with the semaphore
@@ -134,11 +140,9 @@ static void* transfer_thread_fn(void* ptr)
 			break;
 
 		// Write/Read a record
-		// TODO handle failure in better way
-		if (xdf->mode == XDF_WRITE)
-			ret = write_record_to_disk(xdf);
-		else
-			ret = read_record_from_disk(xdf);
+		ret = wmode ? write_diskrec(xdf) : read_diskrec(xdf);
+		if (ret) 
+			xdf->error = errno;
 
 		// The transfer has been performed => clear the order
 		// and notify the main thread through the semaphore
@@ -158,6 +162,7 @@ static void* transfer_thread_fn(void* ptr)
  */
 static int disk_transfer(struct xdf* xdf)
 {
+	int retval = 0;
 	void* buffer;
 
 	// Wait for the previous operation to be finished
@@ -167,19 +172,25 @@ static int disk_transfer(struct xdf* xdf)
 	// routine has still not in a ready state
 	pthread_mutex_lock(&(xdf->mtx));
 
-	// Swap front and back buffer
-	buffer = xdf->backbuff;
-	xdf->backbuff = xdf->buff;
-	xdf->buff = buffer;
+	if (xdf->error) {
+		errno = xdf->err_signaled = xdf->error;
+		retval = -1;
+		sem_post(&(xdf->sem));
+	} else {
+		// Swap front and back buffer
+		buffer = xdf->backbuff;
+		xdf->backbuff = xdf->buff;
+		xdf->buff = buffer;
 
-	// Signal for data transfer
-	xdf->order = ORDER_TRANSFER;
-	pthread_cond_signal(&(xdf->cond));
+		// Signal for data transfer
+		xdf->order = ORDER_TRANSFER;
+		pthread_cond_signal(&(xdf->cond));
+	}
 
 	// We are safe now, the transfer can start from now
 	pthread_mutex_unlock(&(xdf->mtx));
 
-	return 0;
+	return retval;
 }
 
 static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned int foff)
@@ -288,6 +299,42 @@ static unsigned int compute_sample_size(const struct xdf* xdf)
 	return sample_size;
 }
 
+
+static int alloc_transfer_objects(struct xdf* xdf)
+{
+	unsigned int samsize;
+	xdf->sample_size = samsize = compute_sample_size(xdf);
+
+	if ( !(xdf->array_pos = malloc(xdf->narrays*sizeof(*(xdf->array_pos))))
+  	    || !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
+	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))  
+	    || !(xdf->buff = malloc(xdf->ns_per_rec * samsize)) 
+	    || !(xdf->backbuff = malloc(xdf->ns_per_rec * samsize)) 
+	    || !(xdf->tmpbuff[0] = malloc(xdf->ns_per_rec * 8)) 
+	    || !(xdf->tmpbuff[1] = malloc(xdf->ns_per_rec * 8)) ) {
+		return -1;
+	}
+	return 0;
+}
+
+
+static void free_transfer_objects(struct xdf* xdf)
+{
+	free(xdf->array_pos);
+	free(xdf->convdata);
+	free(xdf->batch);
+	free(xdf->buff);
+	free(xdf->backbuff);
+	free(xdf->tmpbuff[0]);
+	free(xdf->tmpbuff[1]);
+	xdf->array_pos = NULL;
+	xdf->convdata = NULL;
+	xdf->batch = NULL;
+	xdf->buff = xdf->backbuff = xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
+}
+
+
+
 static void setup_convdata(struct xdf* xdf)
 {
 	unsigned int i, in_str, out_str;
@@ -335,6 +382,7 @@ static int setup_transfer_thread(struct xdf* xdf)
 	int done = 0;
 
 	xdf->order = ORDER_NONE;
+
 	if ((ret = pthread_mutex_init(&(xdf->mtx), NULL)))
 		goto error;
 	done++;
@@ -344,6 +392,7 @@ static int setup_transfer_thread(struct xdf* xdf)
 	done++;
 
 	sem_init(&(xdf->sem), 0, 0);
+	xdf->error = xdf->err_signaled = 0;
 	if ((ret = pthread_create(&(xdf->thid), NULL, transfer_thread_fn, xdf)))
 		goto error;
 
@@ -354,7 +403,7 @@ error:
 		pthread_cond_destroy(&(xdf->cond));
 	if (done-- > 0)
 		pthread_mutex_destroy(&(xdf->mtx));
-	set_xdf_error(xdf, ret);
+	errno = ret;
 	return -1;
 }
 
@@ -368,30 +417,62 @@ static int finish_record(struct xdf* xdf)
 		return 0;
 
 	// Fill the remaining of the record with 0 values
-	do {
+	while (ns--) {
 		memset(buffer, 0, xdf->sample_size);
 		buffer += xdf->sample_size;
-	} while (--ns);
+	}
 
 	retval = disk_transfer(xdf);
 	xdf->ns_buff = 0;
 	return retval;
 }
 
+
+static int init_file_content(struct xdf* xdf)
+{
+	int retval = 0;
+	sigset_t mask, oldmask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGXFSZ);
+	pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
+	
+	if (xdf->ops->write_header(xdf) || fsync(xdf->fd))
+		retval = -1;
+	
+	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
+	return retval;
+}
+
+
+static int finish_xdffile(struct xdf* xdf)
+{
+	int retval = 0;
+	sigset_t mask, oldmask;
+
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGXFSZ);
+	pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
+	
+	if (xdf->ops->close_file(xdf) || fsync(xdf->fd) || (close(xdf->fd) < 0))
+		retval = -1;
+
+	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
+	return retval;
+}
+
 int xdf_close(struct xdf* xdf)
 {
-	int fd, retval = 0;
+	int retval = 0;
 	struct xdfch *ch, *prev;
 
 	if (!xdf)
-		return set_xdf_error(NULL, EBADF);
-
-	fd = xdf->fd;
+		return set_xdf_error(EINVAL);
 
 	if (xdf->ready) {
 		if (xdf->mode == XDF_WRITE) {
 			if (finish_record(xdf))
-				return -1;
+				retval = -1;
 		}
 
 		// Wait for the last transfer to be done and 
@@ -409,15 +490,14 @@ int xdf_close(struct xdf* xdf)
 		pthread_cond_destroy(&(xdf->cond));
 
 		// Free all allocated buffers
-		free(xdf->array_pos);
-		free(xdf->convdata);
-		free(xdf->batch);
-		free(xdf->buff);
-		free(xdf->backbuff);
-		free(xdf->tmpbuff[0]);
-		free(xdf->tmpbuff[1]);
+		free_transfer_objects(xdf);
 	}
 
+	// Finish and close the file
+	if (finish_xdffile(xdf))
+		retval = -1;
+
+	// Free channels and file
 	free(xdf->array_stride);
 	ch=xdf->channels;
 	while (ch) {
@@ -425,22 +505,16 @@ int xdf_close(struct xdf* xdf)
 		ch = ch->next;
 		xdf->ops->free_channel(prev);
 	}
-	
-
-	// Finish and close the file
-	retval = xdf->ops->close_file(xdf);
-
-	// TODO Handle close failure
-	if (close(fd) < 0)
-		retval = set_xdf_error(NULL, errno);
+	xdf->ops->free_file(xdf);
 
 	return retval;
 }
 
+
 int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* strides)
 {
 	unsigned int* newstrides;
-	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride)))))
+	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride))))) 
 		return -1;
 
 	free(xdf->array_stride);
@@ -452,14 +526,12 @@ int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* str
 }
 
 
-
 /*!
  * xdf->array_pos, xdf->convdata and xdf->batch are assumed to be NULL
  */
 int xdf_prepare_transfer(struct xdf* xdf)
 {
 	int nbatch;
-	unsigned int samsize;
 
 	if (xdf->ready)
 		return -1;
@@ -470,28 +542,16 @@ int xdf_prepare_transfer(struct xdf* xdf)
 	xdf->nbatch = nbatch;
 
 	// Alloc of temporary entities needed for convertion
-	xdf->sample_size = samsize = compute_sample_size(xdf);
-	if ( !(xdf->array_pos = malloc(xdf->narrays*sizeof(*(xdf->array_pos))))
-  	    || !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
-	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))  
-	    || !(xdf->buff = malloc(xdf->ns_per_rec * samsize)) 
-	    || !(xdf->backbuff = malloc(xdf->ns_per_rec * samsize)) 
-	    || !(xdf->tmpbuff[0] = malloc(xdf->ns_per_rec * 8)) 
-	    || !(xdf->tmpbuff[1] = malloc(xdf->ns_per_rec * 8)) ) { 
+	if (alloc_transfer_objects(xdf))
 		goto error;
-	}
 
 	// Setup batches, convertion parameters
 	compute_batches(xdf, 1); // assign batches: memory is now allocated
 	setup_convdata(xdf);
 
 	if (xdf->mode == XDF_WRITE) {
-		if (xdf->ops->write_header(xdf))
+		if (init_file_content(xdf))
 			goto error;
-		if (fsync(xdf->fd)) {
-			set_xdf_error(xdf, errno);
-			goto error;
-		}
 	}
 
 	if (setup_transfer_thread(xdf))
@@ -501,18 +561,8 @@ int xdf_prepare_transfer(struct xdf* xdf)
 	return 0;
 
 error:
-	free(xdf->array_pos);
-	free(xdf->convdata);
-	free(xdf->batch);
-	free(xdf->buff);
-	free(xdf->backbuff);
-	free(xdf->tmpbuff[0]);
-	free(xdf->tmpbuff[1]);
+	free_transfer_objects(xdf);
 	xdf->nbatch = 0;
-	xdf->array_pos = NULL;
-	xdf->convdata = NULL;
-	xdf->batch = NULL;
-	xdf->buff = xdf->backbuff = xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
 	return -1;
 }
 
@@ -528,6 +578,15 @@ error:
  */
 int xdf_write(struct xdf* xdf, unsigned int ns, ...)
 {
+	int retval = 0;
+
+	if (xdf == NULL)
+		return set_xdf_error(EINVAL);
+	if (!xdf->ready || (xdf->mode == XDF_READ))
+		return set_xdf_error(EPERM);
+	if (xdf->err_signaled)
+		return set_xdf_error(xdf->err_signaled);
+
 	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
 	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
 	const char** buff_in = xdf->array_pos;
@@ -551,13 +610,26 @@ int xdf_write(struct xdf* xdf, unsigned int ns, ...)
 
 		// Write the content of the buffer if full
 		if (++ns_buff == xdf->ns_per_rec) {
-			disk_transfer(xdf);
+			if (disk_transfer(xdf)) {
+				retval = -1;
+				break;
+			}
 			buffer = xdf->buff;
 			ns_buff = 0;
 		}
 	}
 
 	xdf->ns_buff = ns_buff;
+	return retval;
+}
+
+
+int set_xdf_error(int error)
+{
+	if (error) {
+		errno = error;
+		return -1;
+	}
 	return 0;
 }
 

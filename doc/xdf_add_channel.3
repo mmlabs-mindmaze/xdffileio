@@ -24,8 +24,19 @@ This type of initialization allows the user to add channels without having to
 specifically pack them: this is achieved by default.
 .SH "RETURN VALUE"
 .LP
-\fBxdf_add_channel\fP() returns the handle to newly created channel descriptor
-in case of success, NULL otherwise.
+\fBxdf_add_channel\fP() returns the handle to newly created channel
+descriptor in case of success. Otherwise NULL is returned  and \fIerrno\fP
+is set appropriately.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL.
+.TP
+.B ENOMEM
+The system is unable to allocate resources.
+.TP
+.B EPERM
+the file referenced by \fIxdf\fP has been opened with the mode \fBXDF_READ\fP
 .SH "SEE ALSO"
 .BR xdf_copy_chconf (3)
 

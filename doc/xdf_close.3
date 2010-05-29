@@ -12,12 +12,33 @@ xdf_close - Close a xDF file
 .LP
 \fBxdf_close\fP() closes the xDF file referenced by the handle \fIxdf\fP. When
 the file is closed, if a record is not full, it will be completed by zeros.
-If the function fails, the handle \fIxdf\fP remains valid.
+After a call to \fBxdf_close\fP(), \fIxdf\fP should not be used anymore even
+if the call fails since all resources associated will be freed anyways.
 .LP
 .SH "RETURN VALUE"
 .LP
-The function returns 0 in case of succes. Otherwise, -1 is returned and the
-reason of failure.
-
-
+The function returns 0 in case of succes. Otherwise, -1 is returned and
+\fIerrno\fP is set accordingly.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL
+.TP
+.B EFBIG
+An attempt was made to write a file that exceeds the implementation-defined
+maximum file size or the process's file size limit,
+or to write at a position past the maximum allowed offset.
+.TP
+.B EINTR
+The call was interrupted by a signal before any data was written; see
+\fBsignal\fP(7).
+.TP
+.B EIO
+A low-level I/O error occurred while modifying the inode.
+.TP
+.B ENOSPC
+The device containing the xDF file has no room for the data.
+.TP
+.B ESTALE
+Stale file handle. This error can occur for NFS and for other file systems
 
