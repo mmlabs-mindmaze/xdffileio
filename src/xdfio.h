@@ -1,6 +1,8 @@
 #ifndef XDFIO_H
 #define XDFIO_H
 
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,8 +85,8 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);
 int xdf_prepare_transfer(struct xdf* xdf);
 
-int xdf_write(struct xdf* xdf, unsigned int ns, ...);
-int xdf_read(struct xdf* xdf, unsigned int ns, ...);
+ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
+ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
 
 int xdf_get_error(const struct xdf* xdf);
 const char* xdf_get_string(void);

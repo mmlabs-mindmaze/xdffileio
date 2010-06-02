@@ -100,7 +100,35 @@ static int write_diskrec(struct xdf* xdf)
 
 static int read_diskrec(struct xdf* xdf)
 {
-	(void)xdf;
+	ssize_t rsize;
+	size_t reqsize;
+	unsigned int ich;
+	struct convertion_data* ch;
+	char *fbuff, *dst = xdf->backbuff;
+	void* src = xdf->tmpbuff[0];
+	void* buff = xdf->tmpbuff[1];
+
+	// Transfer, convert and copy to file each channel data
+	for (ich = 0; ich < xdf->numch; ich++) {
+		ch = xdf->convdata + ich;
+
+		// Read the data from file. Continue reading
+		// as long as not all data has been read
+		reqsize = xdf->ns_per_rec * ch->filetypesize;
+		fbuff = src;
+		do {
+			rsize = read(xdf->fd, fbuff, reqsize);
+			if ((rsize == 0) || (rsize == -1))
+				return (rsize == 0) ? 1 : -1;
+			reqsize -= rsize;
+			fbuff += rsize;
+		} while (reqsize);
+
+		// Convert data
+		transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
+		dst += ch->memtypesize;
+	}
+
 	return 0;
 }
 
@@ -141,8 +169,13 @@ static void* transfer_thread_fn(void* ptr)
 
 		// Write/Read a record
 		ret = wmode ? write_diskrec(xdf) : read_diskrec(xdf);
-		if (ret) 
-			xdf->error = errno;
+		if (ret) {
+			// Check end of file
+			if (ret == 1)
+				xdf->error = -1;
+			else
+				xdf->error = errno;
+		}
 
 		// The transfer has been performed => clear the order
 		// and notify the main thread through the semaphore
@@ -173,8 +206,11 @@ static int disk_transfer(struct xdf* xdf)
 	pthread_mutex_lock(&(xdf->mtx));
 
 	if (xdf->error) {
-		errno = xdf->err_signaled = xdf->error;
-		retval = -1;
+		if (xdf->error > 0) {
+			errno = xdf->err_signaled = xdf->error;
+			retval = -1;
+		} else
+			retval = 1;
 		sem_post(&(xdf->sem));
 	} else {
 		// Swap front and back buffer
@@ -356,7 +392,7 @@ static void setup_convdata(struct xdf* xdf)
 			// In read mode, convertion in 
 			// from file/digital to mem/physical
 			in_tp = ch->infiletype;
-			in_str = get_data_size(out_tp);
+			in_str = get_data_size(in_tp);
 			in_mm = ch->digital_mm;
 			out_tp = ch->inmemtype;
 			out_str = xdf->sample_size;
@@ -557,6 +593,9 @@ int xdf_prepare_transfer(struct xdf* xdf)
 	if (setup_transfer_thread(xdf))
 		goto error;
 
+	if (xdf->mode == XDF_READ) 
+		disk_transfer(xdf);
+
 	xdf->ready = 1;
 	return 0;
 
@@ -576,10 +615,8 @@ error:
  *
  * \warning Make sure the mode of the xdf is XDF_WRITE 
  */
-int xdf_write(struct xdf* xdf, unsigned int ns, ...)
+ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
 {
-	int retval = 0;
-
 	if (xdf == NULL)
 		return set_xdf_error(EINVAL);
 	if (!xdf->ready || (xdf->mode == XDF_READ))
@@ -589,8 +626,9 @@ int xdf_write(struct xdf* xdf, unsigned int ns, ...)
 
 	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
 	char* buffer = (char*)xdf->buff + xdf->sample_size * xdf->ns_buff;
-	const char** buff_in = xdf->array_pos;
+	const char** buff_in = (const char**)xdf->array_pos;
 	struct data_batch* batch = xdf->batch;
+	int retval = 0;
 	va_list ap;
 
 	// Initialization of the input buffers
@@ -620,7 +658,56 @@ int xdf_write(struct xdf* xdf, unsigned int ns, ...)
 	}
 
 	xdf->ns_buff = ns_buff;
-	return retval;
+	return (retval == 0) ? (ssize_t)ns : retval;
+}
+
+
+ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
+{
+	if (xdf == NULL)
+		return set_xdf_error(EINVAL);
+	if (!xdf->ready || (xdf->mode == XDF_WRITE))
+		return set_xdf_error(EPERM);
+	if (xdf->err_signaled)
+		return set_xdf_error(xdf->err_signaled);
+
+	unsigned int i, k, ia, ns_buff = xdf->ns_buff, nbatch = xdf->nbatch;
+	char* buffer = (char*)xdf->buff + xdf->sample_size * (xdf->ns_per_rec-ns_buff);
+	char** buff_out = xdf->array_pos;
+	struct data_batch* batch = xdf->batch;
+	va_list ap;
+	int retval = 0, ret;
+
+	// Initialization of the output buffers
+	va_start(ap, ns);
+	for (ia=0; ia<xdf->narrays; ia++)
+		buff_out[ia] = va_arg(ap, char*);
+	va_end(ap);
+
+	for (i=0; i<ns; i++) {
+		// Trigger a disk read when the content of buffer is empty
+		if (!ns_buff) {
+			if ((ret = disk_transfer(xdf))) {
+				if (ret < 0)
+					retval = -1;
+				break;
+			}
+			buffer = xdf->buff;
+			ns_buff = xdf->ns_per_rec;
+		}
+
+		// Transfer the sample to the buffer by chunk
+		for (k=0; k<nbatch; k++) {
+			ia = batch[k].iarray;
+			memcpy(buff_out[ia], buffer+batch[k].foff, batch[k].len);
+			buff_out[ia] += batch[k].mskip;
+		}
+		buffer += xdf->sample_size;
+		ns_buff--;
+	}
+
+	xdf->ns_buff = ns_buff;
+	return retval ? -1 : (ssize_t)i;
 }
 
 

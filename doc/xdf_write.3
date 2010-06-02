@@ -6,7 +6,7 @@ xdf_write - Write samples to a xDF file
 .LP
 .B #include <xdfio.h>
 .sp
-.BI "int xdf_write(struct xdf* " xdf ", unsigned int " ns ", ...);"
+.BI "ssize_t xdf_write(struct xdf* " xdf ", size_t " ns ", ...);"
 .br
 .SH DESCRIPTION
 .LP
@@ -23,8 +23,9 @@ arrays should have been specified previously with calls to
 \fBxdf_set_chconf\fP(3).
 .SH "RETURN VALUE"
 .LP
-The function returns 0 in case of success. Otherwise -1 is returned and
-\fIerrno\fP is set appropriately.
+The function returns the number of the samples successfully added to the xDF
+file in case of success. Otherwise -1 is returned and \fIerrno\fP is set
+appropriately.
 .SH ERRORS
 .TP
 .B EINVAL

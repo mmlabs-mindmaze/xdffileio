@@ -225,6 +225,47 @@ exit:
 	return phase;
 }
 
+int copy_xdffile(char genfilename[], char reffilename[])
+{
+	struct xdf *dst, *src;
+	struct xdfch *dstch, *srcch;
+	unsigned int nch = 0, samplesize, stride[1];
+	void* buffer;
+	ssize_t ns;
+
+
+	src = xdf_open(reffilename, XDF_READ, XDF_BDF);
+	dst = xdf_open(genfilename, XDF_WRITE, XDF_BDF);
+
+	// Copy header and configuration
+	xdf_copy_conf(dst, src);
+	while ((srcch = xdf_get_channel(src, nch++))) {
+		dstch = xdf_add_channel(dst);
+		xdf_copy_chconf(dstch, srcch);
+	}
+
+	samplesize = /*nch*/19*3;
+	buffer = malloc(samplesize*NSAMPLE);
+	stride[0] = samplesize;
+	xdf_define_arrays(src, 1, stride);
+	xdf_define_arrays(dst, 1, stride);
+	xdf_prepare_transfer(src);
+	xdf_prepare_transfer(dst);
+
+	while (1) {
+		ns = xdf_read(src, NSAMPLE, buffer);
+		if (ns <= 0)
+			break;
+		xdf_write(dst, ns, buffer);
+	}
+
+	free(buffer);
+	xdf_close(src);
+	xdf_close(dst);
+
+	return 0;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -253,13 +294,23 @@ int main(int argc, char *argv[])
 		 "%s/ref%u-%u-%u-%u-%u-%u-%u.bdf", getenv("srcdir"),SAMPLINGRATE, DURATION,
 		 NITERATION, NSAMPLE, NEEG, NEXG, NTRI);
 
-
+	
+	// Test generation of a file
+	unlink(genfilename);
 	retcode = generate_xdffile(genfilename);
 	if (!retcode)
 		retcode = TestResultingFile(genfilename, reffilename);
 
+	// Test copy a file (implied reading)
+	unlink(genfilename);
+	retcode = copy_xdffile(genfilename, reffilename);
+	if (!retcode)
+		retcode = TestResultingFile(genfilename, reffilename);
+
+
 	if (!keep_file)
 		unlink(genfilename);
+
 
 	return retcode;
 }

@@ -49,7 +49,7 @@ struct xdf {
 	long pointer;			
 	double rec_duration;
 	unsigned int ns_buff, ns_per_rec, sample_size;
-	int nrecord;
+	int nrecord, nrecread;
 	void *buff, *backbuff;		
 	void *tmpbuff[2];
 	int err_signaled, error;
@@ -61,7 +61,7 @@ struct xdf {
 	struct data_batch* batch;
 	unsigned int narrays;
 	unsigned int* array_stride;	
-	const char** array_pos;	
+	char** array_pos;	
 
 	/* Data format specific behavior */
 	const struct format_operations* ops;

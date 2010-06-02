@@ -10,6 +10,7 @@
 
 #include "xdfio.h"
 #include "xdffile.h"
+#include "xdftypes.h"
 #include "bdf.h"
 
 
@@ -138,36 +139,36 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 	const char *label, *unit, *transducter, *filtinfo, *reserved;
 
 	xdf_get_chconf(src, XDF_CHFIELD_PHYSICAL_MIN, &pmin,
-				   XDF_CHFIELD_PHYSICAL_MAX, &pmax,
-				   XDF_CHFIELD_DIGITAL_MIN, &dmin,
-				   XDF_CHFIELD_DIGITAL_MAX, &dmax,
-				   XDF_CHFIELD_ARRAY_DIGITAL, &digital_inmem,
-				   XDF_CHFIELD_STORED_TYPE, &ts,
-				   XDF_CHFIELD_ARRAY_TYPE, &ta,
-				   XDF_CHFIELD_ARRAY_OFFSET, &offset,
-				   XDF_CHFIELD_ARRAY_INDEX, &index,
-				   XDF_CHFIELD_LABEL, &label,
-				   XDF_CHFIELD_UNIT, &unit,
-				   XDF_CHFIELD_TRANSDUCTER, &transducter,
-				   XDF_CHFIELD_PREFILTERING, &filtinfo,
-				   XDF_CHFIELD_RESERVED, &reserved,
-				   XDF_CHFIELD_NONE);
+			XDF_CHFIELD_PHYSICAL_MAX, &pmax,
+			XDF_CHFIELD_DIGITAL_MIN, &dmin,
+			XDF_CHFIELD_DIGITAL_MAX, &dmax,
+			XDF_CHFIELD_ARRAY_DIGITAL, &digital_inmem,
+			XDF_CHFIELD_STORED_TYPE, &ts,
+			XDF_CHFIELD_ARRAY_TYPE, &ta,
+			XDF_CHFIELD_ARRAY_OFFSET, &offset,
+			XDF_CHFIELD_ARRAY_INDEX, &index,
+			XDF_CHFIELD_LABEL, &label,
+			XDF_CHFIELD_UNIT, &unit,
+			XDF_CHFIELD_TRANSDUCTER, &transducter,
+			XDF_CHFIELD_PREFILTERING, &filtinfo,
+			XDF_CHFIELD_RESERVED, &reserved,
+			XDF_CHFIELD_NONE);
 
 	xdf_set_chconf(dst, XDF_CHFIELD_PHYSICAL_MIN, pmin,
-				   XDF_CHFIELD_PHYSICAL_MAX, pmax,
-				   XDF_CHFIELD_DIGITAL_MIN, dmin,
-				   XDF_CHFIELD_DIGITAL_MAX, dmax,
-				   XDF_CHFIELD_ARRAY_DIGITAL, digital_inmem,
-				   XDF_CHFIELD_STORED_TYPE, ts,
-				   XDF_CHFIELD_ARRAY_TYPE, ta,
-				   XDF_CHFIELD_ARRAY_OFFSET, offset,
-				   XDF_CHFIELD_ARRAY_INDEX, index,
-				   XDF_CHFIELD_LABEL, label,
-				   XDF_CHFIELD_UNIT, unit,
-				   XDF_CHFIELD_TRANSDUCTER, transducter,
-				   XDF_CHFIELD_PREFILTERING, filtinfo,
-				   XDF_CHFIELD_RESERVED, reserved,
-				   XDF_CHFIELD_NONE);
+			XDF_CHFIELD_PHYSICAL_MAX, pmax,
+			XDF_CHFIELD_DIGITAL_MIN, dmin,
+			XDF_CHFIELD_DIGITAL_MAX, dmax,
+			XDF_CHFIELD_ARRAY_DIGITAL, digital_inmem,
+			XDF_CHFIELD_STORED_TYPE, ts,
+			XDF_CHFIELD_ARRAY_TYPE, ta,
+			XDF_CHFIELD_ARRAY_OFFSET, offset,
+			XDF_CHFIELD_ARRAY_INDEX, index,
+			XDF_CHFIELD_LABEL, label,
+			XDF_CHFIELD_UNIT, unit,
+			XDF_CHFIELD_TRANSDUCTER, transducter,
+			XDF_CHFIELD_PREFILTERING, filtinfo,
+			XDF_CHFIELD_RESERVED, reserved,
+			XDF_CHFIELD_NONE);
 
 	return 0;
 }
@@ -181,6 +182,7 @@ static struct xdfch* bdf_alloc_channel(void)
 		return NULL;
 	memset(ch, 0, sizeof(*ch));
 	ch->xdfch.ops = &bdf_ops;
+
 	return &(ch->xdfch);
 }
 
@@ -324,35 +326,191 @@ static int bdf_write_channels_header(struct bdf_file* bdf, FILE* file)
 
 static int bdf_write_header(struct xdf* xdf)
 {
+	int retval = 0;
 	struct bdf_file* bdf = get_bdf(xdf);
 	FILE* file = fdopen(dup(xdf->fd), "w");
 	if (!file)
 		return -1;
 
-	// Write file header
-	if (bdf_write_file_header(bdf, file))
+	// Write file header each field of all channels
+	if ( bdf_write_file_header(bdf, file)
+	    || bdf_write_channels_header(bdf, file) )
+		retval = -1;
+
+	if (fflush(file) || fclose(file))
+		retval = -1;
+
+	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
+
+	return retval;
+}
+
+
+static int read_int_field(FILE* file, int* val, size_t nch)
+{
+	char format[8];
+	long pos = ftell(file);
+	sprintf(format, "%%%zui", nch);
+	
+	if (fscanf(file, format, val) <= 0
+	    || fseek(file, pos+nch, SEEK_SET))
+		return -1;
+	
+	return 0;
+}
+
+
+static int read_string_field(FILE* file, char* val, size_t nch)
+{
+	int pos;
+
+	val[nch] = '\0';
+	if (fread(val, nch, 1, file) < 1)
 		return -1;
 
-	// Write each field of all channels
-	if (bdf_write_channels_header(bdf, file))
-		return -1;
-
-	fflush(file);
-	fclose(file);
+	// Remove trailing spaces
+	pos = strlen(val);
+	while (pos && (val[pos]==' '))
+		pos--;
+	val[pos] = '\0';
 
 	return 0;
 }
 
+static int bdf_read_file_header(struct bdf_file* bdf, FILE* file)
+{
+	char timestring[17], type[45];
+	int recdur, hdrsize, retval = 0;
+
+	fseek(file, 8, SEEK_SET);
+
+	if (read_string_field(file, bdf->subj_ident, 80)
+	   || read_string_field(file, bdf->rec_ident, 80)
+	   || read_string_field(file, timestring, 16)
+	   || read_int_field(file, &hdrsize, 8)
+	   || read_string_field(file, type, 44)
+	   || read_int_field(file, &(bdf->xdf.nrecord), 8)
+	   || read_int_field(file, &recdur, 8)
+	   || read_int_field(file, (int*)&(bdf->xdf.numch), 4) )
+		retval = -1;
+ 
+	bdf->xdf.rec_duration = (double)recdur;
+
+	// format time string
+	if (!retval)
+		strftime(timestring, sizeof(timestring), 
+			 "%d.%m.%y%H.%M.%S", &(bdf->rectime));
+
+	return retval;
+}
+
+static int bdf_read_channels_header(struct bdf_file* bdf, FILE* file)
+{
+	struct xdfch* ch;
+	int ival;
+	unsigned int offset = 0;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_string_field(file, get_bdfch(ch)->label, 16))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_string_field(file, get_bdfch(ch)->transducter, 80))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_string_field(file, get_bdfch(ch)->unit, 8))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
+		if (read_int_field(file, &ival, 8))
+			return -1;
+		ch->physical_mm[0] = (double)ival;
+	}
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
+		if (read_int_field(file, &ival, 8))
+			return -1;
+		ch->physical_mm[1] = (double)ival;
+	}
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
+		if (read_int_field(file, &ival, 8))
+			return -1;
+		ch->digital_mm[0] = (double)ival;
+	}
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
+		if (read_int_field(file, &ival, 8))
+			return -1;
+		ch->digital_mm[1] = (double)ival;
+	}
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_string_field(file, get_bdfch(ch)->prefiltering, 80))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_int_field(file, (int*)&(bdf->xdf.ns_per_rec), 8))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next)
+		if (read_string_field(file, get_bdfch(ch)->reserved, 32))
+			return -1;
+
+	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
+		if ((ch->digital_mm[0] >= 0) && (ch->digital_mm[1] > 8388607.0))
+			ch->infiletype = ch->inmemtype = XDFUINT24;
+		else
+			ch->infiletype = ch->inmemtype = XDFINT24;
+		ch->digital_inmem = 1;
+		ch->offset = offset;
+		offset += get_data_size(ch->infiletype);
+	}
+
+
+	return 0;
+}
+
+
 static int bdf_read_header(struct xdf* xdf)
 {
-	(void)xdf;
-	return -1;
+	int retval = -1;
+	unsigned int i;
+	struct xdfch** curr = &(xdf->channels);
+	struct bdf_file* bdf = get_bdf(xdf);
+	FILE* file = fdopen(dup(xdf->fd), "r");
+	if (!file)
+		return -1;
+
+	if (bdf_read_file_header(bdf, file))
+		goto exit;
+
+	// Allocate all the channels
+
+	for (i=0; i<xdf->numch; i++) {
+		if (!(*curr = bdf_alloc_channel()))
+			goto exit;
+		curr = &((*curr)->next);
+	}
+
+	if (bdf_read_channels_header(bdf, file))
+		goto exit;
+	
+	retval = 0;
+exit:
+	fclose(file);
+
+	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
+	return retval;
 }
+
 
 static void bdf_free_file(struct xdf* xdf)
 {
 	free(get_bdf(xdf));
 }
+
 
 static int bdf_close_file(struct xdf* xdf)
 {

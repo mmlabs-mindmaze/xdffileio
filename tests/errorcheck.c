@@ -209,7 +209,7 @@ int generate_xdffile(const char* filename, unsigned int fsize)
 	for (i=0; i<NITERATION; i++) {
 		// Set data signals and unscaled them
 		WriteSignalData(eegdata, exgdata, tridata, i);
-		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata))
+		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata) < 0)
 			goto exit;
 		currns += NSAMPLE;
 	}

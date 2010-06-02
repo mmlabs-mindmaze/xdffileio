@@ -12,23 +12,39 @@ xdf_read - Read samples from a xDF file
 .LP
 \fBxdf_read\fP() reads \fIns\fP samples from the xDF file referenced by
 \fIxdf\fP. This file should have been opened with mode \fBXDF_READ\fP and
-\fBxdf_prepare_arrays\fP() should have been successfully called on it.
+\fBxdf_prepare_arrays\fP(3) should have been successfully called on it.
 \fBxdf_read\fP() will fail otherwise).
 .LP
 The data to be read will be transferred into arrays specified by pointers
 provided in the variable list of arguments of the function.  The function
 expects the same number of arrays as specified by previous call to
-\fBxdf_define_arrays\fP(). The internal organisation of the data in the
+\fBxdf_define_arrays\fP(3). The internal organisation of the data in the
 arrays should have been specified previously with calls to
-\fBxdf_set_chconf\fP().
+\fBxdf_set_chconf\fP(3).
 .SH "RETURN VALUE"
 .LP
-The function returns 0 in case of success. Otherwise -1 is returned and
-\fIerrno\fP is set appropriately.
+The function returns the number of the samples successfully read from the
+xDF file in case of success. The number of samples read can be smaller than
+the number requested in the end of the file is reached. In case of error,
+-1 is returned and \fIerrno\fP is set appropriately.
 .SH ERRORS
-.TP 7
+.TP 
 .B EINVAL
 \fIxdf\fP is NULL
+.TP
+.B EPERM
+No successfull call to \fBxdf_prepare_transfer\fP(3) have been done on
+\fIxdf\fP or it has been opened using the mode \fBXDF_WRITE\fP.
+.TP
+.B EINTR
+The call was interrupted by a signal before any data was written; see
+\fBsignal\fP(7).
+.TP
+.B EIO
+A low-level I/O error occurred while reading from the inode.
+.TP
+.B ESTALE
+Stale file handle. This error can occur for NFS and for other file systems
 .SH EXAMPLE
 .RS
 .nf
