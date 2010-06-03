@@ -13,7 +13,11 @@
 #include "xdftypes.h"
 #include "bdf.h"
 
+/******************************************************
+ *               BDF specific declaration             *
+ ******************************************************/
 
+// BDF methods declaration
 static int bdf_set_channel(struct xdfch*, enum xdfchfield, union optval);
 static int bdf_get_channel(const struct xdfch*, enum xdfchfield, union
 optval*);
@@ -25,8 +29,39 @@ static int bdf_get_conf(const struct xdf*, enum xdffield, union optval*);
 static int bdf_copy_conf(struct xdf*, const struct xdf*); 
 static int bdf_write_header(struct xdf*);
 static int bdf_read_header(struct xdf*);
-static int bdf_close_file(struct xdf*);
+static int bdf_complete_file(struct xdf*);
 static void bdf_free_file(struct xdf*);
+
+// BDF file structure
+struct bdf_file {
+	struct xdf xdf;
+	char subj_ident[81];
+	char rec_ident[81];
+	struct tm rectime;
+};
+
+// BDF channel structure
+struct bdf_channel {
+	struct xdfch xdfch;
+	char label[17];
+	char transducter[81];
+	char unit[9];
+	char prefiltering[81];
+	char reserved[33];
+};
+
+#define NUMREC_FIELD_LOC 236
+
+#define get_bdf(xdf_p) \
+	((struct bdf_file*)(((char*)(xdf_p))-offsetof(struct bdf_file, xdf)))
+#define get_bdfch(xdfch_p) 				\
+	((struct bdf_channel*)(((char*)(xdfch_p))	\
+		- offsetof(struct bdf_channel, xdfch)))
+
+
+/******************************************************
+ *            BDF type definition declaration         *
+ ******************************************************/
 
 static const struct format_operations bdf_ops = {
 	.set_channel = bdf_set_channel,
@@ -39,36 +74,20 @@ static const struct format_operations bdf_ops = {
 	.copy_conf = bdf_copy_conf,
 	.write_header = bdf_write_header,
 	.read_header = bdf_read_header,
-	.close_file = bdf_close_file,
+	.complete_file = bdf_complete_file,
 	.free_file = bdf_free_file
 };
 
-struct bdf_file {
-	struct xdf xdf;
-	char subj_ident[81];
-	char rec_ident[81];
-	struct tm rectime;
-};
-
-struct bdf_channel {
-	struct xdfch xdfch;
-	char label[17];
-	char transducter[81];
-	char unit[9];
-	char prefiltering[81];
-	char reserved[33];
-};
-
 static const unsigned char bdf_magickey[] = {255, 'B', 'I', 'O', 'S', 'E', 'M', 'I'};
-#define NUMREC_FIELD_LOC 236
 
-#define get_bdf(xdf_p) \
-	((struct bdf_file*)(((char*)(xdf_p))-offsetof(struct bdf_file, xdf)))
-#define get_bdfch(xdfch_p) 				\
-	((struct bdf_channel*)(((char*)(xdfch_p))	\
-		- offsetof(struct bdf_channel, xdfch)))
 
-struct xdf* bdf_alloc_xdffile()
+/******************************************************
+ *            BDF file support implementation         *
+ ******************************************************/
+
+/* Allocate a BDF file
+ */
+struct xdf* bdf_alloc_xdffile(void)
 {
 	struct bdf_file* bdf;
 
@@ -80,6 +99,11 @@ struct xdf* bdf_alloc_xdffile()
 	return &(bdf->xdf);
 }
 
+
+/* \param magickey	pointer to key identifying a type of file
+ *
+ * Returns 1 if the supplied magickey corresponds to a BDF file
+ */
 int bdf_is_same_type(const unsigned char* magickey)
 {
 	if (memcmp(magickey, bdf_magickey, sizeof(bdf_magickey)) == 0)
@@ -88,6 +112,17 @@ int bdf_is_same_type(const unsigned char* magickey)
 }
 
 
+/******************************************************
+ *              BDF methods implementation            *
+ ******************************************************/
+
+/* \param ch	pointer to a xdf channel (BDF underlying) with XDF_WRITE mode
+ * \param field identifier of the field to be changed
+ * \param val	union holding the value to be set
+ *
+ * BDF METHOD.
+ * Change the configuration field value of the channel according to val
+ */
 static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval val)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
@@ -109,6 +144,14 @@ static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval
 	return retval;
 }
 
+
+/* \param ch	pointer to a xdf channel (BDF underlying)
+ * \param field identifier of the field to be get
+ * \param val	union holding the output of the request
+ *
+ * BDF METHOD.
+ * Get the configuration field value of the channel and assign it to val
+ */
 static int bdf_get_channel(const struct xdfch* ch, enum xdfchfield
 field, union optval *val)
 {
@@ -131,6 +174,13 @@ field, union optval *val)
 	return retval;
 }
 
+
+/* \param dst	pointer to a xdf channel (BDF underlying) with XDF_WRITE mode
+ * \param src	pointer to a xdf channel
+ *
+ * BDF METHOD.
+ * Copy the fields of a xDF channel to BDF channel
+ */
 static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	double dmin, dmax, pmin, pmax;
@@ -173,6 +223,10 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 	return 0;
 }
 
+
+/* BDF METHOD.
+ * Allocate a BDF channel 
+ */
 static struct xdfch* bdf_alloc_channel(void)
 {
 	struct bdf_channel* ch;
@@ -186,11 +240,24 @@ static struct xdfch* bdf_alloc_channel(void)
 	return &(ch->xdfch);
 }
 
-static void bdf_free_channel(struct xdfch* xdfch)
+
+/* \param ch	pointer to a xdf channel (underlying BDF)
+ *
+ * BDF METHOD.
+ * Free a BDF channel
+ */
+static void bdf_free_channel(struct xdfch* ch)
 {
-	free(get_bdfch(xdfch));
+	free(get_bdfch(ch));
 }
 
+/* \param xdf	pointer to a xdf file (BDF underlying) with XDF_WRITE mode
+ * \param field identifier of the field to be changed
+ * \param val	union holding the value to set
+ *
+ * BDF METHOD.
+ * Change the configuration field value according to val
+ */
 static int bdf_set_conf(struct xdf* xdf, enum xdffield field, union
 optval val)
 {
@@ -207,6 +274,13 @@ optval val)
 	return retval;
 }
 
+/* \param xdf	pointer to a xdf file (BDF underlying)
+ * \param field identifier of the field to be get
+ * \param val	union holding the output of the request
+ *
+ * BDF METHOD.
+ * Get the configuration field value and assign it to val
+ */
 static int bdf_get_conf(const struct xdf* xdf, enum xdffield field,
 union optval *val)
 {
@@ -223,6 +297,12 @@ union optval *val)
 	return retval;
 }
 
+/* \param dst	pointer to a xdf file (BDF underlying) with XDF_WRITE mode
+ * \param src	pointer to a xdf file
+ *
+ * BDF METHOD.
+ * Copy the fields of a xDF file configuration to BDF file
+ */
 static int bdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	double recduration;
@@ -244,6 +324,14 @@ static int bdf_copy_conf(struct xdf* dst, const struct xdf* src)
 	return 0;
 }
 
+
+/* \param bdf	pointer to a bdf_file opened for writing
+ * \param file  stream associated to the file 
+ *              (should be positioned at the beginning of the file)
+ *
+ * Write the general BDF file header. Write -1 in the number of records
+ * field. The real value is written after the transfer is finished
+ */
 static int bdf_write_file_header(struct bdf_file* bdf, FILE* file)
 {
 	char timestring[17];
@@ -276,6 +364,12 @@ static int bdf_write_file_header(struct bdf_file* bdf, FILE* file)
 	return 0;
 }
 
+/* \param bdf	pointer to a bdf_file opened for writing
+ * \param file  stream associated to the file 
+ *              (should be positioned at the beginning of channel fields)
+ *
+ * Write the BDF channels related fields in the header.
+ */
 static int bdf_write_channels_header(struct bdf_file* bdf, FILE* file)
 {
 	struct xdfch* ch;
@@ -324,6 +418,13 @@ static int bdf_write_channels_header(struct bdf_file* bdf, FILE* file)
 }
 
 
+/* \param xdf	pointer to an xdf file with XDF_WRITE mode
+ *
+ * BDF METHOD.
+ * Write the general file header and channels fields
+ * It creates from the file a stream that will be used to easily format
+ * the header fields.
+ */
 static int bdf_write_header(struct xdf* xdf)
 {
 	int retval = 0;
@@ -346,6 +447,9 @@ static int bdf_write_header(struct xdf* xdf)
 }
 
 
+/* Parse the file (field of nch characters) and assign to the integer val.
+ * Advance the file pointer of exactly nch byte.
+ */
 static int read_int_field(FILE* file, int* val, size_t nch)
 {
 	char format[8];
@@ -360,6 +464,10 @@ static int read_int_field(FILE* file, int* val, size_t nch)
 }
 
 
+/* Parse the file (field of nch characters) and assign to the string val.
+ * Advance the file pointer of exactly nch byte.
+ * It also removes trailing space characters from the string
+ */
 static int read_string_field(FILE* file, char* val, size_t nch)
 {
 	int pos;
@@ -377,6 +485,13 @@ static int read_string_field(FILE* file, char* val, size_t nch)
 	return 0;
 }
 
+
+/* \param bdf	pointer to a bdf_file open for reading
+ * \param file  stream associated to the file 
+ *              (should be at the beginning of the file)
+ *
+ * Read the general BDF file header
+ */
 static int bdf_read_file_header(struct bdf_file* bdf, FILE* file)
 {
 	char timestring[17], type[45];
@@ -404,6 +519,14 @@ static int bdf_read_file_header(struct bdf_file* bdf, FILE* file)
 	return retval;
 }
 
+
+/* \param bdf	pointer to a bdf_file open for reading
+ * \param file  stream associated to the file 
+ *              (should be at the correct file position)
+ *
+ * Read all channels related field in the header and setup the channels
+ * accordingly. set the channels for no scaling and inmemtype = infiletype
+ */
 static int bdf_read_channels_header(struct bdf_file* bdf, FILE* file)
 {
 	struct xdfch* ch;
@@ -458,6 +581,8 @@ static int bdf_read_channels_header(struct bdf_file* bdf, FILE* file)
 		if (read_string_field(file, get_bdfch(ch)->reserved, 32))
 			return -1;
 
+	// Guess the infile type and setup the offsets
+	// (assuming only one array of packed values)
 	for (ch = bdf->xdf.channels; ch != NULL; ch = ch->next) {
 		if ((ch->digital_mm[0] >= 0) && (ch->digital_mm[1] > 8388607.0))
 			ch->infiletype = ch->inmemtype = XDFUINT24;
@@ -472,7 +597,13 @@ static int bdf_read_channels_header(struct bdf_file* bdf, FILE* file)
 	return 0;
 }
 
-
+/* \param xdf	pointer to an xdf file with XDF_READ mode
+ *
+ * BDF METHOD.
+ * Read the header and allocate the channels
+ * It creates from the file a stream that will be used to easily interpret
+ * and parse the header.
+ */
 static int bdf_read_header(struct xdf* xdf)
 {
 	int retval = -1;
@@ -487,7 +618,6 @@ static int bdf_read_header(struct xdf* xdf)
 		goto exit;
 
 	// Allocate all the channels
-
 	for (i=0; i<xdf->numch; i++) {
 		if (!(*curr = bdf_alloc_channel()))
 			goto exit;
@@ -500,30 +630,38 @@ static int bdf_read_header(struct xdf* xdf)
 	retval = 0;
 exit:
 	fclose(file);
-
 	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
 	return retval;
 }
 
 
+/* \param xdf	pointer to an xdf file
+ *
+ * BDF METHOD.
+ * Free all memory allocated to the structure
+ */
 static void bdf_free_file(struct xdf* xdf)
 {
 	free(get_bdf(xdf));
 }
 
 
-static int bdf_close_file(struct xdf* xdf)
+
+/* \param xdf	pointer to an xdf file with XDF_WRITE mode
+ *
+ * BDF METHOD.
+ * Write the number record in the header
+ */
+static int bdf_complete_file(struct xdf* xdf)
 {
 	int retval = 0;
 	char numrecstr[9];
 
-	// Write the number of records
-	if (xdf->ready && (xdf->mode == XDF_WRITE)) {
-		snprintf(numrecstr, 9, "%-8i", xdf->nrecord);
-		if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
-		    || (write(xdf->fd, numrecstr, 8) < 0) )
-		  	retval = -1;
-	}
+	// Write the number of records in the header
+	snprintf(numrecstr, 9, "%-8i", xdf->nrecord);
+	if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
+	    || (write(xdf->fd, numrecstr, 8) < 0) )
+		retval = -1;
 
 	return retval;
 }

@@ -30,7 +30,7 @@ struct format_operations {
 	int (*copy_conf)(struct xdf*, const struct xdf*); 
 	int (*write_header)(struct xdf*);
 	int (*read_header)(struct xdf*);
-	int (*close_file)(struct xdf*);
+	int (*complete_file)(struct xdf*);
 	void (*free_file)(struct xdf*);
 };
 
@@ -50,9 +50,9 @@ struct xdf {
 	double rec_duration;
 	unsigned int ns_buff, ns_per_rec, sample_size;
 	int nrecord, nrecread;
-	void *buff, *backbuff;		
+	char *buff, *backbuff;		
 	void *tmpbuff[2];
-	int err_signaled, error;
+	int reportval;
 	
 	unsigned int numch;
 	struct xdfch* channels;
@@ -61,7 +61,6 @@ struct xdf {
 	struct data_batch* batch;
 	unsigned int narrays;
 	unsigned int* array_stride;	
-	char** array_pos;	
 
 	/* Data format specific behavior */
 	const struct format_operations* ops;

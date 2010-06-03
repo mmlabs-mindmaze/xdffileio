@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -11,15 +15,15 @@
 #include "xdffile.h"
 
 
+/******************************************************
+ *             options table definitions              *
+ ******************************************************/
 struct opt_detail
 {
 	int field;
 	unsigned int type;
 };
 
-/******************************************************
- *                                                    *
- ******************************************************/
 static const struct opt_detail opts_ch_table[] = {
 	{XDF_CHFIELD_ARRAY_INDEX, TYPE_INT},
 	{XDF_CHFIELD_ARRAY_OFFSET, TYPE_INT},
@@ -59,10 +63,21 @@ static int get_option_type(const struct opt_detail table[], unsigned int nmax, i
 #define get_conf_opt_type(field)  (get_option_type(opts_info_table, num_opts_info, (field)))
 
 
+/******************************************************
+ *            xDF structure initialization            *
+ ******************************************************/
+
+/* \param xdf	pointer to a valid xdf structure
+ * \param fd	file descriptor to be used with the xdf file
+ * \param type	type of the xdf file
+ * \param mode	mode of the file
+ *
+ * Initialize a xdf structure the provided and default values
+ */
 static void init_xdf_struct(struct xdf* xdf, int fd, enum xdffiletype type, int mode)
 {
 	xdf->ready = 0;
-	xdf->error = 0;
+	xdf->reportval = 0;
 	xdf->mode = mode;
 	xdf->ftype = type;
 	xdf->fd = fd;
@@ -72,10 +87,15 @@ static void init_xdf_struct(struct xdf* xdf, int fd, enum xdffiletype type, int 
 	xdf->convdata = NULL;
 	xdf->batch = NULL;
 	xdf->array_stride = NULL;
-	xdf->array_pos = NULL;
 }
 
-static struct xdf* init_read_xdf(enum xdffiletype type, const char* filename)
+/* \param type		expected type for the file to be opened
+ * \param filename	path of the file to be read
+ *
+ * Create a xdf structure of a xDF file for reading. if type is not XDF_ANY and
+ * file is not of the same type, the function will fail.
+ */
+static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 {
 	unsigned char magickey[8];
 	enum xdffiletype gtype;
@@ -112,7 +132,7 @@ static struct xdf* init_read_xdf(enum xdffiletype type, const char* filename)
 	
 	// We have caught an error if we reach here
 	errnum = errno;
-	xdf->ops->close_file(xdf);
+	xdf_close(xdf);
 	errno = errnum;
 	return NULL;
 
@@ -123,22 +143,42 @@ error:
 }
 
 
-static struct xdf* init_write_xdf(enum xdffiletype type, const char* filename)
+/* \param type		requested type for the file to be created
+ * \param filename	path of the file to be written
+ *
+ * Create a xdf structure of a xDF file for writing. If type is XDF_ANY,
+ * the function will fail
+ */
+static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 {
 	struct xdf* xdf = NULL;
-	int fd;
+	int fd = -1, errnum;
 	mode_t mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
 
 	// Create the file
 	if ( ((fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) 
-	    || !(xdf = alloc_xdffile(type)) )
+	    || !(xdf = alloc_xdffile(type)) ) {
+		if (fd == -1) {
+			errnum = errno;
+			close(fd);
+			errno = errnum;
+		}
 		return NULL;
-	
+	}
+
 	init_xdf_struct(xdf, fd, type, XDF_WRITE);
 	return xdf;
 }
 
 
+/* \param filename	path of the file to be written
+ * \param mode		read or write
+ * \param type		expected/requested type
+ *
+ * API FUNCTION
+ * Create a xdf structure of a xDF file for writing or reading depending on
+ * the mode. See the manpage for details
+ */
 struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
 	struct xdf* xdf = NULL;
@@ -151,17 +191,34 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 
 	// Structure creation 
 	if (mode == XDF_READ)
-		xdf = init_read_xdf(type, filename);
+		xdf = create_read_xdf(type, filename);
 	else
-		xdf = init_write_xdf(type, filename);
+		xdf = create_write_xdf(type, filename);
 
 	return xdf;
 }
 
+
+/******************************************************
+ *         Channel configuration functions            *
+ ******************************************************/
+
+/* \param xdf	pointer to a valid xdf structure
+ * \param index	index of the requested channel
+ *
+ * API FUNCTION
+ * Returns a pointer to the index-th channel of the xdf file.
+ * Returns NULL in case of failure.
+ */
 struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 {
 	struct xdfch* ch = xdf->channels;
 	unsigned int ich = 0;
+
+	if ((xdf == NULL) || (index >= xdf->numch)) {
+		errno = EINVAL;
+		return NULL;
+	}
 
 	while (ch && (ich<index)) {
 		ich++;
@@ -172,6 +229,55 @@ struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 }
 
 
+/* \param xdf	pointer to a valid xdf structure opened for writing
+ *
+ * API FUNCTION
+ * Add a channel to xdf file. It is initialized with the last added channel
+ * but its offset will correspond to neighbour of the last channel
+ * Returns NULL in case of failure.
+ */
+struct xdfch* xdf_add_channel(struct xdf* xdf)
+{
+	if ((xdf == NULL) || (xdf->mode != XDF_WRITE)) {
+		errno = (xdf == NULL) ? EINVAL : EPERM;
+		return NULL;
+	}
+
+	struct xdfch** curr = &(xdf->channels);
+	struct xdfch *ch, *prev = NULL;
+
+	// go to the end of the list of channel of the xdffile
+	while (*curr) {
+		prev = *curr;
+		curr = &((*curr)->next);
+	}
+
+	ch = xdf->ops->alloc_channel();
+	if (!ch)
+		return NULL;
+
+	// Init the new channel with the previous one
+	if (prev) {
+		xdf_copy_chconf(ch, prev);
+		ch->offset += get_data_size(ch->inmemtype);
+	}
+
+	// Link the channel to the end
+	ch->next = NULL;
+	*curr = ch;
+	xdf->numch++;
+
+	return ch;
+}
+
+
+/* \param ch	pointer to a channel of a xdf file
+ * \param field	identifier of the field to be changed
+ * \param val	union containing the value
+ *
+ * Default set channel configuration handling functions.
+ * Returns -1 if the type is not handled in that function.
+ */
 static int default_set_chconf(struct xdfch* ch, enum xdfchfield
 field, union optval val)
 {
@@ -201,6 +307,20 @@ field, union optval val)
 	return retval;
 }
 
+/* \param ch	pointer to a channel of a xdf file
+ * \param field	identifier of the field to be set
+ * \param other	list of couple (field val) terminated by XDF_CHFIELD_NONE
+ *
+ * API FUNCTION
+ * Set the configuration of a channel according to a list of couple of
+ * (enum xdfchfield, value pointer) that should be terminated by
+ * XDF_CHFIELD_NONE.
+ *
+ * Example:
+ *    xdf_set_chconf(ch, XDF_CHFIELD_DIGITAL_MIN, min,
+ *                       XDF_CHFIELD_DIGITAL_MAX, max,
+ *                       XDF_CHFIELD_NONE);
+ */
 int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
@@ -213,6 +333,8 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 	va_start(ap, field);
 	while (field != XDF_CHFIELD_NONE) {
 		argtype = get_ch_opt_type(field);
+
+		// Assign the correct value type given the field
 		if (argtype == TYPE_INT)
 			val.i = va_arg(ap, int);
 		else if (argtype == TYPE_DATATYPE)
@@ -226,6 +348,7 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 			break;
 		}
 		
+		// Set the field value
 		r1 = default_set_chconf(ch, field, val);
 		r2 = ch->ops->set_channel(ch, field, val);
 		if (r1 && r2) {
@@ -241,6 +364,13 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 }
 
 
+/* \param ch	pointer to a channel of a xdf file
+ * \param field	identifier of the field to be get
+ * \param val	pointer to an union containing the value
+ *
+ * Default get channel configuration handling function.
+ * Returns -1 if the type is not handled in that function
+ */
 static int default_get_chconf(const struct xdfch* ch, enum xdfchfield
 field, union optval* val)
 {
@@ -271,6 +401,20 @@ field, union optval* val)
 }
 
 
+/* \param ch	pointer to a channel of a xdf file
+ * \param field	identifier of the field to be get
+ * \param other	list of couple (field val) terminated by XDF_CHFIELD_NONE
+ *
+ * API FUNCTION
+ * Get the configuration of a channel according to a list of couple of
+ * (enum xdfchfield, value pointer) that should be terminated by
+ * XDF_CHFIELD_NONE.
+ *
+ * Example:
+ *    xdf_get_chconf(ch, XDF_CHFIELD_DIGITAL_MIN, &min,
+ *                       XDF_CHFIELD_DIGITAL_MAX, &max,
+ *                       XDF_CHFIELD_NONE);
+ */
 int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
@@ -282,6 +426,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 
 	va_start(ap, field);
 	while (field != XDF_CHFIELD_NONE) {
+		// Get the field value
 		r1 = default_get_chconf(ch, field, &val);
 		r2 = ch->ops->get_channel(ch, field, &val);
 		if (r1 && r2) {
@@ -289,6 +434,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 			break;
 		}
 
+		// Assign to correct value type to the provided pointer
 		argtype = get_ch_opt_type(field);
 		if (argtype == TYPE_INT)
 			*(va_arg(ap, int*)) = val.i;
@@ -311,6 +457,12 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 }
 
 
+/* \param dst	pointer to the destination xdf channel 
+ * \param src	pointer to the source xdf channel
+ *
+ * API FUNCTION
+ * Copy the configuration of a channel
+ */
 int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	
@@ -321,37 +473,17 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 }
 
 
-struct xdfch* xdf_add_channel(struct xdf* xdf)
-{
-	struct xdfch** curr = &(xdf->channels);
-	struct xdfch *ch, *prev = NULL;
+/******************************************************
+ *         xDF general configuration functions        *
+ ******************************************************/
 
-	// go to the end of the list of channel of the xdffile
-	while (*curr) {
-		prev = *curr;
-		curr = &((*curr)->next);
-	}
-
-	// Allocate new channel
-	ch = xdf->ops->alloc_channel();
-	if (!ch)
-		return NULL;
-
-	// Init the new channel with the previous one
-	if (prev) {
-		xdf_copy_chconf(ch, prev);
-		ch->offset += get_data_size(ch->inmemtype);
-	}
-
-	// Link the channel to the end
-	ch->next = NULL;
-	*curr = ch;
-	xdf->numch++;
-
-	return ch;
-}
-
-
+/* \param xdf	pointer to xdf file
+ * \param field	identifier of the field to be changed
+ * \param val	union containing the value
+ *
+ * Default set general configuration handling function.
+ * Returns -1 if the type is not handled in that function.
+ */
 static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval val)
 {
 	int retval = 0;
@@ -367,6 +499,20 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 }
 
 
+/* \param xdf	pointer to a xdf file
+ * \param field	identifier of the field to be set
+ * \param other	list of couple (field val) terminated by XDF_FIELD_NONE
+ *
+ * API_FUNCTION
+ * set the configuration of a xDF file according to a list of couple of
+ * (enum xdfchfield, value pointer) that should be terminated by
+ * XDF_FIELD_NONE.
+ *
+ * Example:
+ *    xdf_set_conf(xdf, XDF_FIELD_NSAMPLE_PER_RECORD, ns,
+ *                      XDF_FIELD_RECORD_DURATION, time,
+ *                      XDF_FIELD_NONE);
+ */
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
@@ -374,11 +520,13 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 	union optval val;
 
 	if (xdf == NULL)
-		return set_xdf_error(EFAULT);
+		return set_xdf_error(EINVAL);
 
 	va_start(ap, field);
 	while (field != XDF_FIELD_NONE) {
 		argtype = get_conf_opt_type(field);
+
+		// Assign the correct value type given the field
 		if (argtype == TYPE_INT)
 			val.i = va_arg(ap, int);
 		else if (argtype == TYPE_DATATYPE)
@@ -392,6 +540,7 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 			break;
 		}
 		
+		// Set the field value
 		r1 = default_set_conf(xdf, field, val);
 		r2 = xdf->ops->set_conf(xdf, field, val);
 		if (r1 && r2) {
@@ -407,6 +556,13 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 }
 
 
+/* \param xdf	pointer to xdf file
+ * \param field	identifier of the field to be get
+ * \param val	union containing the value
+ *
+ * Default get general configuration handling function.
+ * Returns -1 if the type is not handled in that function.
+ */
 static int default_get_conf(const struct xdf* xdf, enum xdffield field, union optval *val)
 {
 	int retval = 0;
@@ -421,6 +577,21 @@ static int default_get_conf(const struct xdf* xdf, enum xdffield field, union op
 	return retval;
 }
 
+
+/* \param xdf	pointer to a xdf file
+ * \param field	identifier of the field to be get
+ * \param other	list of couple (field val) terminated by XDF_FIELD_NONE
+ *
+ * API_FUNCTION
+ * Get the configuration of a xDF file according to a list of couple of
+ * (enum xdfchfield, value pointer) that should be terminated by
+ * XDF_FIELD_NONE.
+ *
+ * Example:
+ *    xdf_get_conf(xdf, XDF_FIELD_NSAMPLE_PER_RECORD, &ns,
+ *                      XDF_FIELD_RECORD_DURATION, &time,
+ *                      XDF_FIELD_NONE);
+ */
 int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
@@ -432,6 +603,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 
 	va_start(ap, field);
 	while (field != XDF_FIELD_NONE) {
+		// Get the field value
 		r1 = default_get_conf(xdf, field, &val);
 		r2 = xdf->ops->get_conf(xdf, field, &val);
 		if (r1 && r2) {
@@ -439,6 +611,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 			break;
 		}
 
+		// Assign to correct value type to the provided pointer
 		argtype = get_conf_opt_type(field);
 		if (argtype == TYPE_INT)
 			*(va_arg(ap, int*)) = val.i;
@@ -461,6 +634,12 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 }
 
 
+/* \param dst	pointer to the destination xdf file 
+ * \param src	pointer to the source xdf file
+ *
+ * API FUNCTION
+ * Copy the configuration of a xDF file
+ */
 int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)

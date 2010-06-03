@@ -88,7 +88,6 @@ int xdf_prepare_transfer(struct xdf* xdf);
 ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
 ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
 
-int xdf_get_error(const struct xdf* xdf);
 const char* xdf_get_string(void);
 
 #ifdef __cplusplus
