@@ -35,6 +35,7 @@ and that distinguish between text and binary files */
 
 
 // Orders definitions for transfer
+#define ORDER_SEEK	3
 #define ORDER_QUIT	2
 #define ORDER_TRANSFER	1
 #define ORDER_NONE	0
@@ -328,6 +329,7 @@ static void link_batches(struct xdf* xdf, unsigned int nb)
 	batch[nb-1].mskip = stride[batch[nb-1].iarray] - batch[nb-1].moff;
 }
 
+
 static int compute_batches(struct xdf* xdf, int assign)
 {
 	struct data_batch curr, *currb;
@@ -368,15 +370,19 @@ static int compute_batches(struct xdf* xdf, int assign)
 	return nbatch;
 }
 
+
 // channels in the buffer are assumed to be packed
 // TODO: verify this assumption
-static unsigned int compute_sample_size(const struct xdf* xdf)
+static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
 {
 	unsigned int sample_size = 0;
+	enum xdftype type;
 	struct xdfch* ch = xdf->channels;
 
-	for (ch=xdf->channels; ch; ch = ch->next) 
-		sample_size += 	get_data_size(ch->inmemtype);
+	for (ch=xdf->channels; ch; ch = ch->next) {
+		type = inmem ? ch->inmemtype : ch->infiletype;
+		sample_size += get_data_size(type);
+	}
 	return sample_size;
 }
 
@@ -392,7 +398,8 @@ static unsigned int compute_sample_size(const struct xdf* xdf)
 static int alloc_transfer_objects(struct xdf* xdf)
 {
 	unsigned int samsize;
-	xdf->sample_size = samsize = compute_sample_size(xdf);
+	xdf->sample_size = samsize = compute_sample_size(xdf, 1);
+	xdf->filerec_size = compute_sample_size(xdf, 0) * xdf->ns_per_rec;
 
 	if ( !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
 	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))  
@@ -615,22 +622,18 @@ int xdf_close(struct xdf* xdf)
 		return set_xdf_error(EINVAL);
 
 	if (xdf->ready) {
-		if (xdf->mode == XDF_WRITE) {
-			if (finish_record(xdf))
-				retval = -1;
-		}
-
+		if ((xdf->mode == XDF_WRITE) && finish_record(xdf))
+			retval = -1;
+		
 		finish_transfer_thread(xdf);
 		free_transfer_objects(xdf);
 
-		if (xdf->mode == XDF_WRITE)
-			if (complete_file_content(xdf))
-				retval = -1;
+		if ((xdf->mode == XDF_WRITE) && complete_file_content(xdf))
+			retval = -1;
 	}
 
-	if (xdf->fd >= 0)
-		if (close(xdf->fd))
-			retval = -1;
+	if ((xdf->fd >= 0) && close(xdf->fd))
+		retval = -1;
 
 	// Free channels and file
 	free(xdf->array_stride);
@@ -673,7 +676,7 @@ int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* str
  *
  * API FUNCTION
  * Compute the batches, allocate the necessary data for the transfer and
- * Initialiwe the transfer thread
+ * Initialize the transfer thread
  */
 int xdf_prepare_transfer(struct xdf* xdf)
 {
@@ -703,8 +706,10 @@ int xdf_prepare_transfer(struct xdf* xdf)
 	if (init_transfer_thread(xdf))
 		goto error;
 
-	if (xdf->mode == XDF_READ) 
+	if (xdf->mode == XDF_READ) {
 		disk_transfer(xdf);
+		xdf->nrecread = 0;
+	}
 
 	xdf->ready = 1;
 	return 0;
@@ -714,6 +719,7 @@ error:
 	xdf->nbatch = 0;
 	return -1;
 }
+
 
 /* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE 
  * \param ns	number of samples to be added
@@ -806,6 +812,7 @@ ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 				return ((ret<0)&&(i==0)) ? -1 : (ssize_t)i;
 			buff = xdf->buff;
 			xdf->ns_buff = xdf->ns_per_rec;
+			xdf->nrecread++;
 		}
 
 		// Transfer the sample to the buffer by chunk
@@ -821,6 +828,70 @@ ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 	return ns;
 }
 
+
+/* \param xdf 		pointer to a valid xdffile with mode XDF_READ 
+ * \param offset	offset where the current sample pointer must move
+ * \param whence	reference of the offset
+ *
+ * API FUNCTION
+ * Reposition the current sample pointer according to the couple 
+ * (offset, whence). whence can be SEEK_SET, SEEK_CUR or SEEK_END
+ * Upon successful completion, it returns the resulting offset location as
+ * measured in number of samples for the begining of the recording.
+ * Otherwise -1 is returned and errno is set to indicate the error
+ */
+off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
+{
+	off_t curpoint, reqpoint, fileoff;
+	int irec, errnum = 0;
+	unsigned int nsprec = xdf->ns_per_rec;
+
+	if (!xdf || (xdf->mode != XDF_READ) || (!xdf->ready)) {
+		errno = xdf ? EPERM : EINVAL;
+		return -1;
+	}
+
+	curpoint = xdf->nrecread * nsprec - xdf->ns_buff;
+	if (whence == SEEK_CUR)
+		reqpoint = curpoint + offset;
+	else if (whence == SEEK_SET)
+		reqpoint = offset;
+	else if (whence == SEEK_END)
+		reqpoint = xdf->nrecord * nsprec + offset;
+	else
+		return set_xdf_error(EINVAL);
+	
+	if (reqpoint < 0 || (reqpoint >= xdf->nrecord * nsprec))
+		return set_xdf_error(ERANGE);
+	
+	irec = reqpoint / nsprec;
+	if (irec != xdf->nrecread) {
+		if (irec != xdf->nrecread + 1) {
+			// Wait for the previous operation to be finished
+			sem_wait(&(xdf->sem));
+
+ 			pthread_mutex_lock(&(xdf->mtx));
+			fileoff = irec*xdf->filerec_size + xdf->hdr_offset;
+			if ( (lseek(xdf->fd, fileoff, SEEK_SET) < 0)
+			     || (read_diskrec(xdf)) )
+				errnum = errno;
+ 			pthread_mutex_unlock(&(xdf->mtx));
+			
+			sem_post(&(xdf->sem));
+			if (errnum)
+				return set_xdf_error(errnum);
+
+		}
+
+		if (disk_transfer(xdf))
+			return -1;
+		
+		xdf->nrecread = irec;
+	}
+	xdf->ns_buff = nsprec - reqpoint%nsprec;
+
+	return reqpoint;
+}
 
 static const char xdffileio_string[] = PACKAGE_STRING;
 

@@ -18,14 +18,16 @@
  ******************************************************/
 
 // BDF methods declaration
-static int bdf_set_channel(struct xdfch*, enum xdfchfield, union optval);
-static int bdf_get_channel(const struct xdfch*, enum xdfchfield, union
-optval*);
+static int bdf_set_channel(struct xdfch*, enum xdfchfield,
+                           union optval, int);
+static int bdf_get_channel(const struct xdfch*, enum xdfchfield,
+                           union optval*, int);
 static int bdf_copy_chconf(struct xdfch*, const struct xdfch*);
 static struct xdfch* bdf_alloc_channel(void);
 static void bdf_free_channel(struct xdfch* xdfch);
-static int bdf_set_conf(struct xdf*, enum xdffield, union optval); 
-static int bdf_get_conf(const struct xdf*, enum xdffield, union optval*); 
+static int bdf_set_conf(struct xdf*, enum xdffield, union optval, int); 
+static int bdf_get_conf(const struct xdf*, enum xdffield,
+                        union optval*, int); 
 static int bdf_copy_conf(struct xdf*, const struct xdf*); 
 static int bdf_write_header(struct xdf*);
 static int bdf_read_header(struct xdf*);
@@ -96,6 +98,10 @@ struct xdf* bdf_alloc_xdffile(void)
 		return NULL;
 
 	bdf->xdf.ops = &bdf_ops;
+
+	// Set good default for the file format
+	bdf->xdf.rec_duration = 1.0;
+	
 	return &(bdf->xdf);
 }
 
@@ -123,10 +129,13 @@ int bdf_is_same_type(const unsigned char* magickey)
  * BDF METHOD.
  * Change the configuration field value of the channel according to val
  */
-static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval val)
+static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval val, int prevretval)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
 	int retval = 0;
+
+	if (prevretval < 0)
+		return -1;
 
 	if (field == XDF_CHFIELD_LABEL)
 		strncpy(bdfch->label, val.str, sizeof(bdfch->label)-1);
@@ -139,7 +148,7 @@ static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval
 	else if (field == XDF_CHFIELD_RESERVED)
 		strncpy(bdfch->reserved, val.str, sizeof(bdfch->reserved)-1);
 	else
-		retval = -1;
+		retval = prevretval;
 
 	return retval;
 }
@@ -153,10 +162,13 @@ static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval
  * Get the configuration field value of the channel and assign it to val
  */
 static int bdf_get_channel(const struct xdfch* ch, enum xdfchfield
-field, union optval *val)
+field, union optval *val, int prevretval)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
 	int retval = 0;
+
+	if (prevretval < 0)
+		return -1;
 
 	if (field == XDF_CHFIELD_LABEL)
 		val->str = bdfch->label;
@@ -169,7 +181,7 @@ field, union optval *val)
 	else if (field == XDF_CHFIELD_RESERVED)
 		val->str = bdfch->reserved;
 	else
-		retval = -1;
+		retval = prevretval;
 
 	return retval;
 }
@@ -235,8 +247,6 @@ static struct xdfch* bdf_alloc_channel(void)
 	if (!ch)
 		return NULL;
 	memset(ch, 0, sizeof(*ch));
-	ch->xdfch.ops = &bdf_ops;
-
 	return &(ch->xdfch);
 }
 
@@ -259,17 +269,20 @@ static void bdf_free_channel(struct xdfch* ch)
  * Change the configuration field value according to val
  */
 static int bdf_set_conf(struct xdf* xdf, enum xdffield field, union
-optval val)
+optval val, int prevretval)
 {
 	struct bdf_file* bdf = get_bdf(xdf);
 	int retval = 0;
 	
+	if (prevretval < 0)
+		return -1;
+
 	if (field == XDF_FIELD_SUBJ_DESC)
 		strncpy(bdf->subj_ident, val.str, sizeof(bdf->subj_ident)-1);
 	else if (field == XDF_FIELD_REC_DESC)
 		strncpy(bdf->rec_ident, val.str, sizeof(bdf->rec_ident)-1);
 	else
-		retval = -1;
+		retval = prevretval;
 
 	return retval;
 }
@@ -282,17 +295,20 @@ optval val)
  * Get the configuration field value and assign it to val
  */
 static int bdf_get_conf(const struct xdf* xdf, enum xdffield field,
-union optval *val)
+union optval *val, int prevretval)
 {
 	struct bdf_file* bdf = get_bdf(xdf);
 	int retval = 0;
 	
+	if (prevretval < 0)
+		return -1;
+
 	if (field == XDF_FIELD_SUBJ_DESC)
 		val->str = bdf->subj_ident;
 	else if (field == XDF_FIELD_REC_DESC)
 		val->str = bdf->rec_ident;
 	else
-		retval = -1;
+		retval = prevretval;
 
 	return retval;
 }
@@ -510,6 +526,7 @@ static int bdf_read_file_header(struct bdf_file* bdf, FILE* file)
 		retval = -1;
  
 	bdf->xdf.rec_duration = (double)recdur;
+	bdf->xdf.hdr_offset = hdrsize;
 
 	// format time string
 	if (!retval)
@@ -619,7 +636,7 @@ static int bdf_read_header(struct xdf* xdf)
 
 	// Allocate all the channels
 	for (i=0; i<xdf->numch; i++) {
-		if (!(*curr = bdf_alloc_channel()))
+		if (!(*curr = alloc_xdfchannel(xdf)))
 			goto exit;
 		curr = &((*curr)->next);
 	}

@@ -45,6 +45,8 @@ static const struct opt_detail opts_ch_table[] = {
 static const struct opt_detail opts_info_table[] = {
 	{XDF_FIELD_RECORD_DURATION, TYPE_DOUBLE},
 	{XDF_FIELD_NSAMPLE_PER_RECORD, TYPE_INT},
+	{XDF_FIELD_SAMPLING_FREQ, TYPE_INT},
+	{XDF_FIELD_NCHANNEL, TYPE_INT},
 	{XDF_FIELD_SUBJ_DESC, TYPE_STRING},
 	{XDF_FIELD_REC_DESC, TYPE_STRING},
 };
@@ -202,6 +204,21 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 /******************************************************
  *         Channel configuration functions            *
  ******************************************************/
+/* \param xdf	pointer to a valid xdf structure
+ * 
+ * Allocate a channel
+ * Return the pointer a new channel or NULL in case of failure
+ */
+struct xdfch* alloc_xdfchannel(struct xdf* owner)
+{
+	struct xdfch* ch;
+
+	ch = owner->ops->alloc_channel();
+	if (ch)
+		ch->owner = owner;
+
+	return ch;
+}
 
 /* \param xdf	pointer to a valid xdf structure
  * \param index	index of the requested channel
@@ -252,7 +269,7 @@ struct xdfch* xdf_add_channel(struct xdf* xdf)
 		curr = &((*curr)->next);
 	}
 
-	ch = xdf->ops->alloc_channel();
+	ch = alloc_xdfchannel(xdf);
 	if (!ch)
 		return NULL;
 
@@ -276,7 +293,8 @@ struct xdfch* xdf_add_channel(struct xdf* xdf)
  * \param val	union containing the value
  *
  * Default set channel configuration handling functions.
- * Returns -1 if the type is not handled in that function.
+ * Returns 1 if the type is not handled in that function, -1 in case of
+ * error, 0 otherwise
  */
 static int default_set_chconf(struct xdfch* ch, enum xdfchfield
 field, union optval val)
@@ -291,8 +309,12 @@ field, union optval val)
 		ch->physical_mm[0] = val.d;
 	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
 		ch->physical_mm[1] = val.d;
-	else if (field == XDF_CHFIELD_ARRAY_INDEX)
-		ch->iarray = val.i;
+	else if (field == XDF_CHFIELD_ARRAY_INDEX) {
+		if ((val.i < 0) && (ch->owner->mode == XDF_WRITE)) 
+			retval = set_xdf_error(EPERM);
+		else
+			ch->iarray = val.i;
+	}
 	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
 		ch->offset = val.i;
 	else if (field == XDF_CHFIELD_ARRAY_TYPE)
@@ -302,7 +324,7 @@ field, union optval val)
 	else if (field == XDF_CHFIELD_STORED_TYPE)
 		ch->infiletype = val.i;
 	else
-		retval = -1;
+		retval = 1;
 	
 	return retval;
 }
@@ -324,7 +346,7 @@ field, union optval val)
 int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
-	int r1, r2, argtype, retval = 0;
+	int rval, argtype, retval = 0;
 	union optval val;
 
 	if (ch == NULL)
@@ -349,10 +371,12 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 		}
 		
 		// Set the field value
-		r1 = default_set_chconf(ch, field, val);
-		r2 = ch->ops->set_channel(ch, field, val);
-		if (r1 && r2) {
-			retval = set_xdf_error(EINVAL);
+		rval = default_set_chconf(ch, field, val);
+		rval = ch->owner->ops->set_channel(ch, field, val, rval);
+		if (rval) {
+			if (rval > 0)
+				errno = EINVAL;
+		    	retval = -1;
 			break;
 		}
 
@@ -369,7 +393,9 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
  * \param val	pointer to an union containing the value
  *
  * Default get channel configuration handling function.
- * Returns -1 if the type is not handled in that function
+ * Returns 1 if the type is not handled in that function, -1 if an error
+ * occured, 0 otherwise
+ * 
  */
 static int default_get_chconf(const struct xdfch* ch, enum xdfchfield
 field, union optval* val)
@@ -395,7 +421,7 @@ field, union optval* val)
 	else if (field == XDF_CHFIELD_STORED_TYPE)
 		val->type = ch->infiletype;
 	else
-		retval = -1;
+		retval = 1;
 	
 	return retval;
 }
@@ -418,7 +444,7 @@ field, union optval* val)
 int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 {
 	va_list ap;
-	int r1, r2, argtype, retval = 0;
+	int rval, argtype, retval = 0;
 	union optval val;
 
 	if (ch == NULL)
@@ -427,10 +453,12 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 	va_start(ap, field);
 	while (field != XDF_CHFIELD_NONE) {
 		// Get the field value
-		r1 = default_get_chconf(ch, field, &val);
-		r2 = ch->ops->get_channel(ch, field, &val);
-		if (r1 && r2) {
-			retval = set_xdf_error(EINVAL);
+		rval = default_get_chconf(ch, field, &val);
+		rval = ch->owner->ops->get_channel(ch, field, &val, rval);
+		if (rval) {
+			if (rval > 0)
+				errno = EINVAL;
+			retval = -1;
 			break;
 		}
 
@@ -469,7 +497,7 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 	if (!dst || !src)
 		return set_xdf_error(EINVAL);
 
-	return dst->ops->copy_chconf(dst, src);
+	return dst->owner->ops->copy_chconf(dst, src);
 }
 
 
@@ -482,7 +510,8 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
  * \param val	union containing the value
  *
  * Default set general configuration handling function.
- * Returns -1 if the type is not handled in that function.
+ * Returns 1 if the type is not handled in that function, -1 in case of
+ * error and 0 otherwise.
  */
 static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval val)
 {
@@ -490,10 +519,17 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 
 	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
 		xdf->ns_per_rec = val.i;
+	else if (field == XDF_FIELD_SAMPLING_FREQ) 
+		xdf->ns_per_rec = xdf->rec_duration*(double)(val.i);
 	else if (field == XDF_FIELD_RECORD_DURATION) 
 		xdf->rec_duration = val.d;
+	else if (field == XDF_FIELD_NCHANNEL) 
+		retval = set_xdf_error(EINVAL);
 	else
-		retval = -1;
+		retval = 1;
+	
+	if ((retval == 0) && (xdf->mode != XDF_WRITE))
+		retval = set_xdf_error(EPERM);
 	
 	return retval;
 }
@@ -516,7 +552,7 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
-	int r1, r2, argtype, retval = 0;
+	int rval, argtype, retval = 0;
 	union optval val;
 
 	if (xdf == NULL)
@@ -541,10 +577,12 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 		}
 		
 		// Set the field value
-		r1 = default_set_conf(xdf, field, val);
-		r2 = xdf->ops->set_conf(xdf, field, val);
-		if (r1 && r2) {
-			retval = set_xdf_error(EINVAL);
+		rval = default_set_conf(xdf, field, val);
+		rval = xdf->ops->set_conf(xdf, field, val, rval);
+		if (rval) {
+			if (rval > 0)
+				errno = EINVAL;
+			retval = -1;
 			break;
 		}
 
@@ -561,7 +599,8 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
  * \param val	union containing the value
  *
  * Default get general configuration handling function.
- * Returns -1 if the type is not handled in that function.
+ * Returns 1 if the type is not handled in that function, -1 if an error
+ * occured, 0 otherwise
  */
 static int default_get_conf(const struct xdf* xdf, enum xdffield field, union optval *val)
 {
@@ -569,10 +608,14 @@ static int default_get_conf(const struct xdf* xdf, enum xdffield field, union op
 
 	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
 		val->i = xdf->ns_per_rec;
+	else if (field == XDF_FIELD_SAMPLING_FREQ) 
+		val->i = ((double)(xdf->ns_per_rec))/xdf->rec_duration;
 	else if (field == XDF_FIELD_RECORD_DURATION)
 		val->d = xdf->rec_duration;
+	else if (field == XDF_FIELD_NCHANNEL)
+		val->i = xdf->numch;
 	else
-		retval = -1;
+		retval = 1;
 	
 	return retval;
 }
@@ -595,7 +638,7 @@ static int default_get_conf(const struct xdf* xdf, enum xdffield field, union op
 int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
-	int r1, r2, argtype, retval = 0;
+	int rval, argtype, retval = 0;
 	union optval val;
 
 	if (xdf == NULL)
@@ -604,10 +647,12 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 	va_start(ap, field);
 	while (field != XDF_FIELD_NONE) {
 		// Get the field value
-		r1 = default_get_conf(xdf, field, &val);
-		r2 = xdf->ops->get_conf(xdf, field, &val);
-		if (r1 && r2) {
-			retval = set_xdf_error(EINVAL);
+		rval = default_get_conf(xdf, field, &val);
+		rval = xdf->ops->get_conf(xdf, field, &val, rval);
+		if (rval) {
+			if (rval > 0)
+				errno = EINVAL;
+			retval = -1;
 			break;
 		}
 

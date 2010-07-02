@@ -31,7 +31,10 @@ in the parenthesis (the expected type of the value for
 \fBxdf_get_chconf\fP()):
 .TP 7
 \fBXDF_CHFIELD_ARRAY_INDEX\fP (int)
-Specify the array from/to which the channel value should be transfered.
+Specify the array from/to which the channel value should be transfered. If
+the mode of the file is \fBXDF_READ\fP and the value is negative, the
+channel will not be read. If the mode is \fBXDF_WRITE\fP and the value is
+negative, the function will fail.
 .TP 7
 \fBXDF_CHFIELD_ARRAY_OFFSET\fP (int)
 Specify the offset in the array from/to which the channel value should be

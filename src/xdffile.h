@@ -20,13 +20,16 @@ union optval {
 };
 
 struct format_operations {
-	int (*set_channel)(struct xdfch*, enum xdfchfield, union optval);
-	int (*get_channel)(const struct xdfch*, enum xdfchfield, union optval*);
+	int (*set_channel)(struct xdfch*, enum xdfchfield,
+	                   union optval, int);
+	int (*get_channel)(const struct xdfch*, enum xdfchfield,
+	                   union optval*, int);
 	int (*copy_chconf)(struct xdfch*, const struct xdfch*);
 	struct xdfch* (*alloc_channel)(void);
 	void (*free_channel)(struct xdfch*);
-	int (*set_conf)(struct xdf*, enum xdffield, union optval); 
-	int (*get_conf)(const struct xdf*, enum xdffield, union optval*); 
+	int (*set_conf)(struct xdf*, enum xdffield, union optval, int); 
+	int (*get_conf)(const struct xdf*, enum xdffield,
+	                union optval*, int); 
 	int (*copy_conf)(struct xdf*, const struct xdf*); 
 	int (*write_header)(struct xdf*);
 	int (*read_header)(struct xdf*);
@@ -39,16 +42,17 @@ struct xdfch {
 	enum xdftype inmemtype, infiletype;
 	double physical_mm[2], digital_mm[2];
 	struct xdfch* next;
-	const struct format_operations* ops;
+	struct xdf* owner;
 };
 
 struct xdf {
 	enum xdffiletype ftype;
 	int fd;					
+	off_t hdr_offset;
 	unsigned int ready, mode;			
 	long pointer;			
 	double rec_duration;
-	unsigned int ns_buff, ns_per_rec, sample_size;
+	unsigned int ns_buff, ns_per_rec, sample_size, filerec_size;
 	int nrecord, nrecread;
 	char *buff, *backbuff;		
 	void *tmpbuff[2];
@@ -75,6 +79,7 @@ struct xdf {
 
 enum xdffiletype guess_file_type(const unsigned char* magickey);
 struct xdf* alloc_xdffile(enum xdffiletype type);
+struct xdfch* alloc_xdfchannel(struct xdf* owner);
 int set_xdf_error(int error);
 
 

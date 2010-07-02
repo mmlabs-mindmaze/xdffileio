@@ -229,28 +229,40 @@ int copy_xdffile(char genfilename[], char reffilename[])
 {
 	struct xdf *dst, *src;
 	struct xdfch *dstch, *srcch;
-	unsigned int nch = 0, samplesize, stride[1];
+	unsigned int ich = 0, samplesize, stride[1];
+	int nch;
 	void* buffer;
 	ssize_t ns;
-
 
 	src = xdf_open(reffilename, XDF_READ, XDF_BDF);
 	dst = xdf_open(genfilename, XDF_WRITE, XDF_BDF);
 
 	// Copy header and configuration
 	xdf_copy_conf(dst, src);
-	while ((srcch = xdf_get_channel(src, nch++))) {
+	while ((srcch = xdf_get_channel(src, ich))) {
 		dstch = xdf_add_channel(dst);
 		xdf_copy_chconf(dstch, srcch);
+		ich++;
+	}
+	xdf_get_conf(src, XDF_FIELD_NCHANNEL, &nch, XDF_FIELD_NONE);
+	if (nch != (int)ich) {
+		fprintf(stderr, "\tich=%u, nch=%i\n", ich, nch);
+		return 1;
 	}
 
-	samplesize = /*nch*/19*3;
+	samplesize = nch*3;
 	buffer = malloc(samplesize*NSAMPLE);
 	stride[0] = samplesize;
 	xdf_define_arrays(src, 1, stride);
 	xdf_define_arrays(dst, 1, stride);
 	xdf_prepare_transfer(src);
 	xdf_prepare_transfer(dst);
+
+	if ( (xdf_seek(src, 1000, SEEK_CUR) < 0)
+	    || (xdf_seek(src, 0, SEEK_SET) < 0) ) {
+		fprintf(stderr, "\txdf_seek function failed: %s\n", strerror(errno));
+		return 2;
+	}
 
 	while (1) {
 		ns = xdf_read(src, NSAMPLE, buffer);

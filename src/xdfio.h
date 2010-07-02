@@ -2,6 +2,7 @@
 #define XDFIO_H
 
 #include <sys/types.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +40,8 @@ enum xdffield
 	XDF_FIELD_NONE = 0,
 	XDF_FIELD_RECORD_DURATION,	/* double      */
 	XDF_FIELD_NSAMPLE_PER_RECORD,	/* int         */
+	XDF_FIELD_SAMPLING_FREQ,	/* int         */
+	XDF_FIELD_NCHANNEL,		/* int         */
 	XDF_FIELD_SUBJ_DESC,		/* const char* */
 	XDF_FIELD_REC_DESC		/* const char* */
 };
@@ -87,6 +90,8 @@ int xdf_prepare_transfer(struct xdf* xdf);
 
 ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
 ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
+off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
+
 
 const char* xdf_get_string(void);
 
