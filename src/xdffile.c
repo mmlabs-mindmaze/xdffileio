@@ -56,7 +56,7 @@ struct convertion_data {
  *                 misc functions                 *
  **************************************************/
 
-int set_xdf_error(int error)
+int xdf_set_error(int error)
 {
 	if (error) {
 		errno = error;
@@ -92,7 +92,7 @@ static int write_diskrec(struct xdf* xdf)
 		ch = xdf->convdata + ich;
 
 		// Convert data
-		transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
+		xdf_transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
 
 		// Write the converted data to the file. Continue writing
 		// as long as not all data has been written
@@ -159,7 +159,7 @@ static int read_diskrec(struct xdf* xdf)
 		} while (reqsize);
 
 		// Convert data
-		transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
+		xdf_transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
 		dst += ch->memtypesize;
 	}
 
@@ -284,7 +284,7 @@ static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned 
 
 static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, unsigned int foff)
 {
-	unsigned int datalen = get_data_size(ch->inmemtype);
+	unsigned int datalen = xdf_get_datasize(ch->inmemtype);
 
 	if (!curr)
 		return 0;
@@ -344,7 +344,7 @@ static int compute_batches(struct xdf* xdf, int assign)
 		
 		// Scan channels in order to find different batches
 		for (ch=xdf->channels; ch; ch=ch->next) {
-			dlen = get_data_size(ch->inmemtype);
+			dlen = xdf_get_datasize(ch->inmemtype);
 
 			// Consistency checks
 			if (ch->iarray > xdf->narrays
@@ -381,7 +381,7 @@ static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
 
 	for (ch=xdf->channels; ch; ch = ch->next) {
 		type = inmem ? ch->inmemtype : ch->infiletype;
-		sample_size += get_data_size(type);
+		sample_size += xdf_get_datasize(type);
 	}
 	return sample_size;
 }
@@ -452,13 +452,13 @@ static void setup_convdata(struct xdf* xdf)
 			in_str = xdf->sample_size;
 			in_mm = ch->physical_mm;
 			out_tp = ch->infiletype;
-			out_str = get_data_size(out_tp);
+			out_str = xdf_get_datasize(out_tp);
 			out_mm = ch->digital_mm;
 		} else {
 			// In read mode, convertion in 
 			// from file/digital to mem/physical
 			in_tp = ch->infiletype;
-			in_str = get_data_size(in_tp);
+			in_str = xdf_get_datasize(in_tp);
 			in_mm = ch->digital_mm;
 			out_tp = ch->inmemtype;
 			out_str = xdf->sample_size;
@@ -469,9 +469,9 @@ static void setup_convdata(struct xdf* xdf)
 		if (ch->digital_inmem)
 			in_mm = out_mm = NULL;
 		
-		xdf->convdata[i].filetypesize = get_data_size(ch->infiletype);
-		xdf->convdata[i].memtypesize = get_data_size(ch->inmemtype);
-		setup_transform(&(xdf->convdata[i].prm),
+		xdf->convdata[i].filetypesize = xdf_get_datasize(ch->infiletype);
+		xdf->convdata[i].memtypesize = xdf_get_datasize(ch->inmemtype);
+		xdf_setup_transform(&(xdf->convdata[i].prm),
 		                in_str, in_tp, in_mm,
 		                out_str, out_tp, out_mm);
 		ch = ch->next;
@@ -619,7 +619,7 @@ int xdf_close(struct xdf* xdf)
 	struct xdfch *ch, *prev;
 
 	if (!xdf)
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 
 	if (xdf->ready) {
 		if ((xdf->mode == XDF_WRITE) && finish_record(xdf))
@@ -708,7 +708,7 @@ int xdf_prepare_transfer(struct xdf* xdf)
 
 	if (xdf->mode == XDF_READ) {
 		disk_transfer(xdf);
-		xdf->nrecread = 0;
+		xdf->nrecread = -1;
 	}
 
 	xdf->ready = 1;
@@ -851,7 +851,8 @@ off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 		return -1;
 	}
 
-	curpoint = xdf->nrecread * nsprec - xdf->ns_buff;
+	curpoint = (xdf->nrecread < 0 ? 0 : xdf->nrecread)*nsprec
+			- xdf->ns_buff;
 	if (whence == SEEK_CUR)
 		reqpoint = curpoint + offset;
 	else if (whence == SEEK_SET)
@@ -859,10 +860,10 @@ off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 	else if (whence == SEEK_END)
 		reqpoint = xdf->nrecord * nsprec + offset;
 	else
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 	
 	if (reqpoint < 0 || (reqpoint >= xdf->nrecord * nsprec))
-		return set_xdf_error(ERANGE);
+		return xdf_set_error(ERANGE);
 	
 	irec = reqpoint / nsprec;
 	if (irec != xdf->nrecread) {
@@ -879,7 +880,7 @@ off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 			
 			sem_post(&(xdf->sem));
 			if (errnum)
-				return set_xdf_error(errnum);
+				return xdf_set_error(errnum);
 
 		}
 

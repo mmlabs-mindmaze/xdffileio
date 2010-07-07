@@ -89,7 +89,7 @@ static const unsigned char bdf_magickey[] = {255, 'B', 'I', 'O', 'S', 'E', 'M', 
 
 /* Allocate a BDF file
  */
-struct xdf* bdf_alloc_xdffile(void)
+struct xdf* xdf_alloc_bdffile(void)
 {
 	struct bdf_file* bdf;
 
@@ -110,7 +110,7 @@ struct xdf* bdf_alloc_xdffile(void)
  *
  * Returns 1 if the supplied magickey corresponds to a BDF file
  */
-int bdf_is_same_type(const unsigned char* magickey)
+int xdf_is_bdffile(const unsigned char* magickey)
 {
 	if (memcmp(magickey, bdf_magickey, sizeof(bdf_magickey)) == 0)
 		return 1;
@@ -607,7 +607,7 @@ static int bdf_read_channels_header(struct bdf_file* bdf, FILE* file)
 			ch->infiletype = ch->inmemtype = XDFINT24;
 		ch->digital_inmem = 1;
 		ch->offset = offset;
-		offset += get_data_size(ch->infiletype);
+		offset += xdf_get_datasize(ch->infiletype);
 	}
 
 
@@ -636,7 +636,7 @@ static int bdf_read_header(struct xdf* xdf)
 
 	// Allocate all the channels
 	for (i=0; i<xdf->numch; i++) {
-		if (!(*curr = alloc_xdfchannel(xdf)))
+		if (!(*curr = xdf_alloc_channel(xdf)))
 			goto exit;
 		curr = &((*curr)->next);
 	}

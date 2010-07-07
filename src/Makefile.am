@@ -6,6 +6,5 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdfio.h formatdecl.c			\
 			  bdffile.c bdf.h
 
-
-#libxdffileio_la_LDFLAGS = -release $(RELEASE) -version-info $(CURRENT):$(REVISION):$(AGE)
+libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(srcdir)/exports.sym 
 

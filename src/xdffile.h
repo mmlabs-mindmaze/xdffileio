@@ -77,10 +77,10 @@ struct xdf {
 	int order;
 };
 
-enum xdffiletype guess_file_type(const unsigned char* magickey);
-struct xdf* alloc_xdffile(enum xdffiletype type);
-struct xdfch* alloc_xdfchannel(struct xdf* owner);
-int set_xdf_error(int error);
+enum xdffiletype xdf_guess_filetype(const unsigned char* magickey);
+struct xdf* xdf_alloc_file(enum xdffiletype type);
+struct xdfch* xdf_alloc_channel(struct xdf* owner);
+int xdf_set_error(int error);
 
 
 #endif /* XDFFILE_H */

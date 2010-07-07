@@ -12,8 +12,8 @@ struct dataformat_entry {
 struct dataformat_entry support_datafmt[] = {
 	{
 		.type=XDF_BDF,
-		.alloc_file = bdf_alloc_xdffile,
-		.is_same_type = bdf_is_same_type
+		.alloc_file = xdf_alloc_bdffile,
+		.is_same_type = xdf_is_bdffile
 	}
 };
 
@@ -21,7 +21,7 @@ static unsigned int num_support_datafmt = sizeof(support_datafmt)
 				/ sizeof(support_datafmt[0]);
 
 
-enum xdffiletype guess_file_type(const unsigned char* magickey)
+enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
 {
 	unsigned int i;
 	enum xdffiletype type = XDF_ANY;
@@ -35,7 +35,7 @@ enum xdffiletype guess_file_type(const unsigned char* magickey)
 	return type;
 }
 
-struct xdf* alloc_xdffile(enum xdffiletype type)
+struct xdf* xdf_alloc_file(enum xdffiletype type)
 {
 	unsigned int i;
 	for (i=0; i<num_support_datafmt; i++) {

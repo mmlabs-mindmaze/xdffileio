@@ -115,14 +115,14 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	    	errnum = errno;
 		goto error;
 	}
-	gtype = guess_file_type(magickey);
+	gtype = xdf_guess_filetype(magickey);
 	if ((gtype == XDF_ANY) || ((type != XDF_ANY)&&(type != gtype))) {
 		errnum = EMEDIUMTYPE;
 		goto error;
 	}
 	
 	// Allocate structure
-	if (!(xdf = alloc_xdffile(gtype))) {
+	if (!(xdf = xdf_alloc_file(gtype))) {
 		errnum = errno;
 		goto error;
 	}
@@ -159,7 +159,7 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 
 	// Create the file
 	if ( ((fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) 
-	    || !(xdf = alloc_xdffile(type)) ) {
+	    || !(xdf = xdf_alloc_file(type)) ) {
 		if (fd == -1) {
 			errnum = errno;
 			close(fd);
@@ -209,7 +209,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
  * Allocate a channel
  * Return the pointer a new channel or NULL in case of failure
  */
-struct xdfch* alloc_xdfchannel(struct xdf* owner)
+struct xdfch* xdf_alloc_channel(struct xdf* owner)
 {
 	struct xdfch* ch;
 
@@ -269,14 +269,14 @@ struct xdfch* xdf_add_channel(struct xdf* xdf)
 		curr = &((*curr)->next);
 	}
 
-	ch = alloc_xdfchannel(xdf);
+	ch = xdf_alloc_channel(xdf);
 	if (!ch)
 		return NULL;
 
 	// Init the new channel with the previous one
 	if (prev) {
 		xdf_copy_chconf(ch, prev);
-		ch->offset += get_data_size(ch->inmemtype);
+		ch->offset += xdf_get_datasize(ch->inmemtype);
 	}
 
 	// Link the channel to the end
@@ -311,7 +311,7 @@ field, union optval val)
 		ch->physical_mm[1] = val.d;
 	else if (field == XDF_CHFIELD_ARRAY_INDEX) {
 		if ((val.i < 0) && (ch->owner->mode == XDF_WRITE)) 
-			retval = set_xdf_error(EPERM);
+			retval = xdf_set_error(EPERM);
 		else
 			ch->iarray = val.i;
 	}
@@ -350,7 +350,7 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 	union optval val;
 
 	if (ch == NULL)
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 
 	va_start(ap, field);
 	while (field != XDF_CHFIELD_NONE) {
@@ -366,7 +366,7 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 		else if (argtype == TYPE_DOUBLE)
 			val.d = va_arg(ap, double);
 		else {
-			retval = set_xdf_error(EINVAL);
+			retval = xdf_set_error(EINVAL);
 			break;
 		}
 		
@@ -448,7 +448,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 	union optval val;
 
 	if (ch == NULL)
-		return set_xdf_error(EFAULT);
+		return xdf_set_error(EFAULT);
 
 	va_start(ap, field);
 	while (field != XDF_CHFIELD_NONE) {
@@ -473,7 +473,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 		else if (argtype == TYPE_DOUBLE)
 			*(va_arg(ap, double*)) = val.d;
 		else {
-			retval = set_xdf_error(EINVAL);
+			retval = xdf_set_error(EINVAL);
 			break;
 		}
 
@@ -495,7 +495,7 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	
 	if (!dst || !src)
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 
 	return dst->owner->ops->copy_chconf(dst, src);
 }
@@ -524,12 +524,12 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 	else if (field == XDF_FIELD_RECORD_DURATION) 
 		xdf->rec_duration = val.d;
 	else if (field == XDF_FIELD_NCHANNEL) 
-		retval = set_xdf_error(EINVAL);
+		retval = xdf_set_error(EINVAL);
 	else
 		retval = 1;
 	
 	if ((retval == 0) && (xdf->mode != XDF_WRITE))
-		retval = set_xdf_error(EPERM);
+		retval = xdf_set_error(EPERM);
 	
 	return retval;
 }
@@ -556,7 +556,7 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 	union optval val;
 
 	if (xdf == NULL)
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 
 	va_start(ap, field);
 	while (field != XDF_FIELD_NONE) {
@@ -572,7 +572,7 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 		else if (argtype == TYPE_DOUBLE)
 			val.d = va_arg(ap, double);
 		else {
-			retval = set_xdf_error(EINVAL);
+			retval = xdf_set_error(EINVAL);
 			break;
 		}
 		
@@ -642,7 +642,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 	union optval val;
 
 	if (xdf == NULL)
-		return set_xdf_error(EFAULT);
+		return xdf_set_error(EFAULT);
 
 	va_start(ap, field);
 	while (field != XDF_FIELD_NONE) {
@@ -667,7 +667,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 		else if (argtype == TYPE_DOUBLE)
 			*(va_arg(ap, double*)) = val.d;
 		else {
-			retval = set_xdf_error(EINVAL);
+			retval = xdf_set_error(EINVAL);
 			break;
 		}
 
@@ -688,7 +688,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)
-		return set_xdf_error(EINVAL);
+		return xdf_set_error(EINVAL);
 
 	return dst->ops->copy_conf(dst, src);
 }

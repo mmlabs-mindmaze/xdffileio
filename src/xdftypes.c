@@ -234,7 +234,7 @@ static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 
 
 /* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data useable by user */
-void transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff)
+void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff)
 {
 	void* in = src;
 	void* out = dst;
@@ -255,7 +255,7 @@ void transconv_data(unsigned int ns, void* dst, void* src, const struct convprm*
 	}
 }
 
-int setup_transform(struct convprm* prm, 
+int xdf_setup_transform(struct convprm* prm, 
 		    unsigned int in_str, enum xdftype in_tp, const double* in_mm, 
 		    unsigned int out_str, enum xdftype out_tp, const double* out_mm)
 {
@@ -297,7 +297,7 @@ int setup_transform(struct convprm* prm,
 	return 0;
 }
 
-int get_data_size(enum xdftype type)
+int xdf_get_datasize(enum xdftype type)
 {
 	return (type <= XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size) : -1;
 }

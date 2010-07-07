@@ -1,0 +1,16 @@
+xdf_open
+xdf_close
+xdf_set_conf
+xdf_get_conf
+xdf_copy_conf
+xdf_get_channel
+xdf_add_channel
+xdf_set_chconf
+xdf_get_chconf
+xdf_copy_chconf
+xdf_define_arrays
+xdf_prepare_transfer
+xdf_write
+xdf_read
+xdf_seek
+xdf_get_string

@@ -21,9 +21,9 @@ struct convprm {
 	convproc cvfn3;
 };
 
-void transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff);
-int get_data_size(enum xdftype type);
-int setup_transform(struct convprm* prm, 
+void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff);
+int xdf_get_datasize(enum xdftype type);
+int xdf_setup_transform(struct convprm* prm, 
 		    unsigned int in_str, enum xdftype in_tp, const double in_mm[2], 
 		    unsigned int out_str, enum xdftype out_tp, const double out_mm[2]);
 

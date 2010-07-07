@@ -2,8 +2,8 @@
 #define BDF_H
 
 
-struct xdf* bdf_alloc_xdffile(void);
-int bdf_is_same_type(const unsigned char* magickey);
+struct xdf* xdf_alloc_bdffile(void);
+int xdf_is_bdffile(const unsigned char* magickey);
 
 
 #endif //BDF_H
