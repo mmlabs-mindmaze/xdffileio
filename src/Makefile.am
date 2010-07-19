@@ -1,3 +1,5 @@
+EXTRA_DIST=exports.sym
+
 lib_LTLIBRARIES = libxdffileio.la
 include_HEADERS = xdfio.h 
 
