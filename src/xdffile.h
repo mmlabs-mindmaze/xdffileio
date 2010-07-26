@@ -20,9 +20,9 @@ union optval {
 };
 
 struct format_operations {
-	int (*set_channel)(struct xdfch*, enum xdfchfield,
+	int (*set_channel)(struct xdfch*, enum xdffield,
 	                   union optval, int);
-	int (*get_channel)(const struct xdfch*, enum xdfchfield,
+	int (*get_channel)(const struct xdfch*, enum xdffield,
 	                   union optval*, int);
 	int (*copy_chconf)(struct xdfch*, const struct xdfch*);
 	struct xdfch* (*alloc_channel)(void);
@@ -66,6 +66,7 @@ struct xdf {
 	unsigned int narrays;
 	unsigned int* array_stride;	
 
+	struct xdfch* defaultch;
 	/* Data format specific behavior */
 	const struct format_operations* ops;
 	

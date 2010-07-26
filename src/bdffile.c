@@ -18,9 +18,9 @@
  ******************************************************/
 
 // BDF methods declaration
-static int bdf_set_channel(struct xdfch*, enum xdfchfield,
+static int bdf_set_channel(struct xdfch*, enum xdffield,
                            union optval, int);
-static int bdf_get_channel(const struct xdfch*, enum xdfchfield,
+static int bdf_get_channel(const struct xdfch*, enum xdffield,
                            union optval*, int);
 static int bdf_copy_chconf(struct xdfch*, const struct xdfch*);
 static struct xdfch* bdf_alloc_channel(void);
@@ -34,14 +34,6 @@ static int bdf_read_header(struct xdf*);
 static int bdf_complete_file(struct xdf*);
 static void bdf_free_file(struct xdf*);
 
-// BDF file structure
-struct bdf_file {
-	struct xdf xdf;
-	char subj_ident[81];
-	char rec_ident[81];
-	struct tm rectime;
-};
-
 // BDF channel structure
 struct bdf_channel {
 	struct xdfch xdfch;
@@ -50,6 +42,15 @@ struct bdf_channel {
 	char unit[9];
 	char prefiltering[81];
 	char reserved[33];
+};
+
+// BDF file structure
+struct bdf_file {
+	struct xdf xdf;
+	struct bdf_channel default_bdfch;
+	char subj_ident[81];
+	char rec_ident[81];
+	struct tm rectime;
 };
 
 #define NUMREC_FIELD_LOC 236
@@ -82,6 +83,17 @@ static const struct format_operations bdf_ops = {
 
 static const unsigned char bdf_magickey[] = {255, 'B', 'I', 'O', 'S', 'E', 'M', 'I'};
 
+static const struct bdf_channel bdfch_def = {
+	.xdfch = {
+		.iarray = 0,
+		.offset = 0,
+		.infiletype = XDFINT24,
+		.inmemtype = XDFINT32,
+		.digital_inmem = 0,
+		.digital_mm = {-8388608.0, 8388607.0},
+		.physical_mm = {-8388608.0, 8388607.0},
+	}
+};
 
 /******************************************************
  *            BDF file support implementation         *
@@ -98,8 +110,11 @@ struct xdf* xdf_alloc_bdffile(void)
 		return NULL;
 
 	bdf->xdf.ops = &bdf_ops;
+	bdf->xdf.defaultch = &(bdf->default_bdfch.xdfch);
 
 	// Set good default for the file format
+	memcpy(&(bdf->default_bdfch), &bdfch_def, sizeof(bdfch_def));
+	bdf->default_bdfch.xdfch.owner = &(bdf->xdf);
 	bdf->xdf.rec_duration = 1.0;
 	
 	return &(bdf->xdf);
@@ -129,7 +144,7 @@ int xdf_is_bdffile(const unsigned char* magickey)
  * BDF METHOD.
  * Change the configuration field value of the channel according to val
  */
-static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval val, int prevretval)
+static int bdf_set_channel(struct xdfch* ch, enum xdffield field, union optval val, int prevretval)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
 	int retval = 0;
@@ -161,7 +176,7 @@ static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval
  * BDF METHOD.
  * Get the configuration field value of the channel and assign it to val
  */
-static int bdf_get_channel(const struct xdfch* ch, enum xdfchfield
+static int bdf_get_channel(const struct xdfch* ch, enum xdffield
 field, union optval *val, int prevretval)
 {
 	struct bdf_channel* bdfch = get_bdfch(ch);
@@ -200,13 +215,30 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 	unsigned int offset, index, digital_inmem;
 	const char *label, *unit, *transducter, *filtinfo, *reserved;
 
-	xdf_get_chconf(src, XDF_CF_PMIN, &pmin,
+	// Fast copy if they are of the same type
+	if (src->owner->ops == dst->owner->ops) {
+		struct bdf_channel* bdfsrc = get_bdfch(src);
+		struct bdf_channel* bdfdst = get_bdfch(dst);
+		struct xdfch* next = dst->next;
+		struct xdf* owner = dst->owner;
+
+		memcpy(bdfdst, bdfsrc, sizeof(*bdfsrc));
+
+		// Channel specific data
+		dst->owner = owner;
+		dst->next = next;
+
+		return 0;
+	}
+
+	xdf_get_chconf(src, 
+			XDF_CF_ARRTYPE, &ta,
+			XDF_CF_PMIN, &pmin,
 			XDF_CF_PMAX, &pmax,
+			XDF_CF_STOTYPE, &ts,
 			XDF_CF_DMIN, &dmin,
 			XDF_CF_DMAX, &dmax,
 			XDF_CF_ARRDIGITAL, &digital_inmem,
-			XDF_CF_STOTYPE, &ts,
-			XDF_CF_ARRTYPE, &ta,
 			XDF_CF_ARROFFSET, &offset,
 			XDF_CF_ARRINDEX, &index,
 			XDF_CF_LABEL, &label,
@@ -214,15 +246,16 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 			XDF_CF_TRANSDUCTER, &transducter,
 			XDF_CF_PREFILTERING, &filtinfo,
 			XDF_CF_RESERVED, &reserved,
-			XDF_CF_NONE);
+			XDF_NOF);
 
-	xdf_set_chconf(dst, XDF_CF_PMIN, pmin,
+	xdf_set_chconf(dst,
+			XDF_CF_ARRTYPE, ta,
+			XDF_CF_PMIN, pmin,
 			XDF_CF_PMAX, pmax,
+			XDF_CF_STOTYPE, ts,
 			XDF_CF_DMIN, dmin,
 			XDF_CF_DMAX, dmax,
 			XDF_CF_ARRDIGITAL, digital_inmem,
-			XDF_CF_STOTYPE, ts,
-			XDF_CF_ARRTYPE, ta,
 			XDF_CF_ARROFFSET, offset,
 			XDF_CF_ARRINDEX, index,
 			XDF_CF_LABEL, label,
@@ -230,7 +263,7 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 			XDF_CF_TRANSDUCTER, transducter,
 			XDF_CF_PREFILTERING, filtinfo,
 			XDF_CF_RESERVED, reserved,
-			XDF_CF_NONE);
+			XDF_NOF);
 
 	return 0;
 }
@@ -326,16 +359,16 @@ static int bdf_copy_conf(struct xdf* dst, const struct xdf* src)
 	const char *subj, *rec;
 
 	xdf_get_conf(src, XDF_F_REC_DURATION, &recduration,
-				XDF_F_NSAMPLE_PER_RECORD, &ns_rec,
+				XDF_F_REC_NSAMPLE, &ns_rec,
 				XDF_F_SUBJ_DESC, &subj,
 				XDF_F_SESS_DESC, &rec,
-				XDF_F_NONE);
+				XDF_NOF);
 
 	xdf_set_conf(dst, XDF_F_REC_DURATION, recduration,
-				XDF_F_NSAMPLE_PER_RECORD, ns_rec,
+				XDF_F_REC_NSAMPLE, ns_rec,
 				XDF_F_SUBJ_DESC, subj,
 				XDF_F_SESS_DESC, rec,
-				XDF_F_NONE);
+				XDF_NOF);
 
 	return 0;
 }

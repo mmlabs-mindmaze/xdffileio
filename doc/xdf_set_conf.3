@@ -17,27 +17,39 @@ header) of xDF file referenced by \fIxdf\fP according to the variable list
 of argument. This list is composed of successive couple grouping one
 variable of type enum xdffield defining the feature to be set and a value
 whose type depends on the previous field type. The list \fBmust finish\fP by
-\fBXDF_F_NONE\fP.
+\fBXDF_NOF\fP.
 .LP
 \fBxdf_get_conf\fP() gets the configuration of the channel referenced by
 \fIxdf\fP according to the variable list of argument. The variable list is
-the same list terminated by \fBXDF_CF_NONE\fP as for
+the same list terminated by \fBXDF_NOF\fP as for
 \fBxdf_set_conf\fP() excepting that the second part of the couple is not
 that value but a \fBpointer to the value\fP.
 .LP
-Here is the list of admissible value. The type of value expected is provided
-in the parenthesis (the expected type of the value for \fBxdf_set_conf\fP(),
-or a pointer to this type for \fBxdf_get_conf\fP()):
+\fBxdf_set_conf\fP() accepts two types of field value. The first one are
+file configuration field (XDF_F_*) which set different aspects of the
+general configuration of the file. The second type are the channel
+configuration fields (XDF_CF_*). When used in \fBxdf_set_conf\fP(), those
+fields set the default values that will be used for the creation of the next
+channel (see \fBxdf_add_channel\fP(3)). The list of channel configuration
+fields and their meaning are specified in the documentation of
+\fBxdf_set_chconf\fP(3).
+.LP
+Here is the list of file configuration field value. The type of value
+expected is provided in the parenthesis (the expected type of the value for
+\fBxdf_set_conf\fP(), or a pointer to this type for \fBxdf_get_conf\fP()):
 .TP 7
 \fBXDF_F_REC_DURATION\fP (double)
 Specify the duration of one record. The value should be positive.
 .TP 7
-\fBXDF_F_NSAMPLE_PER_RECORD\fP (int)
+\fBXDF_F_REC_NSAMPLE\fP (int)
 Specify the number of time points contained in each record. The value should
-be positive.
+be positive. Setting the number of sample per record modifies the sampling
+frequency (field \fBXDF_SAMPLING_FREQ\fP).
 .TP 7
 \fBXDF_F_SAMPLING_FREQ\fP (int)
-Get or set the sampling frequency of the recording.
+Get or set the sampling frequency of the recording. Setting the sampling
+frequency modifies the number of sample per record (field
+\fBXDF_F_REC_NSAMPLE).
 .TP 7
 \fBXDF_F_NCHANNEL\fP (int)  (get function only)
 Get the number of channel in the file.
@@ -73,17 +85,20 @@ const char *subjstr, *sessstr;
 
 xdf_get_conf(xdfr, XDF_F_SUBJ_DESC, &subjstr,
                    XDF_F_SESS_DESC, &sessstr,
-                   XDF_F_NONE);
+                   XDF_NOF);
 
 printf("subject: %s\\nrecording: %s\\n", subjstr, sessstr);
 
 xdf_set_conf(xdfw, XDF_F_SUBJ_DESC, subjstr,
                    XDF_F_SESS_DESC, sessstr,
-                   XDF_F_NONE);
+                   XDF_NOF);
 \fP
 .fi
 .RE
 .SH "SEE ALSO"
-.BR xdf_copy_conf (3)
+.BR xdf_copy_conf (3),
+.BR xdf_set_chconf (3),
+.BR xdf_add_channel (3)
+
 
 

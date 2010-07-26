@@ -7,21 +7,21 @@ channel descriptor handle
 .LP
 .B #include <xdfio.h>
 .sp
-.BI "int xdf_set_chconf(struct xdfch* " ch ", enum xdfchfield " field ", ...);"
+.BI "int xdf_set_chconf(struct xdfch* " ch ", enum xdffield " field ", ...);"
 .br
-.BI "int xdf_get_chconf(const struct xdfch* " ch ", enum xdfchfield " field ", ...);"
+.BI "int xdf_get_chconf(const struct xdfch* " ch ", enum xdffield " field ", ...);"
 .br
 .SH DESCRIPTION
 .LP
 \fBxdf_set_chconf\fP() sets the configuration of the channel referenced
 by \fIch\fP according to the variable list of argument. This list is
-composed of successive couple grouping one variable of type enum xdfchfield
+composed of successive couple grouping one variable of type enum xdffield
 defining the feature to be set and a value whose type depends on the
-previous field type. The list \fBmust finish\fP by \fBXDF_CF_NONE\fP.
+previous field type. The list \fBmust finish\fP by \fBXDF_NOF\fP.
 .LP
 \fBxdf_get_chconf\fP() gets the configuration of the channel referenced
 by \fIch\fP according to the variable list of argument. The variable list is
-the same list terminated by \fBXDF_CF_NONE\fP as for
+the same list terminated by \fBXDF_NOF\fP as for
 \fBxdf_set_chconf\fP() excepting that the second part of the couple is not
 that value but a \fBpointer to the value\fP.
 .LP
@@ -83,7 +83,7 @@ The two functions returns 0 in case of success. Otherwise -1 is returned and
 .TP 7
 .B EINVAL
 \fIch\fP is NULL or \fIfield\fP is not a proper value of the enumeration
-xdfchfield
+xdffield
 .TP 7
 .B EPERM
 The request submitted to \fBxdf_set_chconf\fP() is not allowed for this
@@ -103,7 +103,7 @@ hchxdf ch = xdf_add_channel(xdf);
 xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray,
                         XDF_CF_ARROFFSET, offset,
                         XDF_CF_LABEL, label,
-                        XDF_CF_NONE);
+                        XDF_NOF);
 \fP
 .fi
 .RE
@@ -121,7 +121,7 @@ hchxdf ch = xdf_get_channel(xdf, 1);
 xdf_get_chconf(ch, XDF_CF_ARRINDEX, &iarray,
                         XDF_CF_ARROFFSET, &offset,
                         XDF_CF_LABEL, &label,
-                        XDF_CF_NONE);
+                        XDF_NOF);
 
 printf("iarray = %u\\n", iarray);
 printf("offset = %u\\n", offset);

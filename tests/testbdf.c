@@ -17,9 +17,7 @@
 #define NTRI	1
 #define scaled_t	float
 static const enum xdftype arrtype = XDFFLOAT;
-static const enum xdftype sttype = XDFINT24;
-static const enum xdftype trigsttype = XDFUINT24;
-static const enum xdftype trigarrtype = XDFUINT32;
+static const enum xdftype trigarrtype = XDFINT32;
 
 int TestResultingFile(const char* testfilename, const char* reffilename)
 {
@@ -71,7 +69,7 @@ int TestResultingFile(const char* testfilename, const char* reffilename)
 }
 
 
-void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, uint32_t* tridata, int seed)
+void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, int32_t* tridata, int seed)
 {
 	int i,j;
 	static int isample = 0;
@@ -91,53 +89,38 @@ void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, uint32_t* tridata, in
 	isample += NSAMPLE;
 }
 
-int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind)
-{
-	struct xdfch* ch;
-	if (!(ch = xdf_add_channel(xdf)))
-		return -1;
 
-	xdf_set_chconf(ch, 
+static int set_default_analog(struct xdf* xdf, int arrindex)
+{
+	xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, arrtype,
-		XDF_CF_STOTYPE, sttype,
-		XDF_CF_ARRINDEX, iarr,
-		XDF_CF_ARROFFSET, (ind*sizeof(scaled_t)),
-		XDF_CF_LABEL, label,
+		XDF_CF_ARRINDEX, arrindex,
+		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Active Electrode",
 		XDF_CF_PREFILTERING, "HP: DC; LP: 417 Hz",
 		XDF_CF_PMIN, -262144.0,
 		XDF_CF_PMAX, 262143.0,
-		XDF_CF_DMIN, -8388608.0,
-		XDF_CF_DMAX, 8388607.0,
 		XDF_CF_UNIT, "uV",
 		XDF_CF_RESERVED, "EEG",
-		XDF_CF_NONE);
-
+		XDF_NOF);
+	
 	return 0;
 }
 
-int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
+static int set_default_trigger(struct xdf* xdf, int arrindex)
 {
-	struct xdfch* ch;
-	if (!(ch = xdf_add_channel(xdf)))
-		return -1;
-
-	xdf_set_chconf(ch, 
+	xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, trigarrtype,
-		XDF_CF_STOTYPE, trigsttype,
-		XDF_CF_ARRINDEX, iarr,
-		XDF_CF_ARROFFSET, (ind*sizeof(uint32_t)),
-		XDF_CF_LABEL, label,
+		XDF_CF_ARRINDEX, arrindex,
+		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Triggers and Status",
 		XDF_CF_PREFILTERING, "No filtering",
 		XDF_CF_PMIN, -8388608.0,
 		XDF_CF_PMAX, 8388607.0,
-		XDF_CF_DMIN, -8388608.0,
-		XDF_CF_DMAX, 8388607.0,
 		XDF_CF_UNIT, "Boolean",
 		XDF_CF_RESERVED, "TRI",
-		XDF_CF_NONE);
-
+		XDF_NOF);
+	
 	return 0;
 }
 
@@ -145,7 +128,7 @@ int generate_xdffile(const char* filename)
 {
 	scaled_t* eegdata;
 	scaled_t* exgdata;
-	uint32_t* tridata;
+	int32_t* tridata;
 	int phase;
 	struct xdf* xdf = NULL;
 	int i,j;
@@ -174,23 +157,25 @@ int generate_xdffile(const char* filename)
 	
 	// Specify the structure (channels and sampling rate)
 	phase--;
-	xdf_set_conf(xdf, XDF_F_REC_DURATION, (double)1.0,
-			  XDF_F_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
-			  XDF_F_NONE);
-
+	xdf_set_conf(xdf, XDF_F_SAMPLING_FREQ, (int)SAMPLINGRATE, XDF_NOF);
+	set_default_analog(xdf, 0);
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);
-		if (add_activeelec_channel(xdf, tmpstr, 0, j) < 0)
+		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
+
+	xdf_set_conf(xdf, XDF_CF_ARRINDEX, 1, XDF_CF_ARROFFSET, 0, XDF_NOF);
 	for (j=0; j<NEXG; j++) {
 		sprintf(tmpstr, "EXG%i", j);
-		if (add_activeelec_channel(xdf, tmpstr, 1, j) < 0)
+		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
+
+	set_default_trigger(xdf, 2);
 	for (j=0; j<NTRI; j++) {
 		sprintf(tmpstr, "TRI%i", j);
-		if (add_trigger_channel(xdf, tmpstr, 2, j) < 0)
+		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
@@ -242,26 +227,26 @@ int copy_xdffile(char genfilename[], char reffilename[])
 	xdf_copy_conf(dst, src);
 	offset = 0;
 	while ((srcch = xdf_get_channel(src, ich))) {
-		dstch = xdf_add_channel(dst);
+		dstch = xdf_add_channel(dst, NULL);
 		if (ich != NEEG+NEXG) {
 			xdf_set_chconf(srcch, 
 			            XDF_CF_ARRDIGITAL, 0,
 		                    XDF_CF_ARRTYPE, XDFFLOAT,
 				    XDF_CF_ARROFFSET, offset,
-				    XDF_CF_NONE);
+				    XDF_NOF);
 			offset += sizeof(float);
 		} else {
 			xdf_set_chconf(srcch, 
 			            XDF_CF_ARRDIGITAL, 0,
 		                    XDF_CF_ARRTYPE, XDFINT32,
 				    XDF_CF_ARROFFSET, offset,
-				    XDF_CF_NONE);
+				    XDF_NOF);
 			offset += sizeof(int32_t);
 		}
 		xdf_copy_chconf(dstch, srcch);
 		ich++;
 	}
-	xdf_get_conf(src, XDF_F_NCHANNEL, &nch, XDF_F_NONE);
+	xdf_get_conf(src, XDF_F_NCHANNEL, &nch, XDF_NOF);
 	if (nch != (int)ich) {
 		fprintf(stderr, "\tich=%u, nch=%i\n", ich, nch);
 		return 1;

@@ -35,21 +35,23 @@ enum xdffiletype
 	XDF_GDF
 };
 
+#define XDF_F_FIRST	1
+#define XDF_CF_FIRST	10001
+
 enum xdffield
 {
-	XDF_F_NONE = 0,
-	XDF_F_REC_DURATION,		/* double      */
-	XDF_F_NSAMPLE_PER_RECORD,	/* int         */
+	XDF_NOF = 0,
+
+	/* File configuration field */
+	XDF_F_REC_DURATION = XDF_F_FIRST,/* double      */
+	XDF_F_REC_NSAMPLE,		/* int         */
 	XDF_F_SAMPLING_FREQ,		/* int         */
 	XDF_F_NCHANNEL,			/* int         */
 	XDF_F_SUBJ_DESC,		/* const char* */
-	XDF_F_SESS_DESC			/* const char* */
-};
+	XDF_F_SESS_DESC,		/* const char* */
 
-enum xdfchfield
-{
-	XDF_CF_NONE = 0,
-	XDF_CF_ARRINDEX,	/* int		*/
+	/* Channel configuration fields */
+	XDF_CF_ARRINDEX = XDF_CF_FIRST,/* int		*/
 	XDF_CF_ARROFFSET,	/* int 		*/
 	XDF_CF_ARRDIGITAL,	/* int		*/
 	XDF_CF_ARRTYPE,		/* enum xdftype */
@@ -80,9 +82,9 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
 int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
 
 struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index);
-struct xdfch* xdf_add_channel(struct xdf* xdf);
-int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...);
-int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...);
+struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
+int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
+int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...);
 int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
 int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);

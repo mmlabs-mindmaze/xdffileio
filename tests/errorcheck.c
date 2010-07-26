@@ -95,7 +95,7 @@ void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, uint32_t* tridata, in
 int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 {
 	struct xdfch* ch;
-	if (!(ch = xdf_add_channel(xdf)))
+	if (!(ch = xdf_add_channel(xdf, NULL)))
 		return -1;
 
 	xdf_set_chconf(ch, 
@@ -112,7 +112,7 @@ int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind
 		XDF_CF_DMAX, 8388607.0,
 		XDF_CF_UNIT, "uV",
 		XDF_CF_RESERVED, "EEG",
-		XDF_CF_NONE);
+		XDF_NOF);
 
 	return 0;
 }
@@ -120,7 +120,7 @@ int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind
 int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 {
 	struct xdfch* ch;
-	if (!(ch = xdf_add_channel(xdf)))
+	if (!(ch = xdf_add_channel(xdf, NULL)))
 		return -1;
 
 	xdf_set_chconf(ch, 
@@ -137,7 +137,7 @@ int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 		XDF_CF_DMAX, 8388607.0,
 		XDF_CF_UNIT, "Boolean",
 		XDF_CF_RESERVED, "TRI",
-		XDF_CF_NONE);
+		XDF_NOF);
 
 	return 0;
 }
@@ -178,8 +178,8 @@ int generate_xdffile(const char* filename, unsigned int fsize)
 	// Specify the structure (channels and sampling rate)
 	phase--;
 	xdf_set_conf(xdf, XDF_F_REC_DURATION, (double)1.0,
-			  XDF_F_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
-			  XDF_F_NONE);
+			  XDF_F_REC_NSAMPLE, (int)SAMPLINGRATE,
+			  XDF_NOF);
 
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);
