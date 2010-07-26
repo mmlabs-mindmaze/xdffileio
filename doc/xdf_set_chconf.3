@@ -17,11 +17,11 @@ channel descriptor handle
 by \fIch\fP according to the variable list of argument. This list is
 composed of successive couple grouping one variable of type enum xdfchfield
 defining the feature to be set and a value whose type depends on the
-previous field type. The list \fBmust finish\fP by i\fBXDF_CHFIELD_NONE\fP.
+previous field type. The list \fBmust finish\fP by \fBXDF_CF_NONE\fP.
 .LP
 \fBxdf_get_chconf\fP() gets the configuration of the channel referenced
 by \fIch\fP according to the variable list of argument. The variable list is
-the same list terminated by \fBXDF_CHFIELD_NONE\fP as for
+the same list terminated by \fBXDF_CF_NONE\fP as for
 \fBxdf_set_chconf\fP() excepting that the second part of the couple is not
 that value but a \fBpointer to the value\fP.
 .LP
@@ -30,49 +30,49 @@ in the parenthesis (the expected type of the value for
 \fBxdf_set_chconf\fP(), or a pointer to this type for
 \fBxdf_get_chconf\fP()):
 .TP 7
-\fBXDF_CHFIELD_ARRAY_INDEX\fP (int)
+\fBXDF_CF_ARRINDEX\fP (int)
 Specify the array from/to which the channel value should be transfered. If
 the mode of the file is \fBXDF_READ\fP and the value is negative, the
 channel will not be read. If the mode is \fBXDF_WRITE\fP and the value is
 negative, the function will fail.
 .TP 7
-\fBXDF_CHFIELD_ARRAY_OFFSET\fP (int)
+\fBXDF_CF_ARROFFSET\fP (int)
 Specify the offset in the array from/to which the channel value should be
 transfered.
 .TP 7
-\fBXDF_CHFIELD_ARRAY_DIGITAL\fP (int)
+\fBXDF_CF_ARRDIGITAL\fP (int)
 Indicate that the data in the array from/to which the channel value should be
 transfered is provided in digital unit. This means in practice that no scaling
 is performed during the transfer from/to the disk (non zero indicate no
 scaling).
 .TP 7
-\fBXDF_CHFIELD_ARRAY_TYPE\fP (enum xdftype)
+\fBXDF_CF_ARRTYPE\fP (enum xdftype)
 specify the type in the channel should casted to/from when accessed in the
 array.
 .TP 7
-\fBXDF_CHFIELD_STORED_TYPE\fP (enum xdftype)
+\fBXDF_CF_STOTYPE\fP (enum xdftype)
 Specify the type stored in the file of the channel value. If the XDF file
 has been opened in XDF_READ, this field can only be get, i.e. cannot be set
 by \fBxdf_set_chconf\fP().
 .TP 7
-\fBXDF_CHFIELD_STORED_LABEL\fP (const char*)
+\fBXDF_CF_LABEL\fP (const char*)
 Set/get the label of the channel. This field cannot be set if the XDF file
 is in mode XDF_READ.
 .TP 7
-\fBXDF_CHFIELD_PHYSICAL_MIN\fP (double)
+\fBXDF_CF_PMIN\fP (double)
 Set/get the minimal value that a physical value can get. Cannot be set if
 XDF_READ.
 .TP 7
-\fBXDF_CHFIELD_PHYSICAL_MAX\fP (double)
+\fBXDF_CF_PMAX\fP (double)
 Set/get the maximal value that a physical value can get. Cannot be set if
 XDF_READ.
 ertza
 .TP 7
-\fBXDF_CHFIELD_DIGITAL_MIN\fP (double)
+\fBXDF_CF_DMIN\fP (double)
 Set/get the minimal value that a digital value can get. Cannot be set if
 XDF_READ.
 .TP 7
-\fBXDF_CHFIELD_DIGITAL_MAX\fP (double)
+\fBXDF_CF_DMAX\fP (double)
 Set/get the maximal value that a digital value can get. Cannot be set if
 XDF_READ.
 .SH "RETURN VALUE"
@@ -100,10 +100,10 @@ unsigned int iarray = 2, offset = 0;
 const char[] label = "Channel EEG";
 
 hchxdf ch = xdf_add_channel(xdf);
-xdf_set_chconf(ch, XDF_CHFIELD_ARRAY_INDEX, iarray,
-                        XDF_CHFIELD_ARRAY_OFFSET, offset,
-                        XDF_CHFIELD_STORED_LABEL, label,
-                        XDF_CHFIELD_NONE);
+xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray,
+                        XDF_CF_ARROFFSET, offset,
+                        XDF_CF_LABEL, label,
+                        XDF_CF_NONE);
 \fP
 .fi
 .RE
@@ -118,10 +118,10 @@ unsigned int iarray, offset;
 const char[128] label;
 
 hchxdf ch = xdf_get_channel(xdf, 1);
-xdf_get_chconf(ch, XDF_CHFIELD_ARRAY_INDEX, &iarray,
-                        XDF_CHFIELD_ARRAY_OFFSET, &offset,
-                        XDF_CHFIELD_STORED_LABEL, &label,
-                        XDF_CHFIELD_NONE);
+xdf_get_chconf(ch, XDF_CF_ARRINDEX, &iarray,
+                        XDF_CF_ARROFFSET, &offset,
+                        XDF_CF_LABEL, &label,
+                        XDF_CF_NONE);
 
 printf("iarray = %u\\n", iarray);
 printf("offset = %u\\n", offset);

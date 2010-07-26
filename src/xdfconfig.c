@@ -25,30 +25,30 @@ struct opt_detail
 };
 
 static const struct opt_detail opts_ch_table[] = {
-	{XDF_CHFIELD_ARRAY_INDEX, TYPE_INT},
-	{XDF_CHFIELD_ARRAY_OFFSET, TYPE_INT},
-	{XDF_CHFIELD_ARRAY_DIGITAL, TYPE_INT},
-	{XDF_CHFIELD_ARRAY_TYPE, TYPE_DATATYPE},
-	{XDF_CHFIELD_STORED_TYPE, TYPE_DATATYPE},
-	{XDF_CHFIELD_LABEL, TYPE_STRING},
-	{XDF_CHFIELD_PHYSICAL_MIN, TYPE_DOUBLE},
-	{XDF_CHFIELD_PHYSICAL_MAX, TYPE_DOUBLE}, 
-	{XDF_CHFIELD_DIGITAL_MIN, TYPE_DOUBLE},	
-	{XDF_CHFIELD_DIGITAL_MAX, TYPE_DOUBLE},
-	{XDF_CHFIELD_UNIT, TYPE_STRING},
-	{XDF_CHFIELD_TRANSDUCTER, TYPE_STRING},
-	{XDF_CHFIELD_PREFILTERING, TYPE_STRING},
-	{XDF_CHFIELD_RESERVED, TYPE_STRING},
+	{XDF_CF_ARRINDEX, TYPE_INT},
+	{XDF_CF_ARROFFSET, TYPE_INT},
+	{XDF_CF_ARRDIGITAL, TYPE_INT},
+	{XDF_CF_ARRTYPE, TYPE_DATATYPE},
+	{XDF_CF_STOTYPE, TYPE_DATATYPE},
+	{XDF_CF_LABEL, TYPE_STRING},
+	{XDF_CF_PMIN, TYPE_DOUBLE},
+	{XDF_CF_PMAX, TYPE_DOUBLE}, 
+	{XDF_CF_DMIN, TYPE_DOUBLE},	
+	{XDF_CF_DMAX, TYPE_DOUBLE},
+	{XDF_CF_UNIT, TYPE_STRING},
+	{XDF_CF_TRANSDUCTER, TYPE_STRING},
+	{XDF_CF_PREFILTERING, TYPE_STRING},
+	{XDF_CF_RESERVED, TYPE_STRING},
 };
 #define num_opts_ch	(sizeof(opts_ch_table)/sizeof(opts_ch_table[0]))
 
 static const struct opt_detail opts_info_table[] = {
-	{XDF_FIELD_RECORD_DURATION, TYPE_DOUBLE},
-	{XDF_FIELD_NSAMPLE_PER_RECORD, TYPE_INT},
-	{XDF_FIELD_SAMPLING_FREQ, TYPE_INT},
-	{XDF_FIELD_NCHANNEL, TYPE_INT},
-	{XDF_FIELD_SUBJ_DESC, TYPE_STRING},
-	{XDF_FIELD_REC_DESC, TYPE_STRING},
+	{XDF_F_REC_DURATION, TYPE_DOUBLE},
+	{XDF_F_NSAMPLE_PER_RECORD, TYPE_INT},
+	{XDF_F_SAMPLING_FREQ, TYPE_INT},
+	{XDF_F_NCHANNEL, TYPE_INT},
+	{XDF_F_SUBJ_DESC, TYPE_STRING},
+	{XDF_F_SESS_DESC, TYPE_STRING},
 };
 #define num_opts_info	(sizeof(opts_info_table)/sizeof(opts_info_table[0]))
 
@@ -301,27 +301,27 @@ field, union optval val)
 {
 	int retval = 0;
 
-	if (field == XDF_CHFIELD_DIGITAL_MIN)
+	if (field == XDF_CF_DMIN)
 		ch->digital_mm[0] = val.d;
-	else if (field == XDF_CHFIELD_DIGITAL_MAX)
+	else if (field == XDF_CF_DMAX)
 		ch->digital_mm[1] = val.d;
-	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
+	else if (field == XDF_CF_PMIN)
 		ch->physical_mm[0] = val.d;
-	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
+	else if (field == XDF_CF_PMAX)
 		ch->physical_mm[1] = val.d;
-	else if (field == XDF_CHFIELD_ARRAY_INDEX) {
+	else if (field == XDF_CF_ARRINDEX) {
 		if ((val.i < 0) && (ch->owner->mode == XDF_WRITE)) 
 			retval = xdf_set_error(EPERM);
 		else
 			ch->iarray = val.i;
 	}
-	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
+	else if (field == XDF_CF_ARROFFSET)
 		ch->offset = val.i;
-	else if (field == XDF_CHFIELD_ARRAY_TYPE)
+	else if (field == XDF_CF_ARRTYPE)
 		ch->inmemtype = val.i;
-	else if (field == XDF_CHFIELD_ARRAY_DIGITAL)
+	else if (field == XDF_CF_ARRDIGITAL)
 		ch->digital_inmem = val.i;
-	else if (field == XDF_CHFIELD_STORED_TYPE)
+	else if (field == XDF_CF_STOTYPE)
 		ch->infiletype = val.i;
 	else
 		retval = 1;
@@ -331,17 +331,17 @@ field, union optval val)
 
 /* \param ch	pointer to a channel of a xdf file
  * \param field	identifier of the field to be set
- * \param other	list of couple (field val) terminated by XDF_CHFIELD_NONE
+ * \param other	list of couple (field val) terminated by XDF_CF_NONE
  *
  * API FUNCTION
  * Set the configuration of a channel according to a list of couple of
  * (enum xdfchfield, value pointer) that should be terminated by
- * XDF_CHFIELD_NONE.
+ * XDF_CF_NONE.
  *
  * Example:
- *    xdf_set_chconf(ch, XDF_CHFIELD_DIGITAL_MIN, min,
- *                       XDF_CHFIELD_DIGITAL_MAX, max,
- *                       XDF_CHFIELD_NONE);
+ *    xdf_set_chconf(ch, XDF_CF_DMIN, min,
+ *                       XDF_CF_DMAX, max,
+ *                       XDF_CF_NONE);
  */
 int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 {
@@ -353,7 +353,7 @@ int xdf_set_chconf(struct xdfch* ch, enum xdfchfield field, ...)
 		return xdf_set_error(EINVAL);
 
 	va_start(ap, field);
-	while (field != XDF_CHFIELD_NONE) {
+	while (field != XDF_CF_NONE) {
 		argtype = get_ch_opt_type(field);
 
 		// Assign the correct value type given the field
@@ -402,23 +402,23 @@ field, union optval* val)
 {
 	int retval = 0;
 
-	if (field == XDF_CHFIELD_DIGITAL_MIN)
+	if (field == XDF_CF_DMIN)
 		val->d = ch->digital_mm[0];
-	else if (field == XDF_CHFIELD_DIGITAL_MAX)
+	else if (field == XDF_CF_DMAX)
 		val->d = ch->digital_mm[1];
-	else if (field == XDF_CHFIELD_PHYSICAL_MIN)
+	else if (field == XDF_CF_PMIN)
 		val->d = ch->physical_mm[0];
-	else if (field == XDF_CHFIELD_PHYSICAL_MAX)
+	else if (field == XDF_CF_PMAX)
 		val->d = ch->physical_mm[1];
-	else if (field == XDF_CHFIELD_ARRAY_INDEX)
+	else if (field == XDF_CF_ARRINDEX)
 		val->i = ch->iarray;
-	else if (field == XDF_CHFIELD_ARRAY_OFFSET)
+	else if (field == XDF_CF_ARROFFSET)
 		val->i = ch->offset;
-	else if (field == XDF_CHFIELD_ARRAY_DIGITAL)
+	else if (field == XDF_CF_ARRDIGITAL)
 		val->i = ch->digital_inmem;
-	else if (field == XDF_CHFIELD_ARRAY_TYPE)
+	else if (field == XDF_CF_ARRTYPE)
 		val->type = ch->inmemtype;
-	else if (field == XDF_CHFIELD_STORED_TYPE)
+	else if (field == XDF_CF_STOTYPE)
 		val->type = ch->infiletype;
 	else
 		retval = 1;
@@ -429,17 +429,17 @@ field, union optval* val)
 
 /* \param ch	pointer to a channel of a xdf file
  * \param field	identifier of the field to be get
- * \param other	list of couple (field val) terminated by XDF_CHFIELD_NONE
+ * \param other	list of couple (field val) terminated by XDF_CF_NONE
  *
  * API FUNCTION
  * Get the configuration of a channel according to a list of couple of
  * (enum xdfchfield, value pointer) that should be terminated by
- * XDF_CHFIELD_NONE.
+ * XDF_CF_NONE.
  *
  * Example:
- *    xdf_get_chconf(ch, XDF_CHFIELD_DIGITAL_MIN, &min,
- *                       XDF_CHFIELD_DIGITAL_MAX, &max,
- *                       XDF_CHFIELD_NONE);
+ *    xdf_get_chconf(ch, XDF_CF_DMIN, &min,
+ *                       XDF_CF_DMAX, &max,
+ *                       XDF_CF_NONE);
  */
 int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 {
@@ -451,7 +451,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdfchfield field, ...)
 		return xdf_set_error(EFAULT);
 
 	va_start(ap, field);
-	while (field != XDF_CHFIELD_NONE) {
+	while (field != XDF_CF_NONE) {
 		// Get the field value
 		rval = default_get_chconf(ch, field, &val);
 		rval = ch->owner->ops->get_channel(ch, field, &val, rval);
@@ -517,13 +517,13 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 {
 	int retval = 0;
 
-	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
+	if (field == XDF_F_NSAMPLE_PER_RECORD)
 		xdf->ns_per_rec = val.i;
-	else if (field == XDF_FIELD_SAMPLING_FREQ) 
+	else if (field == XDF_F_SAMPLING_FREQ) 
 		xdf->ns_per_rec = xdf->rec_duration*(double)(val.i);
-	else if (field == XDF_FIELD_RECORD_DURATION) 
+	else if (field == XDF_F_REC_DURATION) 
 		xdf->rec_duration = val.d;
-	else if (field == XDF_FIELD_NCHANNEL) 
+	else if (field == XDF_F_NCHANNEL) 
 		retval = xdf_set_error(EINVAL);
 	else
 		retval = 1;
@@ -537,17 +537,17 @@ static int default_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 
 /* \param xdf	pointer to a xdf file
  * \param field	identifier of the field to be set
- * \param other	list of couple (field val) terminated by XDF_FIELD_NONE
+ * \param other	list of couple (field val) terminated by XDF_F_NONE
  *
  * API_FUNCTION
  * set the configuration of a xDF file according to a list of couple of
  * (enum xdfchfield, value pointer) that should be terminated by
- * XDF_FIELD_NONE.
+ * XDF_F_NONE.
  *
  * Example:
- *    xdf_set_conf(xdf, XDF_FIELD_NSAMPLE_PER_RECORD, ns,
- *                      XDF_FIELD_RECORD_DURATION, time,
- *                      XDF_FIELD_NONE);
+ *    xdf_set_conf(xdf, XDF_F_NSAMPLE_PER_RECORD, ns,
+ *                      XDF_F_REC_DURATION, time,
+ *                      XDF_F_NONE);
  */
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
@@ -559,7 +559,7 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 		return xdf_set_error(EINVAL);
 
 	va_start(ap, field);
-	while (field != XDF_FIELD_NONE) {
+	while (field != XDF_F_NONE) {
 		argtype = get_conf_opt_type(field);
 
 		// Assign the correct value type given the field
@@ -606,13 +606,13 @@ static int default_get_conf(const struct xdf* xdf, enum xdffield field, union op
 {
 	int retval = 0;
 
-	if (field == XDF_FIELD_NSAMPLE_PER_RECORD)
+	if (field == XDF_F_NSAMPLE_PER_RECORD)
 		val->i = xdf->ns_per_rec;
-	else if (field == XDF_FIELD_SAMPLING_FREQ) 
+	else if (field == XDF_F_SAMPLING_FREQ) 
 		val->i = ((double)(xdf->ns_per_rec))/xdf->rec_duration;
-	else if (field == XDF_FIELD_RECORD_DURATION)
+	else if (field == XDF_F_REC_DURATION)
 		val->d = xdf->rec_duration;
-	else if (field == XDF_FIELD_NCHANNEL)
+	else if (field == XDF_F_NCHANNEL)
 		val->i = xdf->numch;
 	else
 		retval = 1;
@@ -623,17 +623,17 @@ static int default_get_conf(const struct xdf* xdf, enum xdffield field, union op
 
 /* \param xdf	pointer to a xdf file
  * \param field	identifier of the field to be get
- * \param other	list of couple (field val) terminated by XDF_FIELD_NONE
+ * \param other	list of couple (field val) terminated by XDF_F_NONE
  *
  * API_FUNCTION
  * Get the configuration of a xDF file according to a list of couple of
  * (enum xdfchfield, value pointer) that should be terminated by
- * XDF_FIELD_NONE.
+ * XDF_F_NONE.
  *
  * Example:
- *    xdf_get_conf(xdf, XDF_FIELD_NSAMPLE_PER_RECORD, &ns,
- *                      XDF_FIELD_RECORD_DURATION, &time,
- *                      XDF_FIELD_NONE);
+ *    xdf_get_conf(xdf, XDF_F_NSAMPLE_PER_RECORD, &ns,
+ *                      XDF_F_REC_DURATION, &time,
+ *                      XDF_F_NONE);
  */
 int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
@@ -645,7 +645,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 		return xdf_set_error(EFAULT);
 
 	va_start(ap, field);
-	while (field != XDF_FIELD_NONE) {
+	while (field != XDF_F_NONE) {
 		// Get the field value
 		rval = default_get_conf(xdf, field, &val);
 		rval = xdf->ops->get_conf(xdf, field, &val, rval);

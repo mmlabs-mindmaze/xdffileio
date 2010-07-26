@@ -37,32 +37,32 @@ enum xdffiletype
 
 enum xdffield
 {
-	XDF_FIELD_NONE = 0,
-	XDF_FIELD_RECORD_DURATION,	/* double      */
-	XDF_FIELD_NSAMPLE_PER_RECORD,	/* int         */
-	XDF_FIELD_SAMPLING_FREQ,	/* int         */
-	XDF_FIELD_NCHANNEL,		/* int         */
-	XDF_FIELD_SUBJ_DESC,		/* const char* */
-	XDF_FIELD_REC_DESC		/* const char* */
+	XDF_F_NONE = 0,
+	XDF_F_REC_DURATION,		/* double      */
+	XDF_F_NSAMPLE_PER_RECORD,	/* int         */
+	XDF_F_SAMPLING_FREQ,		/* int         */
+	XDF_F_NCHANNEL,			/* int         */
+	XDF_F_SUBJ_DESC,		/* const char* */
+	XDF_F_SESS_DESC			/* const char* */
 };
 
 enum xdfchfield
 {
-	XDF_CHFIELD_NONE = 0,
-	XDF_CHFIELD_ARRAY_INDEX,	/* int		*/
-	XDF_CHFIELD_ARRAY_OFFSET,	/* int 		*/
-	XDF_CHFIELD_ARRAY_DIGITAL,	/* int		*/
-	XDF_CHFIELD_ARRAY_TYPE,		/* enum xdftype */
-	XDF_CHFIELD_STORED_TYPE,	/* enum xdftype */
-	XDF_CHFIELD_LABEL,	        /* const char*  */
-	XDF_CHFIELD_PHYSICAL_MIN,	/* double 	*/
-	XDF_CHFIELD_PHYSICAL_MAX,	/* double 	*/
-	XDF_CHFIELD_DIGITAL_MIN,	/* double 	*/
-	XDF_CHFIELD_DIGITAL_MAX,	/* double 	*/
-	XDF_CHFIELD_UNIT,		/* const char*  */
-	XDF_CHFIELD_TRANSDUCTER,	/* const char*  */
-	XDF_CHFIELD_PREFILTERING,	/* const char*  */
-	XDF_CHFIELD_RESERVED,		/* const char*	*/
+	XDF_CF_NONE = 0,
+	XDF_CF_ARRINDEX,	/* int		*/
+	XDF_CF_ARROFFSET,	/* int 		*/
+	XDF_CF_ARRDIGITAL,	/* int		*/
+	XDF_CF_ARRTYPE,		/* enum xdftype */
+	XDF_CF_STOTYPE,		/* enum xdftype */
+	XDF_CF_LABEL,	        /* const char*  */
+	XDF_CF_PMIN,		/* double 	*/
+	XDF_CF_PMAX,		/* double 	*/
+	XDF_CF_DMIN,		/* double 	*/
+	XDF_CF_DMAX,		/* double 	*/
+	XDF_CF_UNIT,		/* const char*  */
+	XDF_CF_TRANSDUCTER,	/* const char*  */
+	XDF_CF_PREFILTERING,	/* const char*  */
+	XDF_CF_RESERVED,	/* const char*	*/
 };
 
 

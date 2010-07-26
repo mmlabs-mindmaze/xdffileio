@@ -98,20 +98,20 @@ int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind
 		return -1;
 
 	xdf_set_chconf(ch, 
-		XDF_CHFIELD_ARRAY_TYPE, arrtype,
-		XDF_CHFIELD_STORED_TYPE, sttype,
-		XDF_CHFIELD_ARRAY_INDEX, iarr,
-		XDF_CHFIELD_ARRAY_OFFSET, (ind*sizeof(scaled_t)),
-		XDF_CHFIELD_LABEL, label,
-		XDF_CHFIELD_TRANSDUCTER, "Active Electrode",
-		XDF_CHFIELD_PREFILTERING, "HP: DC; LP: 417 Hz",
-		XDF_CHFIELD_PHYSICAL_MIN, -262144.0,
-		XDF_CHFIELD_PHYSICAL_MAX, 262143.0,
-		XDF_CHFIELD_DIGITAL_MIN, -8388608.0,
-		XDF_CHFIELD_DIGITAL_MAX, 8388607.0,
-		XDF_CHFIELD_UNIT, "uV",
-		XDF_CHFIELD_RESERVED, "EEG",
-		XDF_CHFIELD_NONE);
+		XDF_CF_ARRTYPE, arrtype,
+		XDF_CF_STOTYPE, sttype,
+		XDF_CF_ARRINDEX, iarr,
+		XDF_CF_ARROFFSET, (ind*sizeof(scaled_t)),
+		XDF_CF_LABEL, label,
+		XDF_CF_TRANSDUCTER, "Active Electrode",
+		XDF_CF_PREFILTERING, "HP: DC; LP: 417 Hz",
+		XDF_CF_PMIN, -262144.0,
+		XDF_CF_PMAX, 262143.0,
+		XDF_CF_DMIN, -8388608.0,
+		XDF_CF_DMAX, 8388607.0,
+		XDF_CF_UNIT, "uV",
+		XDF_CF_RESERVED, "EEG",
+		XDF_CF_NONE);
 
 	return 0;
 }
@@ -123,20 +123,20 @@ int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 		return -1;
 
 	xdf_set_chconf(ch, 
-		XDF_CHFIELD_ARRAY_TYPE, trigarrtype,
-		XDF_CHFIELD_STORED_TYPE, trigsttype,
-		XDF_CHFIELD_ARRAY_INDEX, iarr,
-		XDF_CHFIELD_ARRAY_OFFSET, (ind*sizeof(uint32_t)),
-		XDF_CHFIELD_LABEL, label,
-		XDF_CHFIELD_TRANSDUCTER, "Triggers and Status",
-		XDF_CHFIELD_PREFILTERING, "No filtering",
-		XDF_CHFIELD_PHYSICAL_MIN, -8388608.0,
-		XDF_CHFIELD_PHYSICAL_MAX, 8388607.0,
-		XDF_CHFIELD_DIGITAL_MIN, -8388608.0,
-		XDF_CHFIELD_DIGITAL_MAX, 8388607.0,
-		XDF_CHFIELD_UNIT, "Boolean",
-		XDF_CHFIELD_RESERVED, "TRI",
-		XDF_CHFIELD_NONE);
+		XDF_CF_ARRTYPE, trigarrtype,
+		XDF_CF_STOTYPE, trigsttype,
+		XDF_CF_ARRINDEX, iarr,
+		XDF_CF_ARROFFSET, (ind*sizeof(uint32_t)),
+		XDF_CF_LABEL, label,
+		XDF_CF_TRANSDUCTER, "Triggers and Status",
+		XDF_CF_PREFILTERING, "No filtering",
+		XDF_CF_PMIN, -8388608.0,
+		XDF_CF_PMAX, 8388607.0,
+		XDF_CF_DMIN, -8388608.0,
+		XDF_CF_DMAX, 8388607.0,
+		XDF_CF_UNIT, "Boolean",
+		XDF_CF_RESERVED, "TRI",
+		XDF_CF_NONE);
 
 	return 0;
 }
@@ -174,9 +174,9 @@ int generate_xdffile(const char* filename)
 	
 	// Specify the structure (channels and sampling rate)
 	phase--;
-	xdf_set_conf(xdf, XDF_FIELD_RECORD_DURATION, (double)1.0,
-			  XDF_FIELD_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
-			  XDF_FIELD_NONE);
+	xdf_set_conf(xdf, XDF_F_REC_DURATION, (double)1.0,
+			  XDF_F_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
+			  XDF_F_NONE);
 
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);
@@ -233,24 +233,41 @@ int copy_xdffile(char genfilename[], char reffilename[])
 	int nch;
 	void* buffer;
 	ssize_t ns;
+	int offset;
 
 	src = xdf_open(reffilename, XDF_READ, XDF_BDF);
 	dst = xdf_open(genfilename, XDF_WRITE, XDF_BDF);
 
 	// Copy header and configuration
 	xdf_copy_conf(dst, src);
+	offset = 0;
 	while ((srcch = xdf_get_channel(src, ich))) {
 		dstch = xdf_add_channel(dst);
+		if (ich != NEEG+NEXG) {
+			xdf_set_chconf(srcch, 
+			            XDF_CF_ARRDIGITAL, 0,
+		                    XDF_CF_ARRTYPE, XDFFLOAT,
+				    XDF_CF_ARROFFSET, offset,
+				    XDF_CF_NONE);
+			offset += sizeof(float);
+		} else {
+			xdf_set_chconf(srcch, 
+			            XDF_CF_ARRDIGITAL, 0,
+		                    XDF_CF_ARRTYPE, XDFINT32,
+				    XDF_CF_ARROFFSET, offset,
+				    XDF_CF_NONE);
+			offset += sizeof(int32_t);
+		}
 		xdf_copy_chconf(dstch, srcch);
 		ich++;
 	}
-	xdf_get_conf(src, XDF_FIELD_NCHANNEL, &nch, XDF_FIELD_NONE);
+	xdf_get_conf(src, XDF_F_NCHANNEL, &nch, XDF_F_NONE);
 	if (nch != (int)ich) {
 		fprintf(stderr, "\tich=%u, nch=%i\n", ich, nch);
 		return 1;
 	}
 
-	samplesize = nch*3;
+	samplesize = nch*4;
 	buffer = malloc(samplesize*NSAMPLE);
 	stride[0] = samplesize;
 	xdf_define_arrays(src, 1, stride);

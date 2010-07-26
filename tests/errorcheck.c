@@ -99,20 +99,20 @@ int add_activeelec_channel(struct xdf* xdf, const char* label, int iarr, int ind
 		return -1;
 
 	xdf_set_chconf(ch, 
-		XDF_CHFIELD_ARRAY_TYPE, arrtype,
-		XDF_CHFIELD_STORED_TYPE, sttype,
-		XDF_CHFIELD_ARRAY_INDEX, iarr,
-		XDF_CHFIELD_ARRAY_OFFSET, (ind*sizeof(scaled_t)),
-		XDF_CHFIELD_LABEL, label,
-		XDF_CHFIELD_TRANSDUCTER, "Active Electrode",
-		XDF_CHFIELD_PREFILTERING, "HP: DC; LP: 417 Hz",
-		XDF_CHFIELD_PHYSICAL_MIN, -262144.0,
-		XDF_CHFIELD_PHYSICAL_MAX, 262143.0,
-		XDF_CHFIELD_DIGITAL_MIN, -8388608.0,
-		XDF_CHFIELD_DIGITAL_MAX, 8388607.0,
-		XDF_CHFIELD_UNIT, "uV",
-		XDF_CHFIELD_RESERVED, "EEG",
-		XDF_CHFIELD_NONE);
+		XDF_CF_ARRTYPE, arrtype,
+		XDF_CF_STOTYPE, sttype,
+		XDF_CF_ARRINDEX, iarr,
+		XDF_CF_ARROFFSET, (ind*sizeof(scaled_t)),
+		XDF_CF_LABEL, label,
+		XDF_CF_TRANSDUCTER, "Active Electrode",
+		XDF_CF_PREFILTERING, "HP: DC; LP: 417 Hz",
+		XDF_CF_PMIN, -262144.0,
+		XDF_CF_PMAX, 262143.0,
+		XDF_CF_DMIN, -8388608.0,
+		XDF_CF_DMAX, 8388607.0,
+		XDF_CF_UNIT, "uV",
+		XDF_CF_RESERVED, "EEG",
+		XDF_CF_NONE);
 
 	return 0;
 }
@@ -124,20 +124,20 @@ int add_trigger_channel(struct xdf* xdf, const char* label, int iarr, int ind)
 		return -1;
 
 	xdf_set_chconf(ch, 
-		XDF_CHFIELD_ARRAY_TYPE, trigarrtype,
-		XDF_CHFIELD_STORED_TYPE, trigsttype,
-		XDF_CHFIELD_ARRAY_INDEX, iarr,
-		XDF_CHFIELD_ARRAY_OFFSET, (ind*sizeof(uint32_t)),
-		XDF_CHFIELD_LABEL, label,
-		XDF_CHFIELD_TRANSDUCTER, "Triggers and Status",
-		XDF_CHFIELD_PREFILTERING, "No filtering",
-		XDF_CHFIELD_PHYSICAL_MIN, -8388608.0,
-		XDF_CHFIELD_PHYSICAL_MAX, 8388607.0,
-		XDF_CHFIELD_DIGITAL_MIN, -8388608.0,
-		XDF_CHFIELD_DIGITAL_MAX, 8388607.0,
-		XDF_CHFIELD_UNIT, "Boolean",
-		XDF_CHFIELD_RESERVED, "TRI",
-		XDF_CHFIELD_NONE);
+		XDF_CF_ARRTYPE, trigarrtype,
+		XDF_CF_STOTYPE, trigsttype,
+		XDF_CF_ARRINDEX, iarr,
+		XDF_CF_ARROFFSET, (ind*sizeof(uint32_t)),
+		XDF_CF_LABEL, label,
+		XDF_CF_TRANSDUCTER, "Triggers and Status",
+		XDF_CF_PREFILTERING, "No filtering",
+		XDF_CF_PMIN, -8388608.0,
+		XDF_CF_PMAX, 8388607.0,
+		XDF_CF_DMIN, -8388608.0,
+		XDF_CF_DMAX, 8388607.0,
+		XDF_CF_UNIT, "Boolean",
+		XDF_CF_RESERVED, "TRI",
+		XDF_CF_NONE);
 
 	return 0;
 }
@@ -177,9 +177,9 @@ int generate_xdffile(const char* filename, unsigned int fsize)
 	
 	// Specify the structure (channels and sampling rate)
 	phase--;
-	xdf_set_conf(xdf, XDF_FIELD_RECORD_DURATION, (double)1.0,
-			  XDF_FIELD_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
-			  XDF_FIELD_NONE);
+	xdf_set_conf(xdf, XDF_F_REC_DURATION, (double)1.0,
+			  XDF_F_NSAMPLE_PER_RECORD, (int)SAMPLINGRATE,
+			  XDF_F_NONE);
 
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);

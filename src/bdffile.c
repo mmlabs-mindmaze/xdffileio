@@ -137,15 +137,15 @@ static int bdf_set_channel(struct xdfch* ch, enum xdfchfield field, union optval
 	if (prevretval < 0)
 		return -1;
 
-	if (field == XDF_CHFIELD_LABEL)
+	if (field == XDF_CF_LABEL)
 		strncpy(bdfch->label, val.str, sizeof(bdfch->label)-1);
-	else if (field == XDF_CHFIELD_UNIT)
+	else if (field == XDF_CF_UNIT)
 		strncpy(bdfch->unit, val.str, sizeof(bdfch->unit)-1);
-	else if (field == XDF_CHFIELD_TRANSDUCTER)
+	else if (field == XDF_CF_TRANSDUCTER)
 		strncpy(bdfch->transducter, val.str, sizeof(bdfch->transducter)-1);
-	else if (field == XDF_CHFIELD_PREFILTERING)
+	else if (field == XDF_CF_PREFILTERING)
 		strncpy(bdfch->prefiltering, val.str, sizeof(bdfch->prefiltering)-1);
-	else if (field == XDF_CHFIELD_RESERVED)
+	else if (field == XDF_CF_RESERVED)
 		strncpy(bdfch->reserved, val.str, sizeof(bdfch->reserved)-1);
 	else
 		retval = prevretval;
@@ -170,15 +170,15 @@ field, union optval *val, int prevretval)
 	if (prevretval < 0)
 		return -1;
 
-	if (field == XDF_CHFIELD_LABEL)
+	if (field == XDF_CF_LABEL)
 		val->str = bdfch->label;
-	else if (field == XDF_CHFIELD_UNIT)
+	else if (field == XDF_CF_UNIT)
 		val->str = bdfch->unit;
-	else if (field == XDF_CHFIELD_TRANSDUCTER)
+	else if (field == XDF_CF_TRANSDUCTER)
 		val->str = bdfch->transducter;
-	else if (field == XDF_CHFIELD_PREFILTERING)
+	else if (field == XDF_CF_PREFILTERING)
 		val->str = bdfch->prefiltering;
-	else if (field == XDF_CHFIELD_RESERVED)
+	else if (field == XDF_CF_RESERVED)
 		val->str = bdfch->reserved;
 	else
 		retval = prevretval;
@@ -200,37 +200,37 @@ static int bdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 	unsigned int offset, index, digital_inmem;
 	const char *label, *unit, *transducter, *filtinfo, *reserved;
 
-	xdf_get_chconf(src, XDF_CHFIELD_PHYSICAL_MIN, &pmin,
-			XDF_CHFIELD_PHYSICAL_MAX, &pmax,
-			XDF_CHFIELD_DIGITAL_MIN, &dmin,
-			XDF_CHFIELD_DIGITAL_MAX, &dmax,
-			XDF_CHFIELD_ARRAY_DIGITAL, &digital_inmem,
-			XDF_CHFIELD_STORED_TYPE, &ts,
-			XDF_CHFIELD_ARRAY_TYPE, &ta,
-			XDF_CHFIELD_ARRAY_OFFSET, &offset,
-			XDF_CHFIELD_ARRAY_INDEX, &index,
-			XDF_CHFIELD_LABEL, &label,
-			XDF_CHFIELD_UNIT, &unit,
-			XDF_CHFIELD_TRANSDUCTER, &transducter,
-			XDF_CHFIELD_PREFILTERING, &filtinfo,
-			XDF_CHFIELD_RESERVED, &reserved,
-			XDF_CHFIELD_NONE);
+	xdf_get_chconf(src, XDF_CF_PMIN, &pmin,
+			XDF_CF_PMAX, &pmax,
+			XDF_CF_DMIN, &dmin,
+			XDF_CF_DMAX, &dmax,
+			XDF_CF_ARRDIGITAL, &digital_inmem,
+			XDF_CF_STOTYPE, &ts,
+			XDF_CF_ARRTYPE, &ta,
+			XDF_CF_ARROFFSET, &offset,
+			XDF_CF_ARRINDEX, &index,
+			XDF_CF_LABEL, &label,
+			XDF_CF_UNIT, &unit,
+			XDF_CF_TRANSDUCTER, &transducter,
+			XDF_CF_PREFILTERING, &filtinfo,
+			XDF_CF_RESERVED, &reserved,
+			XDF_CF_NONE);
 
-	xdf_set_chconf(dst, XDF_CHFIELD_PHYSICAL_MIN, pmin,
-			XDF_CHFIELD_PHYSICAL_MAX, pmax,
-			XDF_CHFIELD_DIGITAL_MIN, dmin,
-			XDF_CHFIELD_DIGITAL_MAX, dmax,
-			XDF_CHFIELD_ARRAY_DIGITAL, digital_inmem,
-			XDF_CHFIELD_STORED_TYPE, ts,
-			XDF_CHFIELD_ARRAY_TYPE, ta,
-			XDF_CHFIELD_ARRAY_OFFSET, offset,
-			XDF_CHFIELD_ARRAY_INDEX, index,
-			XDF_CHFIELD_LABEL, label,
-			XDF_CHFIELD_UNIT, unit,
-			XDF_CHFIELD_TRANSDUCTER, transducter,
-			XDF_CHFIELD_PREFILTERING, filtinfo,
-			XDF_CHFIELD_RESERVED, reserved,
-			XDF_CHFIELD_NONE);
+	xdf_set_chconf(dst, XDF_CF_PMIN, pmin,
+			XDF_CF_PMAX, pmax,
+			XDF_CF_DMIN, dmin,
+			XDF_CF_DMAX, dmax,
+			XDF_CF_ARRDIGITAL, digital_inmem,
+			XDF_CF_STOTYPE, ts,
+			XDF_CF_ARRTYPE, ta,
+			XDF_CF_ARROFFSET, offset,
+			XDF_CF_ARRINDEX, index,
+			XDF_CF_LABEL, label,
+			XDF_CF_UNIT, unit,
+			XDF_CF_TRANSDUCTER, transducter,
+			XDF_CF_PREFILTERING, filtinfo,
+			XDF_CF_RESERVED, reserved,
+			XDF_CF_NONE);
 
 	return 0;
 }
@@ -277,9 +277,9 @@ optval val, int prevretval)
 	if (prevretval < 0)
 		return -1;
 
-	if (field == XDF_FIELD_SUBJ_DESC)
+	if (field == XDF_F_SUBJ_DESC)
 		strncpy(bdf->subj_ident, val.str, sizeof(bdf->subj_ident)-1);
-	else if (field == XDF_FIELD_REC_DESC)
+	else if (field == XDF_F_SESS_DESC)
 		strncpy(bdf->rec_ident, val.str, sizeof(bdf->rec_ident)-1);
 	else
 		retval = prevretval;
@@ -303,9 +303,9 @@ union optval *val, int prevretval)
 	if (prevretval < 0)
 		return -1;
 
-	if (field == XDF_FIELD_SUBJ_DESC)
+	if (field == XDF_F_SUBJ_DESC)
 		val->str = bdf->subj_ident;
-	else if (field == XDF_FIELD_REC_DESC)
+	else if (field == XDF_F_SESS_DESC)
 		val->str = bdf->rec_ident;
 	else
 		retval = prevretval;
@@ -325,17 +325,17 @@ static int bdf_copy_conf(struct xdf* dst, const struct xdf* src)
 	int ns_rec;
 	const char *subj, *rec;
 
-	xdf_get_conf(src, XDF_FIELD_RECORD_DURATION, &recduration,
-				XDF_FIELD_NSAMPLE_PER_RECORD, &ns_rec,
-				XDF_FIELD_SUBJ_DESC, &subj,
-				XDF_FIELD_REC_DESC, &rec,
-				XDF_FIELD_NONE);
+	xdf_get_conf(src, XDF_F_REC_DURATION, &recduration,
+				XDF_F_NSAMPLE_PER_RECORD, &ns_rec,
+				XDF_F_SUBJ_DESC, &subj,
+				XDF_F_SESS_DESC, &rec,
+				XDF_F_NONE);
 
-	xdf_set_conf(dst, XDF_FIELD_RECORD_DURATION, recduration,
-				XDF_FIELD_NSAMPLE_PER_RECORD, ns_rec,
-				XDF_FIELD_SUBJ_DESC, subj,
-				XDF_FIELD_REC_DESC, rec,
-				XDF_FIELD_NONE);
+	xdf_set_conf(dst, XDF_F_REC_DURATION, recduration,
+				XDF_F_NSAMPLE_PER_RECORD, ns_rec,
+				XDF_F_SUBJ_DESC, subj,
+				XDF_F_SESS_DESC, rec,
+				XDF_F_NONE);
 
 	return 0;
 }
