@@ -10,6 +10,7 @@
 #include "filecmp.h"
 #include "copy_xdf.h"
 
+#define RAMP_NS		50
 #define SAMPLINGRATE	128
 #define DURATION	13
 #define NITERATION	((SAMPLINGRATE*DURATION)/NSAMPLE)
@@ -19,26 +20,37 @@
 #define NTRI	1
 #define scaled_t	float
 static const enum xdftype arrtype = XDFFLOAT;
-static const enum xdftype trigarrtype = XDFINT32;
+static const enum xdftype trigarrtype = XDFINT16;
 off_t offskip[2] = {168, 184};
 
 
-void WriteSignalData(scaled_t* eegdata, scaled_t* exgdata, int32_t* tridata, int seed)
+void set_signal_values(scaled_t* eeg, scaled_t* exg, int16_t* tri)
 {
 	int i,j;
+	double dv;
 	static int isample = 0;
 
 	for(i=0; i<NSAMPLE; i++) {
-		for (j=0; j<NEEG; j++)	
-			eegdata[i*NEEG+j] = ((i+isample)%23)/*((j+1)*i)+seed*/;
+		for (j=0; j<NEEG; j++)	{
+			dv = ((i+isample)%RAMP_NS) / (double)(RAMP_NS-1);
+			dv = dv*UINT16_MAX + INT16_MIN;
+			eeg[i*NEEG+j] = dv / (j+1);
+		}
 	}
 	for(i=0; i<NSAMPLE; i++) {
-		for (j=0; j<NEXG; j++)	
-			exgdata[i*NEXG+j] = ((j+1)*i)+seed;
+		for (j=0; j<NEXG; j++) {	
+			dv = ((i+isample)%RAMP_NS) / (double)(RAMP_NS-1);
+			dv = dv*UINT16_MAX + INT16_MIN;
+			exg[i*NEXG+j] = dv + (j+1+NEEG);
+		}
 	}
 	for(i=0; i<NSAMPLE; i++) {
-		for (j=0; j<NTRI; j++)	
-			tridata[i*NTRI+j] = (((i+isample)%10 == 0)?6:0);
+		for (j=0; j<NTRI; j++) {
+			tri[i*NTRI+j] = 0;
+			if ((i+isample) % RAMP_NS == 0)
+				tri[i*NTRI+j] = (((i+isample)/RAMP_NS) % 2
+				                 ? -256 : 256);
+		}
 	}
 	isample += NSAMPLE;
 }
@@ -52,8 +64,8 @@ static int set_default_analog(struct xdf* xdf, int arrindex)
 		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Active Electrode",
 		XDF_CF_PREFILTERING, "HP: DC; LP: 417 Hz",
-		XDF_CF_PMIN, -262144.0,
-		XDF_CF_PMAX, 262143.0,
+		XDF_CF_PMIN, (double)INT16_MIN,
+		XDF_CF_PMAX, (double)INT16_MAX,
 		XDF_CF_UNIT, "uV",
 		XDF_CF_RESERVED, "EEG",
 		XDF_NOF);
@@ -69,8 +81,11 @@ static int set_default_trigger(struct xdf* xdf, int arrindex)
 		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Triggers and Status",
 		XDF_CF_PREFILTERING, "No filtering",
-		XDF_CF_PMIN, -8388608.0,
-		XDF_CF_PMAX, 8388607.0,
+		XDF_CF_STOTYPE, XDFINT16,
+		XDF_CF_DMIN, (double)INT16_MIN,
+		XDF_CF_DMAX, (double)INT16_MAX,
+		XDF_CF_PMIN, (double)INT16_MIN,
+		XDF_CF_PMAX, (double)INT16_MAX,
 		XDF_CF_UNIT, "Boolean",
 		XDF_CF_RESERVED, "TRI",
 		XDF_NOF);
@@ -83,7 +98,7 @@ int generate_xdffile(const char* filename)
 {
 	scaled_t* eegdata;
 	scaled_t* exgdata;
-	int32_t* tridata;
+	int16_t* tridata;
 	int phase;
 	struct xdf* xdf = NULL;
 	int i,j;
@@ -106,7 +121,7 @@ int generate_xdffile(const char* filename)
 		
 
 	phase--;
-	xdf = xdf_open(filename, XDF_WRITE, XDF_BDF);
+	xdf = xdf_open(filename, XDF_WRITE, XDF_EDF);
 	if (!xdf) 
 		goto exit;
 	
@@ -145,7 +160,7 @@ int generate_xdffile(const char* filename)
 	phase--;
 	for (i=0; i<NITERATION; i++) {
 		// Set data signals and unscaled them
-		WriteSignalData(eegdata, exgdata, tridata, i);
+		set_signal_values(eegdata, exgdata, tridata);
 		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata) < 0)
 			goto exit;
 	}
@@ -169,18 +184,21 @@ exit:
 
 int main(int argc, char *argv[])
 {
-	int retcode = 0, keep_file = 0, opt;
-	char genfilename[] = "essaiw.bdf";
+	int retcode = 0, keep_file = 0, opt, testcopy = 1;
+	char genfilename[] = "essaiw.edf";
 	char reffilename[128];
 
-	while ((opt = getopt(argc, argv, "k")) != -1) {
+	while ((opt = getopt(argc, argv, "kc:")) != -1) {
 		switch (opt) {
 		case 'k':
 			keep_file = 1;
 			break;
+		case 'c':
+			testcopy = atoi(optarg);
+			break;
 
 		default:	/* '?' */
-			fprintf(stderr, "Usage: %s [-k]\n",
+			fprintf(stderr, "Usage: %s [-k] [-c {0/1}]\n",
 				argv[0]);
 			exit(EXIT_FAILURE);
 		}
@@ -191,8 +209,9 @@ int main(int argc, char *argv[])
 
 	// Create the filename for the reference
 	snprintf(reffilename, sizeof(reffilename),
-		 "%s/ref%u-%u-%u-%u-%u-%u-%u.bdf", getenv("srcdir"),SAMPLINGRATE, DURATION,
-		 NITERATION, NSAMPLE, NEEG, NEXG, NTRI);
+		 "%s/ref%u-%u-%u-%u-%u-%u-%u.edf", getenv("srcdir"),
+		 SAMPLINGRATE, DURATION, NITERATION, 
+		 RAMP_NS, NEEG, NEXG, NTRI);
 
 	
 	// Test generation of a file
@@ -202,11 +221,12 @@ int main(int argc, char *argv[])
 		retcode = cmp_files(genfilename, reffilename, 1, offskip);
 
 	// Test copy a file (implied reading)
-	unlink(genfilename);
-	retcode = copy_xdf(genfilename, reffilename, XDF_BDF);
-	if (!retcode)
-		retcode = cmp_files(genfilename, reffilename, 1, offskip);
-
+	if (testcopy) {
+		unlink(genfilename);
+		retcode = copy_xdf(genfilename, reffilename, XDF_EDF);
+		if (!retcode)
+			retcode = cmp_files(genfilename, reffilename, 1, offskip);
+	}
 
 	if (!keep_file)
 		unlink(genfilename);
@@ -214,4 +234,5 @@ int main(int argc, char *argv[])
 
 	return retcode;
 }
+
 

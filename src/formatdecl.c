@@ -1,6 +1,6 @@
-#include "xdffile.h"
-#include "bdf.h"
 #include <stddef.h>
+#include "xdffile.h"
+#include "ebdf.h"
 
 struct dataformat_entry {
 	enum xdffiletype type;
@@ -9,11 +9,16 @@ struct dataformat_entry {
 };
 
 // Declaration array
-struct dataformat_entry support_datafmt[] = {
+static struct dataformat_entry support_datafmt[] = {
 	{
 		.type=XDF_BDF,
 		.alloc_file = xdf_alloc_bdffile,
 		.is_same_type = xdf_is_bdffile
+	},
+	{
+		.type=XDF_EDF,
+		.alloc_file = xdf_alloc_edffile,
+		.is_same_type = xdf_is_edffile
 	}
 };
 

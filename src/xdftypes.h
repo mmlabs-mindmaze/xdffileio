@@ -1,7 +1,16 @@
 #ifndef XDFTYPES_H
 #define XDFTYPES_H
 
+#include <stdint.h>
 #include "xdfio.h"
+
+#ifndef INT24_MAX
+#define INT24_MAX	8388607
+#endif
+#ifndef INT24_MIN
+#define INT24_MIN	-8388608
+#endif
+
 
 union generic_data {
 	double d;

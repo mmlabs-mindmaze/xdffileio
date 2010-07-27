@@ -35,6 +35,7 @@ struct format_operations {
 	int (*read_header)(struct xdf*);
 	int (*complete_file)(struct xdf*);
 	void (*free_file)(struct xdf*);
+	enum xdffiletype type;
 };
 
 struct xdfch {

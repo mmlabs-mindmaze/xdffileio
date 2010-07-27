@@ -6,7 +6,7 @@ include_HEADERS = xdfio.h
 libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdftypes.c xdftypes.h 		\
 			  xdfio.h formatdecl.c			\
-			  bdffile.c bdf.h
+			  ebdffile.c ebdf.h
 
 libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(srcdir)/exports.sym 
 
