@@ -18,45 +18,70 @@
 #define NEEG	11
 #define NEXG	7
 #define NTRI	1
-#define scaled_t	float
-static const enum xdftype arrtype = XDFFLOAT;
-static const enum xdftype trigarrtype = XDFINT16;
+
+#define XDFFILETYPE	XDF_EDF
+const char sess_str[] = "This a test EDF file";
+const char subj_str[] = "Nobody. This string is very long on purpose and test the truncation. It should be longer than the length of the field in the file";
+
+typedef float	eeg_t;
+#define EEG_TYPE 	XDFFLOAT
+typedef double	sens_t;
+#define SENS_TYPE 	XDFDOUBLE
+typedef uint32_t	tri1_t;
+#define TRI1_TYPE	XDFUINT32
+#define TRI1_MIN	0.0
+#define TRI1_MAX        ((double)UINT16_MAX)
+typedef int32_t		tri2_t;
+#define TRI2_TYPE	XDFINT32
+#define TRI2_MIN	((double)INT16_MIN)
+#define TRI2_MAX        ((double)INT16_MAX)
 off_t offskip[2] = {168, 184};
 
+#define PMIN ((double)INT16_MIN)
+#define PMAX ((double)INT16_MAX)
 
-void set_signal_values(scaled_t* eeg, scaled_t* exg, int16_t* tri)
+void set_signal_values(eeg_t* eeg, sens_t* exg, tri1_t* tri1, tri2_t* tri2)
 {
-	int i,j;
+	int i,j, is, ir;
 	double dv;
 	static int isample = 0;
 
 	for(i=0; i<NSAMPLE; i++) {
+		is = i+isample;
+		ir = is % RAMP_NS;
+
 		for (j=0; j<NEEG; j++)	{
-			dv = ((i+isample)%RAMP_NS) / (double)(RAMP_NS-1);
-			dv = dv*UINT16_MAX + INT16_MIN;
+			dv = ir / (double)(RAMP_NS-1);
+			dv = dv*(PMAX-PMIN) + PMIN;
 			eeg[i*NEEG+j] = dv / (j+1);
 		}
-	}
-	for(i=0; i<NSAMPLE; i++) {
+
 		for (j=0; j<NEXG; j++) {	
-			dv = ((i+isample)%RAMP_NS) / (double)(RAMP_NS-1);
-			dv = dv*UINT16_MAX + INT16_MIN;
-			exg[i*NEXG+j] = dv + (j+1+NEEG);
+			dv = ir / (double)(RAMP_NS-1);
+			dv = dv*(PMAX-PMIN) + PMIN;
+			exg[i*NEXG+j] = dv / (j+1);
 		}
-	}
-	for(i=0; i<NSAMPLE; i++) {
+
 		for (j=0; j<NTRI; j++) {
-			tri[i*NTRI+j] = 0;
-			if ((i+isample) % RAMP_NS == 0)
-				tri[i*NTRI+j] = (((i+isample)/RAMP_NS) % 2
-				                 ? -256 : 256);
+			tri1[i*NTRI+j] = 0;
+			if (ir == 0)
+				tri1[i*NTRI+j] = (is/RAMP_NS % 2) 
+						?  8192 : 64;
+		}
+
+		for (j=0; j<NTRI; j++) {
+			tri2[i*NTRI+j] = 0;
+			if (ir == 0)
+				tri2[i*NTRI+j] = (is/RAMP_NS % 2) 
+						? -64 : 64 ;
 		}
 	}
 	isample += NSAMPLE;
 }
 
 
-static int set_default_analog(struct xdf* xdf, int arrindex)
+static int set_default_analog(struct xdf* xdf, int arrindex,
+						enum xdftype arrtype)
 {
 	xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, arrtype,
@@ -64,8 +89,8 @@ static int set_default_analog(struct xdf* xdf, int arrindex)
 		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Active Electrode",
 		XDF_CF_PREFILTERING, "HP: DC; LP: 417 Hz",
-		XDF_CF_PMIN, (double)INT16_MIN,
-		XDF_CF_PMAX, (double)INT16_MAX,
+		XDF_CF_PMIN, PMIN,
+		XDF_CF_PMAX, PMAX,
 		XDF_CF_UNIT, "uV",
 		XDF_CF_RESERVED, "EEG",
 		XDF_NOF);
@@ -73,19 +98,18 @@ static int set_default_analog(struct xdf* xdf, int arrindex)
 	return 0;
 }
 
-static int set_default_trigger(struct xdf* xdf, int arrindex)
+static int set_default_trigger(struct xdf* xdf, int arrindex,
+						enum xdftype arrtype,
+						double pmin, double pmax)
 {
 	xdf_set_conf(xdf, 
-		XDF_CF_ARRTYPE, trigarrtype,
+		XDF_CF_ARRTYPE, arrtype,
 		XDF_CF_ARRINDEX, arrindex,
 		XDF_CF_ARROFFSET, 0,
 		XDF_CF_TRANSDUCTER, "Triggers and Status",
 		XDF_CF_PREFILTERING, "No filtering",
-		XDF_CF_STOTYPE, XDFINT16,
-		XDF_CF_DMIN, (double)INT16_MIN,
-		XDF_CF_DMAX, (double)INT16_MAX,
-		XDF_CF_PMIN, (double)INT16_MIN,
-		XDF_CF_PMAX, (double)INT16_MAX,
+		XDF_CF_PMIN, pmin,
+		XDF_CF_PMAX, pmax,
 		XDF_CF_UNIT, "Boolean",
 		XDF_CF_RESERVED, "TRI",
 		XDF_NOF);
@@ -96,88 +120,96 @@ static int set_default_trigger(struct xdf* xdf, int arrindex)
 
 int generate_xdffile(const char* filename)
 {
-	scaled_t* eegdata;
-	scaled_t* exgdata;
-	int16_t* tridata;
-	int phase;
+	eeg_t* eegdata;
+	sens_t* exgdata;
+	tri1_t* tri1data;
+	tri2_t* tri2data;
+	int retcode = -1;
 	struct xdf* xdf = NULL;
 	int i,j;
 	char tmpstr[16];
-	unsigned int strides[3] = {
+	unsigned int strides[4] = {
 		NEEG*sizeof(*eegdata),
 		NEXG*sizeof(*exgdata),
-		NTRI*sizeof(*tridata)
+		NTRI*sizeof(*tri1data),
+		NTRI*sizeof(*tri2data),
 	};
 
-
-	phase = 5;
 
 	// Allocate the temporary buffers for samples
 	eegdata = malloc(NEEG*NSAMPLE*sizeof(*eegdata));
 	exgdata = malloc(NEXG*NSAMPLE*sizeof(*exgdata));
-	tridata = malloc(NTRI*NSAMPLE*sizeof(*tridata));
-	if (!eegdata || !exgdata || !tridata)
+	tri1data = malloc(NTRI*NSAMPLE*sizeof(*tri1data));
+	tri2data = malloc(NTRI*NSAMPLE*sizeof(*tri2data));
+	if (!eegdata || !exgdata || !tri1data || !tri2data)
 		goto exit;
 		
 
-	phase--;
-	xdf = xdf_open(filename, XDF_WRITE, XDF_EDF);
+	xdf = xdf_open(filename, XDF_WRITE, XDFFILETYPE);
 	if (!xdf) 
 		goto exit;
+	xdf_set_conf(xdf, XDF_F_SAMPLING_FREQ, (int)SAMPLINGRATE,
+	                  XDF_F_SESS_DESC, sess_str,
+			  XDF_F_SUBJ_DESC, subj_str,
+			  XDF_NOF);
 	
 	// Specify the structure (channels and sampling rate)
-	phase--;
-	xdf_set_conf(xdf, XDF_F_SAMPLING_FREQ, (int)SAMPLINGRATE, XDF_NOF);
-	set_default_analog(xdf, 0);
+	set_default_analog(xdf, 0, EEG_TYPE);
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
-	xdf_set_conf(xdf, XDF_CF_ARRINDEX, 1, XDF_CF_ARROFFSET, 0, XDF_NOF);
+	set_default_analog(xdf, 1, SENS_TYPE);
 	for (j=0; j<NEXG; j++) {
 		sprintf(tmpstr, "EXG%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
-	set_default_trigger(xdf, 2);
+	set_default_trigger(xdf, 2, TRI1_TYPE, TRI1_MIN, TRI1_MAX);
 	for (j=0; j<NTRI; j++) {
-		sprintf(tmpstr, "TRI%i", j);
+		sprintf(tmpstr, "TRI1%i", j);
+		if (!xdf_add_channel(xdf, tmpstr))
+			goto exit;
+	}
+
+	set_default_trigger(xdf, 3, TRI2_TYPE, TRI2_MIN, TRI2_MAX);
+	for (j=0; j<NTRI; j++) {
+		sprintf(tmpstr, "TRI2%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
 
 	// Make the the file ready for accepting samples
-	phase--;	
-	xdf_define_arrays(xdf, 3, strides);
+	xdf_define_arrays(xdf, 4, strides);
 	if (xdf_prepare_transfer(xdf) < 0)
 		goto exit;
 	
 	// Feed with samples
-	phase--;
 	for (i=0; i<NITERATION; i++) {
 		// Set data signals and unscaled them
-		set_signal_values(eegdata, exgdata, tridata);
-		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tridata) < 0)
+		set_signal_values(eegdata, exgdata, tri1data, tri2data);
+		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tri1data, tri2data) < 0)
 			goto exit;
 	}
-	phase--;
+	retcode = 0;
 
 exit:
 	// if phase is non zero, a problem occured
-	if (phase) 
+	if (retcode) 
 		fprintf(stderr, "\terror: %s\n", strerror(errno));
 
 	// Clean the structures and ressources
 	xdf_close(xdf);
 	free(eegdata);
 	free(exgdata);
-	free(tridata);
+	free(tri1data);
+	free(tri2data);
 
-	return phase;
+	return retcode;
 }
 
 
@@ -198,7 +230,7 @@ int main(int argc, char *argv[])
 			break;
 
 		default:	/* '?' */
-			fprintf(stderr, "Usage: %s [-k] [-c {0/1}]\n",
+			fprintf(stderr, "Usage: %s [-k]\n",
 				argv[0]);
 			exit(EXIT_FAILURE);
 		}
@@ -209,30 +241,29 @@ int main(int argc, char *argv[])
 
 	// Create the filename for the reference
 	snprintf(reffilename, sizeof(reffilename),
-		 "%s/ref%u-%u-%u-%u-%u-%u-%u.edf", getenv("srcdir"),
-		 SAMPLINGRATE, DURATION, NITERATION, 
-		 RAMP_NS, NEEG, NEXG, NTRI);
+		 "%s/ref%u-%u-%u-%u-%u-%u-%u.edf", getenv("srcdir"),SAMPLINGRATE, DURATION,
+		 NITERATION, RAMP_NS, NEEG, NEXG, NTRI);
 
 	
 	// Test generation of a file
 	unlink(genfilename);
 	retcode = generate_xdffile(genfilename);
 	if (!retcode)
-		retcode = cmp_files(genfilename, reffilename, 1, offskip);
+		retcode = cmp_files(genfilename, reffilename, 1, offskip, NULL);
 
 	// Test copy a file (implied reading)
-	if (testcopy) {
+	if (!retcode && testcopy) {
 		unlink(genfilename);
-		retcode = copy_xdf(genfilename, reffilename, XDF_EDF);
+		retcode = copy_xdf(genfilename, reffilename, XDFFILETYPE);
 		if (!retcode)
-			retcode = cmp_files(genfilename, reffilename, 1, offskip);
+			retcode = cmp_files(genfilename, reffilename, 1, offskip, NULL);
 	}
 
 	if (!keep_file)
 		unlink(genfilename);
 
 
-	return retcode;
+	return retcode ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 

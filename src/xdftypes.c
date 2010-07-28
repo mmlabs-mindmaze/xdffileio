@@ -57,20 +57,26 @@ static const struct data_information data_info[] =
 
 
 
-static void scale_data_d(unsigned int ns, void* data, const union generic_data factor)
+static void scale_data_d(unsigned int ns, void* data, const struct scaling_param* scaling)
 {
 	double* tdata = data;
+	double sc = scaling->scale.d;
+	double off = scaling->offset.d;
 	while (ns--) {
-		*tdata *= factor.d;
+		*tdata *= sc;
+		*tdata += off;
 		tdata++;
 	}
 }
 
-static void scale_data_f(unsigned int ns, void* data, const union generic_data factor)
+static void scale_data_f(unsigned int ns, void* data, const struct scaling_param* scaling)
 {
 	float* tdata = data;
+	float sc = scaling->scale.f;
+	float off = scaling->offset.f;
 	while (ns--) {
-		*tdata *= factor.f;
+		*tdata *= sc;
+		*tdata += off;
 		tdata++;
 	}
 }
@@ -166,6 +172,10 @@ DEFINE_CONV_FN(conv_ui8_ui8, int8_t, int8_t)
 DEFINE_CONV_FN(conv_ui16_ui16, int16_t, int16_t)
 DEFINE_CONV_FN(conv_ui32_ui32, int32_t, int32_t)
 DEFINE_CONV_FN(conv_ui64_ui64, int64_t, int64_t)
+DEFINE_CONV_FN(conv_i32_i16, int32_t, int16_t)
+DEFINE_CONV_FN(conv_i16_i32, int16_t, int32_t)
+DEFINE_CONV_FN(conv_u32_u16, uint32_t, uint16_t)
+DEFINE_CONV_FN(conv_u16_u32, uint16_t, uint32_t)
 DEFINE_CONV_FN(conv_f_f, float, float)
 DEFINE_CONV_FN(conv_d_d, double, double)
 
@@ -204,12 +214,12 @@ static void conv_ui24_ui24(unsigned int ns, void* d, unsigned int std, const voi
 static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 	[XDFUINT8] =  {[XDFUINT8] = conv_ui8_ui8, [XDFUINT64] = conv_u8_u64, [XDFFLOAT] = conv_u8_f, [XDFDOUBLE] = conv_u8_d},
 	[XDFINT8] =   {[XDFINT8] = conv_ui8_ui8,  [XDFINT64] = conv_i8_i64,  [XDFFLOAT] = conv_i8_f, [XDFDOUBLE] = conv_i8_d},
-	[XDFUINT16] = {[XDFUINT16] = conv_ui16_ui16, [XDFUINT64] = conv_u16_u64, [XDFFLOAT] = conv_u16_f, [XDFDOUBLE] = conv_u16_d},
-	[XDFINT16] =  {[XDFINT16] = conv_ui16_ui16, [XDFINT64] = conv_i16_i64, [XDFFLOAT] = conv_i16_f, [XDFDOUBLE] = conv_i16_d},
+	[XDFUINT16] = {[XDFUINT16] = conv_ui16_ui16, [XDFUINT32] = conv_u16_u32, [XDFUINT64] = conv_u16_u64, [XDFFLOAT] = conv_u16_f, [XDFDOUBLE] = conv_u16_d},
+	[XDFINT16] =  {[XDFINT16] = conv_ui16_ui16, [XDFINT32] = conv_i16_i32, [XDFINT64] = conv_i16_i64, [XDFFLOAT] = conv_i16_f, [XDFDOUBLE] = conv_i16_d},
 	[XDFUINT24] = {[XDFUINT24] = conv_ui24_ui24, [XDFUINT32] = conv_u24_u32, [XDFUINT64] = conv_u24_u64, [XDFFLOAT] = conv_u24_f, [XDFDOUBLE] = conv_u24_d},
 	[XDFINT24] =  {[XDFINT24] = conv_ui24_ui24, [XDFINT32] = conv_i24_i32, [XDFINT64] = conv_i24_i64, [XDFFLOAT] = conv_i24_f, [XDFDOUBLE] = conv_i24_d},
-	[XDFUINT32] = {[XDFUINT24] = conv_ui32_ui24, [XDFUINT32] = conv_ui32_ui32, [XDFUINT64] = conv_u32_u64, [XDFFLOAT] = conv_u32_f, [XDFDOUBLE] = conv_u32_d},
-	[XDFINT32] =  {[XDFINT24] = conv_ui32_ui24, [XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64, [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
+	[XDFUINT32] = {[XDFUINT16] = conv_u32_u16, [XDFUINT24] = conv_ui32_ui24, [XDFUINT32] = conv_ui32_ui32, [XDFUINT64] = conv_u32_u64, [XDFFLOAT] = conv_u32_f, [XDFDOUBLE] = conv_u32_d},
+	[XDFINT32] =  {[XDFINT16] = conv_i32_i16, [XDFINT24] = conv_ui32_ui24, [XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64, [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
 	[XDFUINT64] = {[XDFUINT8] = conv_u64_u8, [XDFUINT16] = conv_u64_u16, 
 	               [XDFUINT24] = conv_ui64_ui24, [XDFUINT32] = conv_u64_u32, 
 		       [XDFUINT64] = conv_ui64_ui64,
@@ -247,7 +257,7 @@ void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct conv
 	}
 
 	if (prm->scfn2)
-		prm->scfn2(ns, in, prm->scale);
+		prm->scfn2(ns, in, &(prm->scaling));
 
 	if (prm->cvfn3) {
 		out = dst;
@@ -261,6 +271,7 @@ int xdf_setup_transform(struct convprm* prm,
 {
 	int scaling = 1;
 	enum xdftype ti;
+	double sc, off;
 
 	// Initialize convertion structure
 	memset(prm, 0, sizeof(*prm));
@@ -273,8 +284,10 @@ int xdf_setup_transform(struct convprm* prm,
 
 	// Determine the intermediate type
 	ti =  (data_info[out_tp].is_int) ? in_tp : out_tp;
-	if (data_info[ti].is_int && scaling)
+	if (scaling && data_info[ti].is_int)
 		ti = XDFDOUBLE;
+	if (!scaling && (!convtable[ti][out_tp] || !convtable[in_tp][ti]))
+		ti = data_info[in_tp].is_signed ? XDFINT64 : XDFUINT64;
 	prm->stride2 = data_info[ti].size;
 	
 	// Setup the convertion functions if needed
@@ -285,11 +298,16 @@ int xdf_setup_transform(struct convprm* prm,
 	
 	// Setup scaling
 	if (scaling) {
+		sc = (out_mm[1] - out_mm[0]) /(in_mm[1] - in_mm[0]);
+		off = out_mm[0] - sc * in_mm[0];
+
 		if (ti == XDFDOUBLE) {
-			prm->scale.d = (out_mm[1] - out_mm[0]) / (in_mm[1] - in_mm[0]);
+			prm->scaling.scale.d = sc;		
+			prm->scaling.offset.d = off;
 			prm->scfn2 = scale_data_d;
 		} else if (ti == XDFFLOAT) {
-			prm->scale.f = (out_mm[1] - out_mm[0]) / (in_mm[1] - in_mm[0]);
+			prm->scaling.scale.f = sc;
+			prm->scaling.offset.f = off;
 			prm->scfn2 = scale_data_f;
 		}
 	}

@@ -3,7 +3,7 @@
 #include "filecmp.h"
 
 int cmp_files(const char* testfilename, const char* reffilename,
-              int nskip, const off_t* skip)
+              int nskip, const off_t* skip, off_t* where)
 {
 	int retcode = 0;
 	int n1, n2;
@@ -17,7 +17,7 @@ int cmp_files(const char* testfilename, const char* reffilename,
 	testfile = fopen(testfilename,"r");
 	if (!reffile || !testfile) {
 		fprintf(stderr,"\tOne of the files cannot be opened\n");
-		retcode = 11;
+		retcode = -1;
 	}
 
 	int iskip = 0; 
@@ -25,6 +25,7 @@ int cmp_files(const char* testfilename, const char* reffilename,
 		if ((iskip < nskip) && (pointer == skip[iskip*2])) {
 			fseek(testfile, skip[iskip*2+1], SEEK_SET);
 			fseek(reffile, skip[iskip*2+1], SEEK_SET);
+			pointer = skip[iskip*2+1];
 			iskip++;
 		}
 
@@ -32,7 +33,7 @@ int cmp_files(const char* testfilename, const char* reffilename,
 		n2 = fread(&chunkref, sizeof(chunkref), 1, reffile);
 		if (n1 != n2) {
 		    	fprintf(stderr,"\tThe files differ by the size\n");
-			retcode = 12;
+			retcode = -1;
 			break;
 		}
 		
@@ -44,7 +45,7 @@ int cmp_files(const char* testfilename, const char* reffilename,
 		    	fprintf(stderr, 
 			        "\tThe files differs at 0x%08x\n", 
 				(unsigned int)pointer);
-			retcode = 13;
+			retcode = -1;
 			break;
 		}
 		pointer++;
@@ -57,6 +58,9 @@ int cmp_files(const char* testfilename, const char* reffilename,
 	
 	if (!retcode)
 		fprintf(stderr, "\tThe files are identical\n");
+	else if (where)
+		*where = pointer;
+		
 
 	return retcode;
 }

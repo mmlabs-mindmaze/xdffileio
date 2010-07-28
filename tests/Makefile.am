@@ -9,7 +9,7 @@ testbdf_LDADD = $(top_builddir)/src/libxdffileio.la
 testedf_SOURCES = testedf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h
 testedf_LDADD = $(top_builddir)/src/libxdffileio.la
 
-errorcheck_SOURCES = errorcheck.c
+errorcheck_SOURCES = errorcheck.c filecmp.c filecmp.h
 errorcheck_LDADD = $(top_builddir)/src/libxdffileio.la
 
 TESTS = testbdf testedf errorcheck

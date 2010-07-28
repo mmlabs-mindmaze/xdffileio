@@ -4,6 +4,6 @@
 #include <sys/types.h>
 
 int cmp_files(const char* testfilename, const char* reffilename,
-              int nskip, const off_t* skip);
+              int nskip, const off_t* skip, off_t* where);
 
 #endif

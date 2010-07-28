@@ -17,14 +17,19 @@ union generic_data {
 	float f;
 };
 
+struct scaling_param {
+	union generic_data scale;
+	union generic_data offset;
+};
+
 // Prototype of a type conversion preocedure
 typedef void (*convproc)(unsigned int, void*, unsigned int, const void*, unsigned int);
-typedef void (*scproc)(unsigned int, void*, const union generic_data);
+typedef void (*scproc)(unsigned int, void*, const struct scaling_param*);
 
 // Parameters of a type conversion
 struct convprm {
 	unsigned int stride1, stride2, stride3;
-	union generic_data scale;
+	struct scaling_param scaling;
 	convproc cvfn1;
 	scproc scfn2;
 	convproc cvfn3;
