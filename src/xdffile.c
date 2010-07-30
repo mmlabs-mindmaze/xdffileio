@@ -42,14 +42,15 @@ and that distinguish between text and binary files */
 
 
 struct data_batch {
-	unsigned int len;
-	unsigned int iarray;
-	unsigned int foff, moff, mskip;
+	int len;
+	int iarray;
+	int foff, moff, mskip;
 };
 
 struct convertion_data {
 	struct convprm prm;
 	unsigned int filetypesize, memtypesize;
+	int skip;
 };
 
 /**************************************************
@@ -158,8 +159,11 @@ static int read_diskrec(struct xdf* xdf)
 			fbuff += rsize;
 		} while (reqsize);
 
-		// Convert data
-		xdf_transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
+		if (ch->skip) 
+			continue;
+		// Convert data if the it will be sent to one of the arrays
+		xdf_transconv_data(xdf->ns_per_rec, dst,
+		                   src, &(ch->prm), buff);
 		dst += ch->memtypesize;
 	}
 
@@ -282,7 +286,7 @@ static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned 
 }
 
 
-static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, unsigned int foff)
+static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, int foff)
 {
 	unsigned int datalen = xdf_get_datasize(ch->inmemtype);
 
@@ -301,7 +305,7 @@ static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, unsigne
 
 		// Add channel to batch
 	    	if ((curr->foff+curr->len == foff)
-	    	   && (curr->moff+curr->len == ch->offset)) {
+	    	   && (curr->moff+curr->len == (int)(ch->offset))) {
 			curr->len += datalen;
 			return 1;
 		}
@@ -312,7 +316,8 @@ static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, unsigne
 
 static void link_batches(struct xdf* xdf, unsigned int nb)
 {
-	unsigned int i, ia;
+	unsigned int i;
+	int ia;
 	struct data_batch* batch = xdf->batch;
 	unsigned int* stride = xdf->array_stride; 
 
@@ -344,16 +349,18 @@ static int compute_batches(struct xdf* xdf, int assign)
 		
 		// Scan channels in order to find different batches
 		for (ch=xdf->channels; ch; ch=ch->next) {
+			if (ch->iarray < 0)
+				continue;
 			dlen = xdf_get_datasize(ch->inmemtype);
 
 			// Consistency checks
-			if (ch->iarray > xdf->narrays
+			if ((unsigned int)ch->iarray > xdf->narrays
 			    || ch->offset + dlen > xdf->array_stride[ch->iarray])
 				return -1;
 
 			// Linearize the processing of channel sourcing
 			// the same input array
-			if ((iarr == ch->iarray)
+			if ((iarr == (unsigned int)ch->iarray)
 			   && !add_to_batch(currb, ch, foff)) {
 				nbatch++;
 				if (assign)
@@ -380,6 +387,8 @@ static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
 	struct xdfch* ch = xdf->channels;
 
 	for (ch=xdf->channels; ch; ch = ch->next) {
+		if (ch->iarray < 0)
+			continue;
 		type = inmem ? ch->inmemtype : ch->infiletype;
 		sample_size += xdf_get_datasize(type);
 	}
@@ -469,6 +478,7 @@ static void setup_convdata(struct xdf* xdf)
 		if (ch->digital_inmem)
 			in_mm = out_mm = NULL;
 		
+		xdf->convdata[i].skip = (ch->iarray < 0) ? 1 : 0;
 		xdf->convdata[i].filetypesize = xdf_get_datasize(ch->infiletype);
 		xdf->convdata[i].memtypesize = xdf_get_datasize(ch->inmemtype);
 		xdf_setup_transform(&(xdf->convdata[i].prm),
