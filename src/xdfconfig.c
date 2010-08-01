@@ -177,7 +177,7 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
  * Create a xdf structure of a xDF file for writing or reading depending on
  * the mode. See the manpage for details
  */
-struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
+XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
 	struct xdf* xdf = NULL;
 
@@ -205,7 +205,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
  * Allocate a channel
  * Return the pointer a new channel or NULL in case of failure
  */
-struct xdfch* xdf_alloc_channel(struct xdf* owner)
+XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* owner)
 {
 	struct xdfch* ch;
 
@@ -223,7 +223,7 @@ struct xdfch* xdf_alloc_channel(struct xdf* owner)
  * Returns a pointer to the index-th channel of the xdf file.
  * Returns NULL in case of failure.
  */
-struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
+XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 {
 	struct xdfch* ch = xdf->channels;
 	unsigned int ich = 0;
@@ -250,7 +250,7 @@ struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
  * but its offset will correspond to neighbour of the last channel
  * Returns NULL in case of failure.
  */
-struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
+XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
 {
 	if ((xdf == NULL) || (xdf->mode != XDF_WRITE)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
@@ -347,7 +347,7 @@ field, union optval val)
  *                       XDF_CF_DMAX, max,
  *                       XDF_NOF);
  */
-int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
+XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
 	int argtype, retval = 0;
@@ -454,7 +454,7 @@ field, union optval* val)
  *                       XDF_CF_DMAX, &max,
  *                       XDF_NOF);
  */
-int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
+XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
 	int argtype, retval = 0;
@@ -502,7 +502,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a channel
  */
-int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
+XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	
 	if (!dst || !src)
@@ -569,7 +569,7 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  *                      XDF_F_REC_DURATION, time,
  *                      XDF_NOF);
  */
-int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
+XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
 	int argtype, retval = 0;
@@ -664,7 +664,7 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
  *                      XDF_F_REC_DURATION, &time,
  *                      XDF_NOF);
  */
-int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
+XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
 	int argtype, retval = 0;
@@ -715,7 +715,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a xDF file
  */
-int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
+XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)
 		return xdf_set_error(EINVAL);

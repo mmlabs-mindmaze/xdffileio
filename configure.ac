@@ -33,6 +33,8 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_BIGENDIAN
 
+gl_VISIBILITY
+
 AC_SEARCH_LIBS([pthread_create], [pthread posix4], [], [The pthread library has not been found])
 
 # If on windows, -no-undefined should be added to LDFLAGS to produce a DLL
@@ -46,6 +48,14 @@ case $host in
 		;;
 esac
 
+if test $HAVE_VISIBILITY = 1 ; then
+     AC_DEFINE(XDF_LOCAL, [__attribute__ ((visibility ("hidden")))], [hgf])
+     AC_DEFINE(XDF_API, [__attribute__ ((visibility ("default")))], [hgf])
+else
+     AC_DEFINE(XDF_LOCAL, [], [hgf])
+     AC_DEFINE(XDF_API, [], [hgf])
+fi
+         
 
 AC_SUBST([RELEASE],[lib_release])
 AC_SUBST([CURRENT],[lib_current])

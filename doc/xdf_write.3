@@ -21,6 +21,8 @@ expects the same number of arrays as specified by previous call to
 \fBxdf_define_arrays\fP(3). The internal organisation of the data in the
 arrays should have been specified previously with calls to
 \fBxdf_set_chconf\fP(3).
+.LP
+In addition, it is important to note that none of the arrays should overlap.
 .SH "RETURN VALUE"
 .LP
 The function returns the number of the samples successfully added to the xDF

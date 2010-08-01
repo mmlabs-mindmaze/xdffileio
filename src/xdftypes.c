@@ -2,10 +2,9 @@
 # include <config.h>
 #endif
 
-
-#include "xdftypes.h"
 #include <stdint.h>
 #include <string.h>
+#include "xdftypes.h"
 
 struct data_information {
 	unsigned int size;
@@ -83,7 +82,7 @@ static void scale_data_f(unsigned int ns, void* data, const struct scaling_param
 
 // Prototype of a generic type conversion function
 #define DEFINE_CONV_FN(fnname, tsrc, tdst)				\
-static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, unsigned int sts)	\
+static void fnname(unsigned int ns, void* restrict d, unsigned int std, const void* restrict s, unsigned int sts)	\
 {								\
 	const tsrc* src = s;					\
 	tdst* dst = d;						\
@@ -95,7 +94,7 @@ static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, un
 }						
 
 #define DEFINE_CONV_TO24_FN(fnname, otp, ctp)			\
-static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, unsigned int sts)	\
+static void fnname(unsigned int ns, void* restrict d, unsigned int std, const void* restrict s, unsigned int sts)	\
 {								\
 	const otp* src = s;					\
 	int8_t* dst = d;					\
@@ -109,7 +108,7 @@ static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, un
 }
 
 #define DEFINE_CONV_FROM24_FN(fnname, otp, intertp)		\
-static void fnname(unsigned int ns, void* d, unsigned int std, const void* s, unsigned int sts)	\
+static void fnname(unsigned int ns, void* restrict d, unsigned int std, const void* restrict s, unsigned int sts)	\
 {								\
 	const intertp* src = s;                                \
 	otp* dst = d;                                      	\
@@ -194,7 +193,7 @@ DEFINE_CONV_TO24_FN(conv_d_u24, double, u32)
 DEFINE_CONV_FROM24_FN(conv_i24_d, double, int32_t)
 DEFINE_CONV_FROM24_FN(conv_u24_d, double, uint32_t)
 
-static void conv_ui24_ui24(unsigned int ns, void* d, unsigned int std, const void *s, unsigned int sts)
+static void conv_ui24_ui24(unsigned int ns, void* restrict d, unsigned int std, const void * restrict s, unsigned int sts)
 {
 	uint8_t *dstc = d;
 	const uint8_t *srcc = s;
@@ -244,7 +243,7 @@ static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 
 
 /* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data useable by user */
-void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff)
+XDF_LOCAL void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
 {
 	void* in = src;
 	void* out = dst;
@@ -265,7 +264,7 @@ void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct conv
 	}
 }
 
-int xdf_setup_transform(struct convprm* prm, 
+XDF_LOCAL int xdf_setup_transform(struct convprm* prm, 
 		    unsigned int in_str, enum xdftype in_tp, const double* in_mm, 
 		    unsigned int out_str, enum xdftype out_tp, const double* out_mm)
 {
@@ -315,7 +314,7 @@ int xdf_setup_transform(struct convprm* prm,
 	return 0;
 }
 
-int xdf_get_datasize(enum xdftype type)
+XDF_LOCAL int xdf_get_datasize(enum xdftype type)
 {
 	return (type <= XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size) : -1;
 }

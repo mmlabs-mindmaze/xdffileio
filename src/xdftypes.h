@@ -23,7 +23,7 @@ struct scaling_param {
 };
 
 // Prototype of a type conversion preocedure
-typedef void (*convproc)(unsigned int, void*, unsigned int, const void*, unsigned int);
+typedef void (*convproc)(unsigned int, void* restrict, unsigned int, const void* restrict, unsigned int);
 typedef void (*scproc)(unsigned int, void*, const struct scaling_param*);
 
 // Parameters of a type conversion
@@ -35,9 +35,9 @@ struct convprm {
 	convproc cvfn3;
 };
 
-void xdf_transconv_data(unsigned int ns, void* dst, void* src, const struct convprm* prm, void* tmpbuff);
-int xdf_get_datasize(enum xdftype type);
-int xdf_setup_transform(struct convprm* prm, 
+XDF_LOCAL void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff);
+XDF_LOCAL int xdf_get_datasize(enum xdftype type);
+XDF_LOCAL int xdf_setup_transform(struct convprm* prm, 
 		    unsigned int in_str, enum xdftype in_tp, const double in_mm[2], 
 		    unsigned int out_str, enum xdftype out_tp, const double out_mm[2]);
 

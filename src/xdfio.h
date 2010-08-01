@@ -8,6 +8,9 @@
 extern "C" {
 #endif
 
+#ifndef XDF_API
+#define XDF_API
+#endif
 
 enum xdftype
 {
@@ -74,25 +77,25 @@ enum xdffield
 struct xdf;
 struct xdfch;
 
-struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type);
-int xdf_close(struct xdf* xdf);
+XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type);
+XDF_API int xdf_close(struct xdf* xdf);
 
-int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
-int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
-int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
+XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
+XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
+XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
 
-struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index);
-struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
-int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
-int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...);
-int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
+XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index);
+XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
+XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
+XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...);
+XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
-int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);
-int xdf_prepare_transfer(struct xdf* xdf);
+XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);
+XDF_API int xdf_prepare_transfer(struct xdf* xdf);
 
-ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
-ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
-off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
+XDF_API ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
+XDF_API ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
+XDF_API off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
 
 
 const char* xdf_get_string(void);

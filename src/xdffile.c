@@ -57,7 +57,7 @@ struct convertion_data {
  *                 misc functions                 *
  **************************************************/
 
-int xdf_set_error(int error)
+XDF_LOCAL int xdf_set_error(int error)
 {
 	if (error) {
 		errno = error;
@@ -623,7 +623,7 @@ static int complete_file_content(struct xdf* xdf)
  * API FUNCTION
  * Closes the xDF file and free the resources allocated
  */
-int xdf_close(struct xdf* xdf)
+XDF_API int xdf_close(struct xdf* xdf)
 {
 	int retval = 0;
 	struct xdfch *ch, *prev;
@@ -667,7 +667,7 @@ int xdf_close(struct xdf* xdf)
  * Specify the number of arrays used (used in xdf_read and xdf_write) and 
  * specify the strides for each array.
  */
-int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* strides)
+XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* strides)
 {
 	unsigned int* newstrides;
 	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride))))) 
@@ -688,7 +688,7 @@ int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* str
  * Compute the batches, allocate the necessary data for the transfer and
  * Initialize the transfer thread
  */
-int xdf_prepare_transfer(struct xdf* xdf)
+XDF_API int xdf_prepare_transfer(struct xdf* xdf)
 {
 	int nbatch;
 
@@ -741,7 +741,7 @@ error:
  * on the specification of the channels.
  * Returns the number of samples written, -1 in case of error
  */
-ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
+XDF_API ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
 {
 	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_READ)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
@@ -750,9 +750,9 @@ ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
 
 	unsigned int i, k, ia, nsrec = xdf->ns_per_rec;
 	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
-	char *buff = xdf->buff + samsize * xdf->ns_buff;
+	char* restrict buff = xdf->buff + samsize * xdf->ns_buff;
 	struct data_batch* batch = xdf->batch;
-	const char* in[xdf->narrays];
+	const char* restrict in[xdf->narrays];
 	va_list ap;
 
 	// Initialization of the input buffers
@@ -794,7 +794,7 @@ ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
  * on the specification of the channels.
  * Returns the number of samples read, -1 in case of error
  */
-ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
+XDF_API ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 {
 	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_WRITE)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
@@ -803,9 +803,9 @@ ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 
 	unsigned int i, k, ia;
 	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
-	char* buff = xdf->buff + samsize * (xdf->ns_per_rec-xdf->ns_buff);
+	char* restrict buff = xdf->buff + samsize * (xdf->ns_per_rec-xdf->ns_buff);
 	struct data_batch* batch = xdf->batch;
-	char* out[xdf->narrays];
+	char* restrict out[xdf->narrays];
 	va_list ap;
 	int ret;
 
@@ -850,7 +850,7 @@ ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
  * measured in number of samples for the begining of the recording.
  * Otherwise -1 is returned and errno is set to indicate the error
  */
-off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
+XDF_API off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 {
 	off_t curpoint, reqpoint, fileoff;
 	int irec, errnum = 0;
@@ -909,7 +909,7 @@ static const char xdffileio_string[] = PACKAGE_STRING;
 /* API FUNCTION
  * Returns the string describing the library with its version number
  */
-const char* xdf_get_string(void)
+XDF_API const char* xdf_get_string(void)
 {
 	return xdffileio_string;
 }

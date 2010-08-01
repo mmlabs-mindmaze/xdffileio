@@ -175,6 +175,8 @@ exit:
 
 int main(int argc, char* argv[])
 {
+	(void)argc;
+	(void)argv;
 	char reffilename[512];
 	sprintf(reffilename, "%s/%s", getenv("srcdir"), FILENAME);
 
