@@ -298,14 +298,32 @@ field, union optval val)
 	int retval = 0;
 
 	// Default handler
-	if (field == XDF_CF_DMIN)
-		ch->digital_mm[0] = val.d;
-	else if (field == XDF_CF_DMAX)
-		ch->digital_mm[1] = val.d;
-	else if (field == XDF_CF_PMIN)
-		ch->physical_mm[0] = val.d;
-	else if (field == XDF_CF_PMAX)
-		ch->physical_mm[1] = val.d;
+	if (field == XDF_CF_DMIN) {
+		if (xdf_datinfo(ch->infiletype)->lim[0] > val.d)
+			retval = xdf_set_error(EOVERFLOW);
+		else
+			ch->digital_mm[0] = val.d;
+	}
+	else if (field == XDF_CF_DMAX) {
+		if (xdf_datinfo(ch->infiletype)->lim[1] < val.d)
+			retval = xdf_set_error(EOVERFLOW);
+		else
+			ch->digital_mm[1] = val.d;
+	} 
+	else if (field == XDF_CF_PMIN) {
+		if (!ch->digital_inmem && 
+		    (xdf_datinfo(ch->inmemtype)->lim[0] > val.d))
+			retval = xdf_set_error(EOVERFLOW);
+		else
+			ch->physical_mm[0] = val.d;
+	}
+	else if (field == XDF_CF_PMAX) {
+		if (!ch->digital_inmem && 
+		    (xdf_datinfo(ch->inmemtype)->lim[1] < val.d))
+			retval = xdf_set_error(EOVERFLOW);
+		else
+			ch->physical_mm[1] = val.d;
+	}
 	else if (field == XDF_CF_ARRINDEX) {
 		if ((val.i < 0) && (ch->owner->mode == XDF_WRITE)) 
 			retval = xdf_set_error(EPERM);
@@ -318,8 +336,11 @@ field, union optval val)
 		ch->inmemtype = val.i;
 	else if (field == XDF_CF_ARRDIGITAL)
 		ch->digital_inmem = val.i;
-	else if (field == XDF_CF_STOTYPE)
+	else if (field == XDF_CF_STOTYPE) {
 		ch->infiletype = val.i;
+		memcpy(ch->digital_mm, xdf_datinfo(val.i)->lim,
+				sizeof(ch->digital_mm));
+	}
 	else
 		retval = 1;
 

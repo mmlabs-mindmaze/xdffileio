@@ -82,7 +82,7 @@ void set_signal_values(eeg_t* eeg, sens_t* exg, tri1_t* tri1, tri2_t* tri2)
 static int set_default_analog(struct xdf* xdf, int arrindex,
 						enum xdftype arrtype)
 {
-	xdf_set_conf(xdf, 
+	return xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, arrtype,
 		XDF_CF_ARRINDEX, arrindex,
 		XDF_CF_ARROFFSET, 0,
@@ -94,14 +94,13 @@ static int set_default_analog(struct xdf* xdf, int arrindex,
 		XDF_CF_RESERVED, "EEG",
 		XDF_NOF);
 	
-	return 0;
 }
 
 static int set_default_trigger(struct xdf* xdf, int arrindex,
 						enum xdftype arrtype,
 						double pmin, double pmax)
 {
-	xdf_set_conf(xdf, 
+	return xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, arrtype,
 		XDF_CF_ARRINDEX, arrindex,
 		XDF_CF_ARROFFSET, 0,
@@ -113,7 +112,6 @@ static int set_default_trigger(struct xdf* xdf, int arrindex,
 		XDF_CF_RESERVED, "TRI",
 		XDF_NOF);
 	
-	return 0;
 }
 
 
@@ -153,28 +151,32 @@ int generate_xdffile(const char* filename)
 			  XDF_NOF);
 	
 	// Specify the structure (channels and sampling rate)
-	set_default_analog(xdf, 0, EEG_TYPE);
+	if (set_default_analog(xdf, 0, EEG_TYPE))
+		goto exit;
 	for (j=0; j<NEEG; j++) {
 		sprintf(tmpstr, "EEG%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
-	set_default_analog(xdf, 1, SENS_TYPE);
+	if (set_default_analog(xdf, 1, SENS_TYPE))
+		goto exit;
 	for (j=0; j<NEXG; j++) {
 		sprintf(tmpstr, "EXG%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
-	set_default_trigger(xdf, 2, TRI1_TYPE, TRI1_MIN, TRI1_MAX);
+	if (set_default_trigger(xdf, 2, TRI1_TYPE, TRI1_MIN, TRI1_MAX))
+		goto exit;
 	for (j=0; j<NTRI; j++) {
 		sprintf(tmpstr, "TRI1%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))
 			goto exit;
 	}
 
-	set_default_trigger(xdf, 3, TRI2_TYPE, TRI2_MIN, TRI2_MAX);
+	if (set_default_trigger(xdf, 3, TRI2_TYPE, TRI2_MIN, TRI2_MAX))
+		goto exit;
 	for (j=0; j<NTRI; j++) {
 		sprintf(tmpstr, "TRI2%i", j);
 		if (!xdf_add_channel(xdf, tmpstr))

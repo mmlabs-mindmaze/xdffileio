@@ -4,13 +4,10 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <float.h>
+#include <limits.h>
 #include "xdftypes.h"
 
-struct data_information {
-	unsigned int size;
-	unsigned int is_int:1;
-	unsigned int is_signed:1;
-};
 
 union ui24 {
 	int32_t i32;
@@ -40,18 +37,30 @@ union ui24 {
 
 static const struct data_information data_info[] = 
 {
-	[XDFFLOAT] = {.size = sizeof(float), .is_int = 0, .is_signed = 1},
-	[XDFDOUBLE] = {.size = sizeof(double), .is_int = 0, .is_signed = 1},
-	[XDFINT8] = {.size = sizeof(int8_t), .is_int = 1, .is_signed = 0},
-	[XDFUINT8] = {.size = sizeof(uint8_t), .is_int = 1, .is_signed = 0},
-	[XDFINT16] = {.size = sizeof(int16_t), .is_int = 1, .is_signed = 1},
-	[XDFUINT16] = {.size = sizeof(uint16_t), .is_int = 1, .is_signed = 0},
-	[XDFINT24] = {.size = 3, .is_int = 1, .is_signed = 1},
-	[XDFUINT24] = {.size = 3, .is_int = 1, .is_signed = 0},
-	[XDFINT32] = {.size = sizeof(int32_t), .is_int = 1, .is_signed = 1},
-	[XDFUINT32] = {.size = sizeof(uint32_t), .is_int = 1, .is_signed = 0},
-	[XDFINT64] = {.size = sizeof(int64_t), .is_int = 1, .is_signed = 1},
-	[XDFUINT64] = {.size = sizeof(uint64_t), .is_int = 1, .is_signed = 0}
+	[XDFFLOAT] = {.size = sizeof(float), .is_int = 0, .is_signed = 1,
+	              .lim[0] = -FLT_MAX, .lim[1] = FLT_MAX},
+	[XDFDOUBLE] = {.size = sizeof(double), .is_int = 0, .is_signed = 1,
+	              .lim[0] = -DBL_MAX, .lim[1] = DBL_MAX},
+	[XDFINT8] = {.size = sizeof(int8_t), .is_int = 1, .is_signed = 0,
+	              .lim[0] = INT8_MIN, .lim[1] = INT8_MAX},
+	[XDFUINT8] = {.size = sizeof(uint8_t), .is_int = 1, .is_signed = 0,
+	              .lim[0] = 0, .lim[1] = UINT8_MAX},
+	[XDFINT16] = {.size = sizeof(int16_t), .is_int = 1, .is_signed = 1,
+	              .lim[0] = INT16_MIN, .lim[1] = INT16_MAX},
+	[XDFUINT16] = {.size = sizeof(uint16_t), .is_int = 1, .is_signed = 0,
+	              .lim[0] = 0, .lim[1] = UINT16_MAX},
+	[XDFINT24] = {.size = 3, .is_int = 1, .is_signed = 1,
+	              .lim[0] = INT24_MIN, .lim[1] = INT24_MAX},
+	[XDFUINT24] = {.size = 3, .is_int = 1, .is_signed = 0,
+	              .lim[0] = 0, .lim[1] = UINT24_MAX},
+	[XDFINT32] = {.size = sizeof(int32_t), .is_int = 1, .is_signed = 1,
+	              .lim[0] = INT32_MIN, .lim[1] = INT32_MAX},
+	[XDFUINT32] = {.size = sizeof(uint32_t), .is_int = 1, .is_signed = 0,
+	              .lim[0] = 0, .lim[1] = UINT32_MAX},
+	[XDFINT64] = {.size = sizeof(int64_t), .is_int = 1, .is_signed = 1,
+	              .lim[0] = INT64_MIN, .lim[1] = INT64_MAX},
+	[XDFUINT64] = {.size = sizeof(uint64_t), .is_int = 1, .is_signed = 0,
+	              .lim[0] = 0, .lim[1] = UINT64_MAX}
 };
 
 
@@ -211,14 +220,29 @@ static void conv_ui24_ui24(unsigned int ns, void* restrict d, unsigned int std, 
  e.g.: convtable[XDFUINT24][XDFDOUBLE] to get the function that convert
  unsigned int 24-bits into double*/
 static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
-	[XDFUINT8] =  {[XDFUINT8] = conv_ui8_ui8, [XDFUINT64] = conv_u8_u64, [XDFFLOAT] = conv_u8_f, [XDFDOUBLE] = conv_u8_d},
-	[XDFINT8] =   {[XDFINT8] = conv_ui8_ui8,  [XDFINT64] = conv_i8_i64,  [XDFFLOAT] = conv_i8_f, [XDFDOUBLE] = conv_i8_d},
-	[XDFUINT16] = {[XDFUINT16] = conv_ui16_ui16, [XDFUINT32] = conv_u16_u32, [XDFUINT64] = conv_u16_u64, [XDFFLOAT] = conv_u16_f, [XDFDOUBLE] = conv_u16_d},
-	[XDFINT16] =  {[XDFINT16] = conv_ui16_ui16, [XDFINT32] = conv_i16_i32, [XDFINT64] = conv_i16_i64, [XDFFLOAT] = conv_i16_f, [XDFDOUBLE] = conv_i16_d},
-	[XDFUINT24] = {[XDFUINT24] = conv_ui24_ui24, [XDFUINT32] = conv_u24_u32, [XDFUINT64] = conv_u24_u64, [XDFFLOAT] = conv_u24_f, [XDFDOUBLE] = conv_u24_d},
-	[XDFINT24] =  {[XDFINT24] = conv_ui24_ui24, [XDFINT32] = conv_i24_i32, [XDFINT64] = conv_i24_i64, [XDFFLOAT] = conv_i24_f, [XDFDOUBLE] = conv_i24_d},
-	[XDFUINT32] = {[XDFUINT16] = conv_u32_u16, [XDFUINT24] = conv_ui32_ui24, [XDFUINT32] = conv_ui32_ui32, [XDFUINT64] = conv_u32_u64, [XDFFLOAT] = conv_u32_f, [XDFDOUBLE] = conv_u32_d},
-	[XDFINT32] =  {[XDFINT16] = conv_i32_i16, [XDFINT24] = conv_ui32_ui24, [XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64, [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
+	[XDFUINT8] =  {[XDFUINT8] = conv_ui8_ui8, [XDFUINT64] = conv_u8_u64,
+	               [XDFFLOAT] = conv_u8_f, [XDFDOUBLE] = conv_u8_d},
+	[XDFINT8] =   {[XDFINT8] = conv_ui8_ui8,  [XDFINT64] = conv_i8_i64,
+	               [XDFFLOAT] = conv_i8_f, [XDFDOUBLE] = conv_i8_d},
+	[XDFUINT16] = {[XDFUINT16] = conv_ui16_ui16, 
+	               [XDFUINT32] = conv_u16_u32, [XDFUINT64] = conv_u16_u64,
+		       [XDFFLOAT] = conv_u16_f, [XDFDOUBLE] = conv_u16_d},
+	[XDFINT16] =  {[XDFINT16] = conv_ui16_ui16,
+	               [XDFINT32] = conv_i16_i32, [XDFINT64] = conv_i16_i64,
+		       [XDFFLOAT] = conv_i16_f, [XDFDOUBLE] = conv_i16_d},
+	[XDFUINT24] = {[XDFUINT24] = conv_ui24_ui24, [XDFUINT32] = conv_u24_u32,
+	               [XDFUINT64] = conv_u24_u64,
+		       [XDFFLOAT] = conv_u24_f, [XDFDOUBLE] = conv_u24_d},
+	[XDFINT24] =  {[XDFINT24] = conv_ui24_ui24, [XDFINT32] = conv_i24_i32,
+	               [XDFINT64] = conv_i24_i64,
+		       [XDFFLOAT] = conv_i24_f, [XDFDOUBLE] = conv_i24_d},
+	[XDFUINT32] = {[XDFUINT16] = conv_u32_u16,
+	               [XDFUINT24] = conv_ui32_ui24, [XDFUINT32] = conv_ui32_ui32,
+		       [XDFUINT64] = conv_u32_u64,
+		       [XDFFLOAT] = conv_u32_f, [XDFDOUBLE] = conv_u32_d},
+	[XDFINT32] =  {[XDFINT16] = conv_i32_i16,[XDFINT24] = conv_ui32_ui24,
+	               [XDFINT32] = conv_ui32_ui32, [XDFINT64] = conv_i32_i64,
+		       [XDFFLOAT] = conv_i32_f, [XDFDOUBLE] = conv_i32_d},
 	[XDFUINT64] = {[XDFUINT8] = conv_u64_u8, [XDFUINT16] = conv_u64_u16, 
 	               [XDFUINT24] = conv_ui64_ui24, [XDFUINT32] = conv_u64_u32, 
 		       [XDFUINT64] = conv_ui64_ui64,
@@ -316,5 +340,10 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 
 XDF_LOCAL int xdf_get_datasize(enum xdftype type)
 {
-	return (type <= XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size) : -1;
+	return (type < XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size):-1;
+}
+
+XDF_LOCAL const struct data_information* xdf_datinfo(enum xdftype type)
+{
+	return (type < XDF_NUM_DATA_TYPES) ? &(data_info[type]) : NULL;
 }
