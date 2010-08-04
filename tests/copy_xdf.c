@@ -11,11 +11,11 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 {
 	struct xdf *dst = NULL, *src = NULL;
 	struct xdfch *dstch, *srcch;
-	unsigned int ich = 0, samplesize, stride[1];
+	unsigned int ich = 0, samplesize;
 	int nch, retcode = -1;
 	void* buffer;
 	ssize_t nssrc, nsdst;
-	size_t nstot;
+	size_t nstot, stride[1];
 	int offset;
 
 	src = xdf_open(reffilename, XDF_READ, fformat);

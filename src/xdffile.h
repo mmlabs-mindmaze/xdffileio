@@ -65,7 +65,7 @@ struct xdf {
 	unsigned int nbatch;
 	struct data_batch* batch;
 	unsigned int narrays;
-	unsigned int* array_stride;	
+	size_t* array_stride;	
 
 	struct xdfch* defaultch;
 	/* Data format specific behavior */

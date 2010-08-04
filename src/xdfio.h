@@ -67,7 +67,7 @@ enum xdffield
 	XDF_CF_UNIT,		/* const char*  */
 	XDF_CF_TRANSDUCTER,	/* const char*  */
 	XDF_CF_PREFILTERING,	/* const char*  */
-	XDF_CF_RESERVED,	/* const char*	*/
+	XDF_CF_RESERVED		/* const char*	*/
 };
 
 
@@ -90,7 +90,7 @@ XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
 XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...);
 XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
-XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, unsigned int* strides);
+XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, const size_t* strides);
 XDF_API int xdf_prepare_transfer(struct xdf* xdf);
 
 XDF_API ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);

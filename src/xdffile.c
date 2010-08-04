@@ -319,7 +319,7 @@ static void link_batches(struct xdf* xdf, unsigned int nb)
 	unsigned int i;
 	int ia;
 	struct data_batch* batch = xdf->batch;
-	unsigned int* stride = xdf->array_stride; 
+	size_t* stride = xdf->array_stride; 
 
 	if (!nb)
 		return;
@@ -667,9 +667,9 @@ XDF_API int xdf_close(struct xdf* xdf)
  * Specify the number of arrays used (used in xdf_read and xdf_write) and 
  * specify the strides for each array.
  */
-XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, unsigned int* strides)
+XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, const size_t* strides)
 {
-	unsigned int* newstrides;
+	size_t* newstrides;
 	if (!(newstrides = malloc(numarrays*sizeof(*(xdf->array_stride))))) 
 		return -1;
 

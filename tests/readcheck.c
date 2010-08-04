@@ -19,7 +19,7 @@ static int keepch(int i, int nchskip)
 static int setup_files(const char* filename, int nchskip, int* nchr, int* ncht)
 {
 	int i, offset, arr;
-	unsigned int st[1];
+	size_t st[1];
 	int arrtp = XDFDOUBLE;
 	struct xdfch* ch;
 

@@ -124,7 +124,7 @@ int generate_xdffile(const char* filename)
 	struct xdf* xdf = NULL;
 	int i,j;
 	char tmpstr[16];
-	unsigned int strides[4] = {
+	size_t strides[4] = {
 		NEEG*sizeof(*eegdata),
 		NEXG*sizeof(*exgdata),
 		NTRI*sizeof(*tri1data),

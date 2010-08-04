@@ -22,7 +22,8 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 	unsigned int samwarn, currns = 0;
 	struct xdf *dst = NULL, *src = NULL;
 	struct xdfch *dstch, *srcch;
-	unsigned int ich = 0, samplesize, stride[1];
+	unsigned int ich = 0, samplesize;
+	size_t stride[1];
 	int nch, retcode = -1;
 	int recns;
 	void* buffer;
