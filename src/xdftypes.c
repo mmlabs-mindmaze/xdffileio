@@ -302,7 +302,7 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 	prm->stride3 = out_str;
 
 	// Test for the need of scaling function
-	if (!in_mm || !out_mm || !memcmp(in_mm, out_mm, sizeof(in_mm)))
+	if (!in_mm || !out_mm || !memcmp(in_mm, out_mm, 2*sizeof(*in_mm)))
 		scaling = 0;
 
 	// Determine the intermediate type
