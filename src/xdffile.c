@@ -872,7 +872,7 @@ XDF_API off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 	else
 		return xdf_set_error(EINVAL);
 	
-	if (reqpoint < 0 || (reqpoint >= xdf->nrecord * nsprec))
+	if (reqpoint < 0 || (reqpoint >= (off_t)(xdf->nrecord * nsprec)))
 		return xdf_set_error(ERANGE);
 	
 	irec = reqpoint / nsprec;

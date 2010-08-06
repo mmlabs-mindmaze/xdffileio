@@ -19,14 +19,14 @@ static int nskip = sizeof(offskip)/(2*sizeof(offskip[0]));
 
 int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned int fsize)
 {
-	unsigned int samwarn, currns = 0;
+	unsigned int samwarn = 0, currns = 0;
 	struct xdf *dst = NULL, *src = NULL;
 	struct xdfch *dstch, *srcch;
 	unsigned int ich = 0, samplesize;
 	size_t stride[1];
 	int nch, retcode = -1;
 	int recns;
-	void* buffer;
+	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
 	int offset;
 
@@ -83,8 +83,10 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 		if (nssrc == 0)
 			break;
 		nsdst = xdf_write(dst, nssrc, buffer);
-		if (nsdst != nssrc) 
+		if (nsdst != nssrc) { 
+			retcode = 1;
 			goto exit;
+		}
 		
 		currns += nsdst;
 	}
@@ -92,6 +94,7 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 exit:
 	if ( (currns > samwarn) 
 	    && (currns < samwarn+2*recns) 
+	    && (retcode == 1)
 	    && (errno == EFBIG) )
 		retcode = 0;
 
