@@ -38,29 +38,29 @@ union ui24 {
 static const struct data_information data_info[] = 
 {
 	[XDFFLOAT] = {.size = sizeof(float), .is_int = 0, .is_signed = 1,
-	              .lim[0] = -FLT_MAX, .lim[1] = FLT_MAX},
+	              .lim = {-FLT_MAX, FLT_MAX}},
 	[XDFDOUBLE] = {.size = sizeof(double), .is_int = 0, .is_signed = 1,
-	              .lim[0] = -DBL_MAX, .lim[1] = DBL_MAX},
+	              .lim = {-DBL_MAX, DBL_MAX}},
 	[XDFINT8] = {.size = sizeof(int8_t), .is_int = 1, .is_signed = 0,
-	              .lim[0] = INT8_MIN, .lim[1] = INT8_MAX},
+	              .lim = {INT8_MIN, INT8_MAX}},
 	[XDFUINT8] = {.size = sizeof(uint8_t), .is_int = 1, .is_signed = 0,
-	              .lim[0] = 0, .lim[1] = UINT8_MAX},
+	              .lim = {0, UINT8_MAX}},
 	[XDFINT16] = {.size = sizeof(int16_t), .is_int = 1, .is_signed = 1,
-	              .lim[0] = INT16_MIN, .lim[1] = INT16_MAX},
+	              .lim = {INT16_MIN, INT16_MAX}},
 	[XDFUINT16] = {.size = sizeof(uint16_t), .is_int = 1, .is_signed = 0,
-	              .lim[0] = 0, .lim[1] = UINT16_MAX},
+	              .lim = {0, UINT16_MAX}},
 	[XDFINT24] = {.size = 3, .is_int = 1, .is_signed = 1,
-	              .lim[0] = INT24_MIN, .lim[1] = INT24_MAX},
+	              .lim = {INT24_MIN, INT24_MAX}},
 	[XDFUINT24] = {.size = 3, .is_int = 1, .is_signed = 0,
-	              .lim[0] = 0, .lim[1] = UINT24_MAX},
+	              .lim = {0, UINT24_MAX}},
 	[XDFINT32] = {.size = sizeof(int32_t), .is_int = 1, .is_signed = 1,
-	              .lim[0] = INT32_MIN, .lim[1] = INT32_MAX},
+	              .lim = {INT32_MIN, INT32_MAX}},
 	[XDFUINT32] = {.size = sizeof(uint32_t), .is_int = 1, .is_signed = 0,
-	              .lim[0] = 0, .lim[1] = UINT32_MAX},
+	              .lim = {0, UINT32_MAX}},
 	[XDFINT64] = {.size = sizeof(int64_t), .is_int = 1, .is_signed = 1,
-	              .lim[0] = INT64_MIN, .lim[1] = INT64_MAX},
+	              .lim = {INT64_MIN, INT64_MAX}},
 	[XDFUINT64] = {.size = sizeof(uint64_t), .is_int = 1, .is_signed = 0,
-	              .lim[0] = 0, .lim[1] = UINT64_MAX}
+	              .lim = {0, UINT64_MAX}}
 };
 
 
