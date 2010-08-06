@@ -9,4 +9,5 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  ebdffile.c ebdf.h
 
 libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(srcdir)/exports.sym 
+libxdffileio_la_LIBADD = $(LTLIBOBJS)
 

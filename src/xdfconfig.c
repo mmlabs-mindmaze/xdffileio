@@ -2,6 +2,7 @@
 # include <config.h>
 #endif
 
+#include <stdio.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -13,6 +14,16 @@
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
+
+/* To support those $!%@!!! systems that are not POSIX compliant
+and that distinguish between text and binary files */
+#ifndef O_BINARY
+# ifdef _O_BINARY
+#  define O_BINARY _O_BINARY
+# else
+#  define O_BINARY 0
+# endif
+#endif /* O_BINARY */
 
 
 /******************************************************
@@ -102,8 +113,9 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	int fd = -1;
 
 	// Open the file
-	if ((fd = open(filename, O_RDONLY)) == -1) 
+	if ((fd = open(filename, O_RDONLY|O_BINARY)) == -1) 
 		return NULL;
+
 
 	// Guess file type
 	if ( (read(fd, magickey, sizeof(magickey)) == -1)
@@ -113,7 +125,7 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	}
 	gtype = xdf_guess_filetype(magickey);
 	if ((gtype == XDF_ANY) || ((type != XDF_ANY)&&(type != gtype))) {
-		errnum = EMEDIUMTYPE;
+		errnum = EILSEQ;
 		goto error;
 	}
 	
@@ -151,10 +163,11 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 {
 	struct xdf* xdf = NULL;
 	int fd = -1, errnum;
-	mode_t mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	/* group and other permissions removed to make windows compatible */
+	mode_t mode = S_IRUSR|S_IWUSR/*|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH*/;
 
 	// Create the file
-	if ( ((fd = open(filename, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) 
+	if ( ((fd = open(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) 
 	    || !(xdf = xdf_alloc_file(type)) ) {
 		if (fd == -1) {
 			errnum = errno;
@@ -300,27 +313,27 @@ field, union optval val)
 	// Default handler
 	if (field == XDF_CF_DMIN) {
 		if (xdf_datinfo(ch->infiletype)->lim[0] > val.d)
-			retval = xdf_set_error(EOVERFLOW);
+			retval = xdf_set_error(EDOM);
 		else
 			ch->digital_mm[0] = val.d;
 	}
 	else if (field == XDF_CF_DMAX) {
 		if (xdf_datinfo(ch->infiletype)->lim[1] < val.d)
-			retval = xdf_set_error(EOVERFLOW);
+			retval = xdf_set_error(EDOM);
 		else
 			ch->digital_mm[1] = val.d;
 	} 
 	else if (field == XDF_CF_PMIN) {
 		if (!ch->digital_inmem && 
 		    (xdf_datinfo(ch->inmemtype)->lim[0] > val.d))
-			retval = xdf_set_error(EOVERFLOW);
+			retval = xdf_set_error(EDOM);
 		else
 			ch->physical_mm[0] = val.d;
 	}
 	else if (field == XDF_CF_PMAX) {
 		if (!ch->digital_inmem && 
 		    (xdf_datinfo(ch->inmemtype)->lim[1] < val.d))
-			retval = xdf_set_error(EOVERFLOW);
+			retval = xdf_set_error(EDOM);
 		else
 			ch->physical_mm[1] = val.d;
 	}

@@ -12,10 +12,11 @@ m4_define([lib_age],0)
 
 AC_INIT(xdffileio,[lib_release.lib_current.lib_age.lib_revision])
 AC_CONFIG_SRCDIR([src/xdffile.c])
+AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config/config.h])
-AM_INIT_AUTOMAKE([no-dist-gzip dist-bzip2 color-tests])
+AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-bzip2 color-tests])
 
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
@@ -35,7 +36,6 @@ AC_C_BIGENDIAN
 
 gl_VISIBILITY
 
-AC_SEARCH_LIBS([pthread_create], [pthread posix4], [], [The pthread library has not been found])
 
 # If on windows, -no-undefined should be added to LDFLAGS to produce a DLL
 case $host in
@@ -51,14 +51,26 @@ esac
 # Test IEEE floating point calculation behavior 
 AC_CHECK_IEEE_FLOAT_ROUND
 
-if test $HAVE_VISIBILITY = 1 ; then
-     AC_DEFINE(XDF_LOCAL, [__attribute__ ((visibility ("hidden")))], [hgf])
-     AC_DEFINE(XDF_API, [__attribute__ ((visibility ("default")))], [hgf])
-else
-     AC_DEFINE(XDF_LOCAL, [], [hgf])
-     AC_DEFINE(XDF_API, [], [hgf])
+# Define the correct attributes for API and local symbol 
+AC_DEFINE(XDF_LOCAL, [], [attribute of the non-exported symbols])
+AC_DEFINE(XDF_API, [], [attribute of the symbols exported in the API])
+if test $HAVE_VISIBILITY = 1 -a $os_support !=  "win32"; then
+     AC_DEFINE(XDF_LOCAL, [__attribute__ ((visibility ("hidden")))],
+     	[attribute of the non-exported symbols])
+     AC_DEFINE(XDF_API, [__attribute__ ((visibility ("default")))],
+     	[attribute of the symbols exported in the API])
 fi
-         
+
+# Test missing functions
+AC_SEARCH_LIBS([pthread_create], [pthread posix4], 
+               [], AC_MSG_ERROR([The pthread library has not been found]))
+AC_CHECK_FUNC(setrlimit, [run_error_test=true], [run_error_test=false])
+AC_CHECK_DECLS([fsync], [], [], [[#include <unistd.h>]])
+AC_CHECK_FUNCS([pthread_sigmask _commit])
+AC_REPLACE_FUNCS([fsync])
+
+AM_CONDITIONAL(RUN_ERROR_TEST, [test "x$run_error_test" = "xtrue"])
+
 
 AC_SUBST([RELEASE],[lib_release])
 AC_SUBST([CURRENT],[lib_current])
@@ -66,6 +78,20 @@ AC_SUBST([REVISION],[lib_revision])
 AC_SUBST([AGE],[lib_age])
 AC_SUBST(AM_LDFLAGS)
 
-AC_CONFIG_FILES([Makefile src/Makefile doc/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile doc/Makefile tests/Makefile])
 AC_OUTPUT
+
+if test "$HAVE_IEEE_FLOAT_ROUND" = -1 
+then
+echo "WARNING!!!
+Because of cross-compiling, the configure script has been unable to  
+determine the rounding behavior of your FPU. Make sure that is follows the 
+IEEE floating point standard. A non standard behavior might happen in
+particular on x86 architecture (not on x86-64 by default)
+There are two ways (among others) to enforce the expected behavior:
+  - Use SSE2 instruction set if your CPU supports it
+          (If gcc is used, add -msse2 and -mfpmath=sse to compiler flags)
+  - Do not store floating point variables in registers
+          (If gcc is used, add -ffloat-store to compiler flags)"
+fi
 

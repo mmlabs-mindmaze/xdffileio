@@ -72,8 +72,9 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 		if (nssrc < 0) {
 			fprintf(stderr, 
 			       "\tfailed reading a chunk of %i samples "
-			       "after %zu samples\nerror caught (%i), %s\n",
-			       (int)NSAMPLE, nstot, errno, strerror(errno));
+			       "after %u samples\nerror caught (%i), %s\n",
+			       (int)NSAMPLE, (unsigned int)nstot,
+			       errno, strerror(errno));
 			goto exit;
 		}
 		if (nssrc == 0)
@@ -81,9 +82,10 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 		nsdst = xdf_write(dst, nssrc, buffer);
 		if (nsdst != nssrc) {
 			fprintf(stderr, 
-			       "\tfailed writing a chunk of %zi samples "
-			       "after %zu samples\nerror caught (%i), %s\n",
-			       nssrc, nstot, errno, strerror(errno));
+			       "\tfailed writing a chunk of %i samples "
+			       "after %i samples\nerror caught (%i), %s\n",
+			       (unsigned int)nssrc, (unsigned int)nstot, 
+			       errno, strerror(errno));
 			goto exit;
 		}
 		nstot += nsdst;

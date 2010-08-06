@@ -1,7 +1,14 @@
 AM_CFLAGS = -I$(top_srcdir)/src
 EXTRA_DIST = ref128-13-97-50-11-7-1.bdf ref128-13-97-50-11-7-1.edf
 
-check_PROGRAMS = testbdf testedf errorcheck readcheck
+check_PROGRAMS = testbdf testedf readcheck
+TESTS = testbdf testedf readcheck
+
+if RUN_ERROR_TEST
+check_PROGRAMS += errorcheck
+TESTS += errorcheck
+endif
+
 
 testbdf_SOURCES = testbdf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h
 testbdf_LDADD = $(top_builddir)/src/libxdffileio.la
@@ -15,5 +22,4 @@ errorcheck_LDADD = $(top_builddir)/src/libxdffileio.la
 readcheck_SOURCES = readcheck.c
 readcheck_LDADD = $(top_builddir)/src/libxdffileio.la
 
-TESTS = testbdf testedf errorcheck readcheck
 

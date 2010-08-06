@@ -24,10 +24,11 @@ static int setup_files(const char* filename, int nchskip, int* nchr, int* ncht)
 	struct xdfch* ch;
 
 	xdfr = xdf_open(filename, XDF_READ, XDF_ANY);
-	xdft = xdf_open(filename, XDF_READ, XDF_ANY);
-	if (!xdfr || !xdft)
+	if (!xdfr)
 		goto error;
-
+	xdft = xdf_open(filename, XDF_READ, XDF_ANY);
+	if (!xdft)
+		goto error;
 
 	// Setup reference file
 	offset = i = 0;

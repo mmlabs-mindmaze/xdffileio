@@ -33,8 +33,9 @@ Otherwise, NULL is returned and \fIerrno\fP is set appropriately.
 In addition to the errors related to calls to \fBopen\fP(3) or
 \fBread\fP(3), the following errors can occur:
 .TP 7
-.B EMEDIUMTYPE
-The file that is being opened corresponds to an unsupported file format.
+.B EILSEQ
+The file that is being opened does not correspond to a supported file format
+or is not of the type specified.
 .TP 7
 .B ENOMEM
 The system is unable to allocate resources.

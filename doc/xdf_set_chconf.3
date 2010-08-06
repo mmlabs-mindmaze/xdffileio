@@ -96,7 +96,7 @@ xdffield
 The request submitted to \fBxdf_set_chconf\fP() is not allowed for this
 channel or is forbidden for file opened with the mode \fBXDF_READ\fP.
 .TP 7
-.B OVERFLOW
+.B EDOM
 The value set in \fBxdf_set_chconf\fP() as digital or physical min/max
 (fields XDF_CF_{D/P}{MIN/MAX}) goes beyond the limits of respectively the
 stored or array data type.

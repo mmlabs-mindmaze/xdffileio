@@ -15,6 +15,10 @@
 #include <errno.h>
 #include <signal.h>
 
+#if !HAVE_DECL_FSYNC
+#include "../lib/fsync.h"
+#endif
+
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
@@ -23,15 +27,30 @@
  *                Local declarations               *
  ***************************************************/
 
-/* To support those $!%@!!! systems that are not POSIX compliant
-and that distinguish between text and binary files */
-#ifndef O_BINARY
-# ifdef _O_BINARY
-#  define O_BINARY _O_BINARY
-# else
-#  define O_BINARY 0
-# endif
-#endif /* O_BINARY */
+#if HAVE_PTHREAD_SIGMASK
+static void block_signals(sigset_t *oldmask)
+{
+	sigset_t mask;
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGXFSZ);
+	pthread_sigmask(SIG_BLOCK, &mask, oldmask);
+}
+
+static void unblock_signals(sigset_t *oldmask)
+{
+	pthread_sigmask(SIG_SETMASK, oldmask, NULL);
+}
+
+#else
+static void block_signals(sigset_t *oldmask)
+{
+	(void)oldmask;
+}
+static void unblock_signals(sigset_t *oldmask)
+{
+	(void)oldmask;
+}
+#endif /* HAVE_PTHREAD_SIGMASK */
 
 
 // Orders definitions for transfer
@@ -185,14 +204,10 @@ static int read_diskrec(struct xdf* xdf)
  */
 static void* transfer_thread_fn(void* ptr)
 {
-	sigset_t mask;
 	struct xdf* xdf = ptr;
 	int wmode = (xdf->mode == XDF_WRITE) ? 1 : 0;
 
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGXFSZ);
-	pthread_sigmask(SIG_BLOCK, &mask, NULL);
-
+	block_signals(NULL);
 	// Once the routine hold the mutex, it is in a ready state, notify
 	// the main thread with the semaphore
  	pthread_mutex_lock(&(xdf->mtx));
@@ -579,16 +594,13 @@ static int finish_record(struct xdf* xdf)
 static int init_file_content(struct xdf* xdf)
 {
 	int retval = 0;
-	sigset_t mask, oldmask;
+	sigset_t oldmask;
 
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGXFSZ);
-	pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
-	
+	block_signals(&oldmask);
 	if (xdf->ops->write_header(xdf) || fsync(xdf->fd))
 		retval = -1;
 	
-	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
+	unblock_signals(&oldmask);
 	return retval;
 }
 
@@ -600,16 +612,13 @@ static int init_file_content(struct xdf* xdf)
 static int complete_file_content(struct xdf* xdf)
 {
 	int retval = 0;
-	sigset_t mask, oldmask;
+	sigset_t oldmask;
 
-	sigemptyset(&mask);
-	sigaddset(&mask, SIGXFSZ);
-	pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
-	
+	block_signals(&oldmask);
 	if (xdf->ops->complete_file(xdf) || fsync(xdf->fd))
 		retval = -1;
+	unblock_signals(&oldmask);
 
-	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
 	return retval;
 }
 

@@ -547,7 +547,7 @@ static int ebdf_write_header(struct xdf* xdf)
 {
 	int retval = 0;
 	struct ebdf_file* bdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "w");
+	FILE* file = fdopen(dup(xdf->fd), "wb");
 	if (!file)
 		return -1;
 
@@ -568,14 +568,14 @@ static int ebdf_write_header(struct xdf* xdf)
 /* Parse the file (field of nch characters) and assign to the integer val.
  * Advance the file pointer of exactly nch byte.
  */
-static int read_int_field(FILE* file, int* val, size_t nch)
+static int read_int_field(FILE* file, int* val, unsigned int nch)
 {
 	char format[8];
 	long pos = ftell(file);
-	sprintf(format, "%%%zui", nch);
+	sprintf(format, "%%%ui", nch);
 	
-	if (fscanf(file, format, val) <= 0
-	    || fseek(file, pos+nch, SEEK_SET))
+	if ((fscanf(file, format, val) <= 0)
+	    || fseek(file, pos+nch, SEEK_SET)) 
 		return -1;
 	
 	return 0;
@@ -586,7 +586,7 @@ static int read_int_field(FILE* file, int* val, size_t nch)
  * Advance the file pointer of exactly nch byte.
  * It also removes trailing space characters from the string
  */
-static int read_string_field(FILE* file, char* val, size_t nch)
+static int read_string_field(FILE* file, char* val, unsigned int nch)
 {
 	int pos;
 
@@ -626,6 +626,7 @@ static int ebdf_read_file_header(struct ebdf_file* bdf, FILE* file)
 	   || read_int_field(file, &recdur, 8)
 	   || read_int_field(file, (int*)&(bdf->xdf.numch), 4) )
 		retval = -1;
+
  
 	bdf->xdf.rec_duration = (double)recdur;
 	bdf->xdf.hdr_offset = hdrsize;
@@ -729,7 +730,7 @@ static int ebdf_read_header(struct xdf* xdf)
 	unsigned int i;
 	struct xdfch** curr = &(xdf->channels);
 	struct ebdf_file* ebdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "r");
+	FILE* file = fdopen(dup(xdf->fd), "rb");
 	if (!file)
 		return -1;
 
@@ -745,6 +746,7 @@ static int ebdf_read_header(struct xdf* xdf)
 
 	if (ebdf_read_channels_header(ebdf, file))
 		goto exit;
+
 	
 	retval = 0;
 exit:

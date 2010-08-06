@@ -13,8 +13,8 @@ int cmp_files(const char* testfilename, const char* reffilename,
 
 
 	// Open the files
-	reffile = fopen(reffilename,"r");
-	testfile = fopen(testfilename,"r");
+	reffile = fopen(reffilename,"rb");
+	testfile = fopen(testfilename,"rb");
 	if (!reffile || !testfile) {
 		fprintf(stderr,"\tOne of the files cannot be opened\n");
 		retcode = -1;
