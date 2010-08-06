@@ -48,6 +48,9 @@ case $host in
 		;;
 esac
 
+# Test IEEE floating point calculation behavior 
+AC_CHECK_IEEE_FLOAT_ROUND
+
 if test $HAVE_VISIBILITY = 1 ; then
      AC_DEFINE(XDF_LOCAL, [__attribute__ ((visibility ("hidden")))], [hgf])
      AC_DEFINE(XDF_API, [__attribute__ ((visibility ("default")))], [hgf])
