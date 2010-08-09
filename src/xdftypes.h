@@ -2,6 +2,7 @@
 #define XDFTYPES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "xdfio.h"
 
 #ifndef INT24_MAX
@@ -15,9 +16,9 @@
 #endif
 
 struct data_information {
-	unsigned int size;
-	unsigned int is_int:1;
-	unsigned int is_signed:1;
+	unsigned char size;
+	bool is_int;
+	bool is_signed;
 	double lim[2];
 };
 
@@ -52,6 +53,8 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 	    unsigned int in_str, enum xdftype in_tp, const double in_mm[2], 
 	    unsigned int out_str, enum xdftype out_tp, const double out_mm[2]);
 
+XDF_LOCAL enum xdftype get_closest_type(enum xdftype target,
+					const bool *supported_type);
 
 
 #endif /* XDFTYPES_H */

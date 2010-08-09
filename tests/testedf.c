@@ -9,6 +9,7 @@
 #include <errno.h>
 #include "filecmp.h"
 #include "copy_xdf.h"
+#include "validation.h"
 
 #define RAMP_NS		50
 #define SAMPLINGRATE	128
@@ -39,6 +40,9 @@ off_t offskip[2] = {168, 184};
 
 #define PMIN ((double)INT16_MIN)
 #define PMAX ((double)INT16_MAX)
+
+enum xdftype supported_type[] = {XDFINT16};
+int numtype = sizeof(supported_type) / sizeof(supported_type[0]);
 
 void set_signal_values(eeg_t* eeg, sens_t* exg, tri1_t* tri1, tri2_t* tri2)
 {
@@ -258,6 +262,10 @@ int main(int argc, char *argv[])
 		if (!retcode)
 			retcode = cmp_files(genfilename, reffilename, 1, offskip, NULL);
 	}
+
+	if (!retcode)
+		retcode = test_validation_param(XDF_EDF, numtype, 
+						supported_type);
 
 	if (!keep_file)
 		unlink(genfilename);

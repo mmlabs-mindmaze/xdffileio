@@ -77,28 +77,31 @@ enum xdffield
 struct xdf;
 struct xdfch;
 
-XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type);
+XDF_API struct xdf* xdf_open(const char* filename, int mode,
+				enum xdffiletype type);
 XDF_API int xdf_close(struct xdf* xdf);
 
 XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
 XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
 XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
 
-XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index);
+XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf,
+					unsigned int index);
 XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
 XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
-XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...);
+XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field,...);
 XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
-XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int narrays, const size_t* strides);
+XDF_API int xdf_define_arrays(struct xdf* xdf, unsigned int narrays,
+				const size_t* strides);
 XDF_API int xdf_prepare_transfer(struct xdf* xdf);
 
 XDF_API ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
 XDF_API ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
 XDF_API off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
 
-
-const char* xdf_get_string(void);
+XDF_API int xdf_closest_type(const struct xdf* xdf, enum xdftype type);
+XDF_API const char* xdf_get_string(void);
 
 #ifdef __cplusplus
 }

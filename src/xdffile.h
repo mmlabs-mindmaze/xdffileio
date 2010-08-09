@@ -4,6 +4,7 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include <stdbool.h>
 
 #include "xdfio.h"
 
@@ -36,6 +37,7 @@ struct format_operations {
 	int (*complete_file)(struct xdf*);
 	void (*free_file)(struct xdf*);
 	enum xdffiletype type;
+	bool supported_type[XDF_NUM_DATA_TYPES];
 };
 
 struct xdfch {

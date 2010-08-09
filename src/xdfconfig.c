@@ -350,9 +350,12 @@ field, union optval val)
 	else if (field == XDF_CF_ARRDIGITAL)
 		ch->digital_inmem = val.i;
 	else if (field == XDF_CF_STOTYPE) {
-		ch->infiletype = val.i;
-		memcpy(ch->digital_mm, xdf_datinfo(val.i)->lim,
-				sizeof(ch->digital_mm));
+		if (ch->owner->ops->supported_type[val.i]) {
+			ch->infiletype = val.i;
+			memcpy(ch->digital_mm, xdf_datinfo(val.i)->lim,
+					sizeof(ch->digital_mm));
+		} else
+			retval = xdf_set_error(EPERM);
 	}
 	else
 		retval = 1;
@@ -757,3 +760,19 @@ XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 	return dst->ops->copy_conf(dst, src);
 }
 
+
+/* \param xdf	pointer to a xdf structure
+ * \param type	target data type
+ *
+ * API function
+ * Returns the data type supported by xdf the closest to type or -1 
+ */
+XDF_API int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
+{
+	if ((xdf == NULL) || (type >= XDF_NUM_DATA_TYPES)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return get_closest_type(type, xdf->ops->supported_type);
+}

@@ -84,6 +84,9 @@ static const struct format_operations bdf_ops = {
 	.complete_file = ebdf_complete_file,
 	.free_file = ebdf_free_file,
 	.type = XDF_BDF,
+	.supported_type = {
+		[XDFINT24] = true
+	}
 };
 
 static const unsigned char bdf_magickey[] = 
@@ -115,6 +118,9 @@ static const struct format_operations edf_ops = {
 	.complete_file = ebdf_complete_file,
 	.free_file = ebdf_free_file,
 	.type = XDF_EDF,
+	.supported_type = {
+		[XDFINT16] = true
+	}
 };
 
 static const unsigned char edf_magickey[] = 
@@ -313,6 +319,7 @@ static int ebdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 			XDF_CF_RESERVED, &reserved,
 			XDF_NOF);
 
+	ts = get_closest_type(ts, dst->owner->ops->supported_type);
 	xdf_set_chconf(dst,
 			XDF_CF_ARRTYPE, ta,
 			XDF_CF_PMIN, pmin,

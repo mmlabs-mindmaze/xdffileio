@@ -1,0 +1,44 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_CLOSEST_TYPE 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_closest_type - Returns a compatible data type
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_closest_type(struct xdf* " xdf ", enum xdftype " target ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_closest_type\fP() selects among the data types supported by the file
+referenced by \fIxdf\fP the type that is the closest to the \fItarget\fP
+argument. The selected type can then be safely used in a call to
+\fBxdf_set_chconf\fP(3) with the \fBXDF_CF_STOTYPE\fP field.
+.LP
+The selection algorithm is based on the 3 following criterions (cited by
+priority, i.e. most important cited first): data size, signed/unsigned type,
+float/integer value. The data size criterion forces the selected type to
+have a data size (number of byte to represent the value) equal or bigger
+than the one of the target type (with a preference with sizes the closest to
+the size of \fItarget\fP). The signed/unsigned criterion tries to
+select a type that has the same signeness (signed or unsigned data type) as
+the target. Finally the float/integer criterion tries to select a floating
+point type if \fItarget\fP is float or double or an integer data type if
+\fItarget\fP is an integer type.
+.LP
+As a consequence, if \fItarget\fP is supported by the underlying file format
+of \fIxdf\fP, the function is ensured to return \fItarget\fP.
+.SH "RETURN VALUE"
+.LP
+\fBxdf_closest_type\fP() returns the selected data type in case of success,
+otherwise -1 and \fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP 7
+.B EINVAL
+the \fIxdf\fP pointer is \fBNULL\fP, or the argument \fItype\fP is not
+an admissible \fBenum xdftype\fP value.
+.SH "SEE ALSO"
+.BR xdf_set_chconf (3)
+
+
+

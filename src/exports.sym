@@ -13,4 +13,5 @@ xdf_prepare_transfer
 xdf_write
 xdf_read
 xdf_seek
+xdf_closest_type
 xdf_get_string

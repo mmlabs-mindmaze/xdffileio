@@ -6,6 +6,7 @@
 #include <string.h>
 #include <float.h>
 #include <limits.h>
+#include <assert.h>
 #include "xdftypes.h"
 
 
@@ -34,6 +35,23 @@ union ui24 {
 	} while (0)
 
 #endif /* WORDS_BIGENDIAN */
+
+// Order this list in ascending order of precision 
+static const enum xdftype sortedlst[] = {
+	XDFINT8,
+	XDFUINT8,
+	XDFINT16,
+	XDFUINT16,
+	XDFINT24,
+	XDFUINT24,
+	XDFINT32,
+	XDFUINT32,
+	XDFFLOAT,
+	XDFINT64,
+	XDFUINT64,
+	XDFDOUBLE
+};
+#define numrep (sizeof(sortedlst)/sizeof(sortedlst[0]))
 
 static const struct data_information data_info[] = 
 {
@@ -314,10 +332,14 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 	prm->stride2 = data_info[ti].size;
 	
 	// Setup the convertion functions if needed
-	if ((in_tp != ti) || (data_info[in_tp].size != in_str))
+	if ((in_tp != ti) || (data_info[in_tp].size != in_str)) {
 		prm->cvfn1 = convtable[in_tp][ti];
-	if ((ti != out_tp) || (data_info[out_tp].size != out_str))
+		assert(prm->cvfn1 != NULL);
+	}
+	if ((ti != out_tp) || (data_info[out_tp].size != out_str)) {
 		prm->cvfn3 = convtable[ti][out_tp];
+		assert(prm->cvfn3 != NULL);
+	}
 	
 	// Setup scaling
 	if (scaling) {
@@ -333,17 +355,122 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 			prm->scaling.offset.f = off;
 			prm->scfn2 = scale_data_f;
 		}
+		assert(prm->scfn2 != NULL);
 	}
 
 	return 0;
 }
+
 
 XDF_LOCAL int xdf_get_datasize(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size):-1;
 }
 
+
 XDF_LOCAL const struct data_information* xdf_datinfo(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? &(data_info[type]) : NULL;
 }
+
+
+// Criterion masks
+#define C_INT		1	// Match the integer or float attribute
+#define C_SIGNED	2	// Match the signed/unsigned attribute
+#define C_SIZE		4	// Enforce the data size attribute, i.e.
+				// if used, the candidat should have a data
+				// size bigger or equal to the target
+
+/* \param[out] match	pointer the the possible type match
+ * \param tinfo		pointer to the data informatation of the target
+ * \param tp		pointer to an size-ordered array of possible types
+ * \param ntypes	number of element in the tp array
+ * \param criterions	bitmask of the criterons
+ *
+ * Returns true if a match respecting the criterions has been found. In that
+ * case, the value will be assign to the variable pointed by match.
+ * Otherwise false is returned.
+ */
+static bool find_match(enum xdftype* match,
+			const struct data_information* tinfo,
+			const enum xdftype* tp, int ntypes,
+			unsigned int criterions)
+{
+	const struct data_information* info;
+	int i, inc = 1, initval = 1;
+	int m_int = 1, m_signed = 1, m_size = 1;
+	bool tint = tinfo->is_int;
+	bool tsigned = tinfo->is_signed;
+	unsigned char tsize = tinfo->size;
+
+	// If m_* is true, the corresponding criterion will not matter
+	m_int = !(criterions & C_INT);
+	m_signed = !(criterions & C_SIGNED);
+	m_size = !(criterions & C_SIZE);
+
+	// If size does not matters, at least inverse the scanning sens so
+	// that the biggest matching data type will be selected
+	if (!(criterions & C_SIZE)) {
+		initval = ntypes-1;
+		inc = -1;
+	}
+
+	// Scan the sorted list of allowed types to find a matching type
+	for (i=initval; (i<ntypes) && (i>=0); i+=inc) {
+		info = &(data_info[tp[i]]);
+
+		if ((m_int || (info->is_int == tint))
+		   && (m_signed || (info->is_signed == tsigned))
+		   && (m_size || (info->size >= tsize))) {
+			*match = tp[i];
+			return true;
+		}
+	}
+
+	return false;
+}
+
+
+/* \param target		data type desired
+ * \param supported_type	array of XDF_NUM_DATA_TYPES bool values
+ *				indicating whether a type is supported
+ * 
+ * Returns the supported data type that is the closest to the target.
+ */
+XDF_LOCAL enum xdftype get_closest_type(enum xdftype target, 
+					const bool *supported_type)
+{
+	unsigned int i;
+	enum xdftype match, tp[XDF_NUM_DATA_TYPES];
+	const struct data_information* tinfo;
+	unsigned int nt = 0;
+
+	if (supported_type[target])
+		return target;
+	
+	// Initialize an array of allowed types sorted in the ascending data
+	// size order
+	for (i=0; i<numrep; i++) {
+		if (supported_type[sortedlst[i]])
+			tp[nt++] = sortedlst[i];
+	}
+	assert(nt > 0);
+	
+	tinfo = &(data_info[target]);
+
+	// Find a match by relaxing gradually the criterions
+	if (find_match(&match, tinfo, tp, nt, C_INT | C_SIGNED | C_SIZE)
+	 || find_match(&match, tinfo, tp, nt, C_SIGNED | C_SIZE)
+	 || find_match(&match, tinfo, tp, nt, C_INT | C_SIZE)
+	 || find_match(&match, tinfo, tp, nt, C_SIZE)
+	 || find_match(&match, tinfo, tp, nt, C_INT | C_SIGNED)
+	 || find_match(&match, tinfo, tp, nt, C_SIGNED)
+	 || find_match(&match, tinfo, tp, nt, C_INT)
+	 || find_match(&match, tinfo, tp, nt, 0))
+	   	return match;
+
+	// We reach the end without a match, it means that the list of
+	// supported types is empty
+	return 0;
+}
+

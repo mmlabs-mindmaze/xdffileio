@@ -10,10 +10,12 @@ TESTS += errorcheck
 endif
 
 
-testbdf_SOURCES = testbdf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h
+testbdf_SOURCES = testbdf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
+		  validation.c validation.h
 testbdf_LDADD = $(top_builddir)/src/libxdffileio.la
 
-testedf_SOURCES = testedf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h
+testedf_SOURCES = testedf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
+		  validation.c validation.h
 testedf_LDADD = $(top_builddir)/src/libxdffileio.la
 
 errorcheck_SOURCES = errorcheck.c filecmp.c filecmp.h
