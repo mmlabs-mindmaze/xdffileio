@@ -49,7 +49,6 @@ struct xdfch {
 };
 
 struct xdf {
-	enum xdffiletype ftype;
 	int fd;					
 	off_t hdr_offset;
 	unsigned int ready, mode;			

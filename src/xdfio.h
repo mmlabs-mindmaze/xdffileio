@@ -35,7 +35,8 @@ enum xdffiletype
 	XDF_EDF,
 	XDF_EDFP,
 	XDF_BDF,
-	XDF_GDF
+	XDF_GDF,
+	XDF_NUM_FILE_TYPES
 };
 
 #define XDF_F_FIRST	1
@@ -50,8 +51,12 @@ enum xdffield
 	XDF_F_REC_NSAMPLE,		/* int         */
 	XDF_F_SAMPLING_FREQ,		/* int         */
 	XDF_F_NCHANNEL,			/* int         */
-	XDF_F_SUBJ_DESC,		/* const char* */
+	XDF_F_FILEFMT,			/* int		*/
+
+	/* Format specific file fields */
+	XDF_F_SUBJ_DESC = 5000,		/* const char* */
 	XDF_F_SESS_DESC,		/* const char* */
+
 
 	/* Channel configuration fields */
 	XDF_CF_ARRINDEX = XDF_CF_FIRST,/* int		*/
@@ -64,7 +69,9 @@ enum xdffield
 	XDF_CF_PMAX,		/* double 	*/
 	XDF_CF_DMIN,		/* double 	*/
 	XDF_CF_DMAX,		/* double 	*/
-	XDF_CF_UNIT,		/* const char*  */
+	
+	/* Format specific channel fields */
+	XDF_CF_UNIT=20000,	/* const char*  */
 	XDF_CF_TRANSDUCTER,	/* const char*  */
 	XDF_CF_PREFILTERING,	/* const char*  */
 	XDF_CF_RESERVED		/* const char*	*/

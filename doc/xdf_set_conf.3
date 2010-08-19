@@ -60,6 +60,10 @@ frequency modifies the number of sample per record (field
 \fBXDF_F_NCHANNEL\fP (int)  (get function only)
 Get the number of channel in the file.
 .TP 7
+\fBXDF_F_FILEFMT\fP (int)  (get function only)
+Get the file format type (one of the value defined by the enumeration
+xdffiletype other than \fBXDF_ANY\fP)
+.TP 7
 \fBXDF_F_SUBJ_DESC\fP (const char*)
 Specify the string describing the subject.
 .TP 7
@@ -73,7 +77,8 @@ The two functions returns 0 in case of success. Otherwise -1 is returned and
 .TP 7
 .B EINVAL
 \fIxdf\fP is NULL or \fIfield\fP is not a proper value of the enumeration
-xdffield
+xdffield accepted by the function (for example \fBXDF_F_NCHANNEL\fP and 
+\fBxdf_set_conf\fP() )
 .TP 7
 .B EPERM
 The request submitted to \fBxdf_set_conf\fP() is not allowed for this type

@@ -41,6 +41,7 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_REC_NSAMPLE, TYPE_INT},
 	{XDF_F_SAMPLING_FREQ, TYPE_INT},
 	{XDF_F_NCHANNEL, TYPE_INT},
+	{XDF_F_FILEFMT, TYPE_INT},
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
 	/* Channel field */
@@ -83,12 +84,11 @@ static int get_field_type(int field)
  *
  * Initialize a xdf structure the provided and default values
  */
-static void init_xdf_struct(struct xdf* xdf, int fd, enum xdffiletype type, int mode)
+static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 {
 	xdf->ready = 0;
 	xdf->reportval = 0;
 	xdf->mode = mode;
-	xdf->ftype = type;
 	xdf->fd = fd;
 	xdf->buff = xdf->backbuff = NULL;
 	xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
@@ -136,7 +136,7 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	}
 	
 	// Initialize by reading the file
-	init_xdf_struct(xdf, fd, gtype, XDF_READ);
+	init_xdf_struct(xdf, fd, XDF_READ);
 	if (xdf->ops->read_header(xdf) == 0)
 		return xdf;
 	
@@ -177,7 +177,7 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 		return NULL;
 	}
 
-	init_xdf_struct(xdf, fd, type, XDF_WRITE);
+	init_xdf_struct(xdf, fd, XDF_WRITE);
 	return xdf;
 }
 
@@ -576,8 +576,6 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 		xdf->ns_per_rec = xdf->rec_duration*(double)(val.i);
 	else if (field == XDF_F_REC_DURATION) 
 		xdf->rec_duration = val.d;
-	else if (field == XDF_F_NCHANNEL) 
-		retval = xdf_set_error(EINVAL);
 	else
 		retval = 1;
 	
@@ -673,6 +671,8 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
 		val->d = xdf->rec_duration;
 	else if (field == XDF_F_NCHANNEL)
 		val->i = xdf->numch;
+	else if (field == XDF_F_FILEFMT)
+		val->i = xdf->ops->type;
 	else
 		retval = 1;
 
