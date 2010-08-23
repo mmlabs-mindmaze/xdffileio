@@ -93,15 +93,7 @@ static const unsigned char bdf_magickey[] =
 	{255, 'B', 'I', 'O', 'S', 'E', 'M', 'I'};
 
 static const struct ebdf_channel bdfch_def = {
-	.xdfch = {
-		.iarray = 0,
-		.offset = 0,
-		.infiletype = XDFINT24,
-		.inmemtype = XDFINT32,
-		.digital_inmem = 0,
-		.digital_mm = {INT24_MIN, INT24_MAX},
-		.physical_mm = {INT24_MIN, INT24_MAX},
-	}
+	.xdfch = { .infiletype = XDFINT24 }
 };
 
 static const struct format_operations edf_ops = {
@@ -127,15 +119,7 @@ static const unsigned char edf_magickey[] =
 	{'0', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
 
 static const struct ebdf_channel edfch_def = {
-	.xdfch = {
-		.iarray = 0,
-		.offset = 0,
-		.infiletype = XDFINT16,
-		.inmemtype = XDFFLOAT,
-		.digital_inmem = 0,
-		.digital_mm = {INT16_MIN, INT16_MAX},
-		.physical_mm = {INT16_MIN, INT16_MAX},
-	}
+	.xdfch = { .infiletype = XDFINT16 }
 };
 
 /******************************************************
@@ -634,7 +618,6 @@ static int ebdf_read_file_header(struct ebdf_file* bdf, FILE* file)
 	   || read_int_field(file, (int*)&(bdf->xdf.numch), 4) )
 		retval = -1;
 
- 
 	bdf->xdf.rec_duration = (double)recdur;
 	bdf->xdf.hdr_offset = hdrsize;
 
@@ -658,7 +641,6 @@ static int ebdf_read_channels_header(struct ebdf_file* ebdf, FILE* file)
 {
 	struct xdfch* ch;
 	int ival;
-	unsigned int offset = 0;
 
 	for (ch = ebdf->xdf.channels; ch != NULL; ch = ch->next)
 		if (read_string_field(file, get_ebdfch(ch)->label, 16))
@@ -712,12 +694,9 @@ static int ebdf_read_channels_header(struct ebdf_file* ebdf, FILE* file)
 	// (assuming only one array of packed values)
 	for (ch = ebdf->xdf.channels; ch != NULL; ch = ch->next) {
 		if (ebdf->xdf.ops->type == XDF_BDF)
-			ch->infiletype = ch->inmemtype = XDFINT24;
+			ch->infiletype = XDFINT24;
 		else
-			ch->infiletype = ch->inmemtype = XDFINT16;
-		ch->digital_inmem = 1;
-		ch->offset = offset;
-		offset += xdf_get_datasize(ch->inmemtype);
+			ch->infiletype = XDFINT16;
 	}
 
 

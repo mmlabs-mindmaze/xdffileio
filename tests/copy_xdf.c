@@ -38,6 +38,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 	xdf_copy_conf(dst, src);
 	offset = 0;
 	while ((srcch = xdf_get_channel(src, ich))) {
+		xdf_set_chconf(srcch, XDF_CF_ARRINDEX, 0, XDF_NOF);
 		dstch = xdf_add_channel(dst, NULL);
 		if (xdf_copy_chconf(dstch, srcch)) {
 			fprintf(stderr, "\tFailed copying channel %i: (%i) %s\n",

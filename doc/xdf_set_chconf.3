@@ -31,55 +31,59 @@ field requests on its right will be processed. The order of processing is
 also important for field requests that influences the value of other fields
 (like \fBXDF_CF_STOTYPE\fP).
 .LP
-Here is the list of admissible value. The type of value expected is provided
+Here is the list of admissible value. The expected type of value is provided
 in the parenthesis (the expected type of the value for
 \fBxdf_set_chconf\fP(), or a pointer to this type for
-\fBxdf_get_chconf\fP()):
+\fBxdf_get_chconf\fP()). The default value of each field is provided in
+squared brackets (however these defaults can be overriden by a call to
+\fBxdf_set_conf\fP(3) if the file is open for writing. If the file is
+opened for reading, the default are meaningful only for the fields
+\fBXDF_CF_ARR*\fP):
 .TP 7
-\fBXDF_CF_ARRINDEX\fP (int)
+\fBXDF_CF_ARRINDEX\fP (int) [0]
 Specify the array from/to which the channel value should be transfered. If
 the mode of the file is \fBXDF_READ\fP and the value is negative, the
 channel will not be read. If the mode is \fBXDF_WRITE\fP and the value is
 negative, the function will fail.
 .TP 7
-\fBXDF_CF_ARROFFSET\fP (int)
+\fBXDF_CF_ARROFFSET\fP (int) [0 for channel 0, packed channels for the rest]
 Specify the offset in the array from/to which the channel value should be
 transfered.
 .TP 7
-\fBXDF_CF_ARRDIGITAL\fP (int)
+\fBXDF_CF_ARRDIGITAL\fP (int) [0 if writing, 1 if reading]
 Indicate that the data in the array from/to which the channel value should
 be transfered is provided in digital unit. This means in practice that no
 scaling is performed during the transfer from/to the disk (non zero indicate
 no scaling).
 .TP 7
-\fBXDF_CF_ARRTYPE\fP (enum xdftype)
+\fBXDF_CF_ARRTYPE\fP (enum xdftype) [same as \fBXDF_CF_STOTYPE\fP]
 specify the type in the channel should casted to/from when accessed in the
 array.
 .TP 7
-\fBXDF_CF_PMIN\fP (double)
+\fBXDF_CF_PMIN\fP (double) [min of \fBXDF_CF_ARRTYPE\fP]
 Set/get the minimal value that a physical value can get. Cannot be set if
 XDF_READ.
 .TP 7
-\fBXDF_CF_PMAX\fP (double)
+\fBXDF_CF_PMAX\fP (double) [max of \fBXDF_CF_ARRTYPE\fP]
 Set/get the maximal value that a physical value can get. Cannot be set if
 XDF_READ.
 .TP 7
-\fBXDF_CF_STOTYPE\fP (enum xdftype)
+\fBXDF_CF_STOTYPE\fP (enum xdftype) [any datatype supported by file type]
 Specify the type stored in the file of the channel value. If the XDF file
 has been opened in XDF_READ, this field cannot be set. If this field is
 successfully set, it will set as well the digital minimum
 (\fBXDF_CF_DMIN\fP) and the digital maximum (\fBXDF_CF_MAX\fP) to the
 minimum and maximum values allowed by the data type.
 .TP 7
-\fBXDF_CF_DMIN\fP (double)
+\fBXDF_CF_DMIN\fP (double) [min of \fBXDF_CF_STOTYPE\fP]
 Set/get the minimal value that a digital value can get. Cannot be set if
 XDF_READ. This is also automatically set by \fBXDF_CF_STOTYPE\fP.
 .TP 7
-\fBXDF_CF_DMAX\fP (double)
+\fBXDF_CF_DMAX\fP (double) [min of \fBXDF_CF_STOTYPE\fP]
 Set/get the maximal value that a digital value can get. Cannot be set if
 XDF_READ. This is also automatically set by \fBXDF_CF_STOTYPE\fP.
 .TP 7
-\fBXDF_CF_LABEL\fP (const char*)
+\fBXDF_CF_LABEL\fP (const char*) [""]
 Set/get the label of the channel. This field cannot be set if the XDF file
 is in mode XDF_READ.
 .SH "RETURN VALUE"

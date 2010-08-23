@@ -98,6 +98,49 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 	xdf->array_stride = NULL;
 }
 
+
+/* \param xdf	pointer to an structure xdf initialized for reading
+ *
+ * Initialize the metadata, i.e. it sets the initial
+ * values of transfer to reasonable defaults: no scaling + iarray to 0
+ */
+static void init_read_metadata(struct xdf* xdf)
+{
+	struct xdfch* ch;
+	int offset = 0;
+
+	// Set channel default values
+	for (ch = xdf->channels; ch != NULL; ch = ch->next) {
+		ch->inmemtype = ch->infiletype;
+		ch->digital_inmem = 1;
+		ch->iarray = 0;
+		ch->offset = offset;
+		offset += xdf_get_datasize(ch->inmemtype);
+	}
+}
+
+
+/* \param xdf	pointer to an structure xdf initialized for writing
+ *
+ * Initialize the metadata, i.e. it sets the initial values of transfer to
+ * reasonable defaults
+ */
+static void init_write_metadata(struct xdf* xdf)
+{
+	struct xdfch* ch = xdf->defaultch;
+	const double* lim;
+
+	// Set default values for the default channel 
+	ch->inmemtype = ch->infiletype;
+	lim = xdf_datinfo(ch->infiletype)->lim;
+	memcpy(ch->digital_mm, lim, sizeof(ch->digital_mm));
+	memcpy(ch->physical_mm, lim, sizeof(ch->physical_mm));
+	ch->digital_inmem = 0;
+	ch->iarray = 0;
+	ch->offset = 0;
+}
+
+
 /* \param type		expected type for the file to be opened
  * \param filename	path of the file to be read
  *
@@ -109,13 +152,11 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	unsigned char magickey[8];
 	enum xdffiletype gtype;
 	struct xdf* xdf = NULL;
-	int errnum = 0;
-	int fd = -1;
+	int fd, errnum = 0;
 
 	// Open the file
 	if ((fd = open(filename, O_RDONLY|O_BINARY)) == -1) 
 		return NULL;
-
 
 	// Guess file type
 	if ( (read(fd, magickey, sizeof(magickey)) == -1)
@@ -137,8 +178,10 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	
 	// Initialize by reading the file
 	init_xdf_struct(xdf, fd, XDF_READ);
-	if (xdf->ops->read_header(xdf) == 0)
+	if (xdf->ops->read_header(xdf) == 0) {
+		init_read_metadata(xdf);
 		return xdf;
+	}
 	
 	// We have caught an error if we reach here
 	errnum = errno;
@@ -178,6 +221,7 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 	}
 
 	init_xdf_struct(xdf, fd, XDF_WRITE);
+	init_write_metadata(xdf);
 	return xdf;
 }
 

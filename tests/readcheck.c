@@ -35,7 +35,6 @@ static int setup_files(const char* filename, int nchskip, int* nchr, int* ncht)
 	*nchr = 0;
 	while ((ch = xdf_get_channel(xdfr, i))) {
 		if (xdf_set_chconf(ch, XDF_CF_ARRTYPE, arrtp,
-		                    XDF_CF_ARRINDEX, 0,
 				    XDF_CF_ARROFFSET, offset,
 				    XDF_NOF))
 			goto error;
