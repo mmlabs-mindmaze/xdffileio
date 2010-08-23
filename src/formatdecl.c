@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "xdffile.h"
 #include "ebdf.h"
+#include "gdf.h"
 
 struct dataformat_entry {
 	enum xdffiletype type;
@@ -23,6 +24,11 @@ static struct dataformat_entry support_datafmt[] = {
 		.type=XDF_EDF,
 		.alloc_file = xdf_alloc_edffile,
 		.is_same_type = xdf_is_edffile
+	},
+	{
+		.type=XDF_GDF,
+		.alloc_file = xdf_alloc_gdffile,
+		.is_same_type = xdf_is_gdffile
 	}
 };
 

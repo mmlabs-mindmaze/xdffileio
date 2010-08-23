@@ -14,6 +14,7 @@
 #include "xdffile.h"
 #include "xdftypes.h"
 #include "ebdf.h"
+#include "streamops.h"
 
 /******************************************************
  *               EDF/BDF specific declaration             *
@@ -450,46 +451,6 @@ static int ebdf_write_header(struct xdf* xdf)
 
 	return retval;
 }
-
-
-/* Parse the file (field of nch characters) and assign to the integer val.
- * Advance the file pointer of exactly nch byte.
- */
-static int read_int_field(FILE* file, int* val, unsigned int nch)
-{
-	char format[8];
-	long pos = ftell(file);
-	sprintf(format, "%%%ui", nch);
-	
-	if ((fscanf(file, format, val) <= 0)
-	    || fseek(file, pos+nch, SEEK_SET)) 
-		return -1;
-	
-	return 0;
-}
-
-
-/* Parse the file (field of nch characters) and assign to the string val.
- * Advance the file pointer of exactly nch byte.
- * It also removes trailing space characters from the string
- */
-static int read_string_field(FILE* file, char* val, unsigned int nch)
-{
-	int pos;
-
-	val[nch] = '\0';
-	if (fread(val, nch, 1, file) < 1)
-		return -1;
-
-	// Remove trailing spaces
-	pos = strlen(val);
-	while (pos && (val[pos]==' '))
-		pos--;
-	val[pos] = '\0';
-
-	return 0;
-}
-
 
 /* \param bdf	pointer to a ebdf_file open for reading
  * \param file  stream associated to the file 
