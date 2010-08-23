@@ -25,19 +25,18 @@ struct format_operations {
 	                   union optval, int);
 	int (*get_channel)(const struct xdfch*, enum xdffield,
 	                   union optval*, int);
-	int (*copy_chconf)(struct xdfch*, const struct xdfch*);
-	struct xdfch* (*alloc_channel)(void);
-	void (*free_channel)(struct xdfch*);
 	int (*set_conf)(struct xdf*, enum xdffield, union optval, int); 
 	int (*get_conf)(const struct xdf*, enum xdffield,
 	                union optval*, int); 
-	int (*copy_conf)(struct xdf*, const struct xdf*); 
 	int (*write_header)(struct xdf*);
 	int (*read_header)(struct xdf*);
 	int (*complete_file)(struct xdf*);
-	void (*free_file)(struct xdf*);
 	enum xdffiletype type;
 	bool supported_type[XDF_NUM_DATA_TYPES];
+	int choff, fileoff;
+	size_t chlen, filelen;
+	const enum xdffield* chfields;
+	const enum xdffield* filefields;
 };
 
 struct xdfch {

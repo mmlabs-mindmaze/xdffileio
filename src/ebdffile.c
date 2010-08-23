@@ -7,10 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
 #include <time.h>
-#include <stdarg.h>
 
 #include "xdfio.h"
 #include "xdffile.h"
@@ -26,17 +24,12 @@ static int ebdf_set_channel(struct xdfch*, enum xdffield,
                            union optval, int);
 static int ebdf_get_channel(const struct xdfch*, enum xdffield,
                            union optval*, int);
-static int ebdf_copy_chconf(struct xdfch*, const struct xdfch*);
-static struct xdfch* ebdf_alloc_channel(void);
-static void ebdf_free_channel(struct xdfch* xdfch);
 static int ebdf_set_conf(struct xdf*, enum xdffield, union optval, int); 
 static int ebdf_get_conf(const struct xdf*, enum xdffield,
                         union optval*, int); 
-static int ebdf_copy_conf(struct xdf*, const struct xdf*); 
 static int ebdf_write_header(struct xdf*);
 static int ebdf_read_header(struct xdf*);
 static int ebdf_complete_file(struct xdf*);
-static void ebdf_free_file(struct xdf*);
 
 // EDF/BDF channel structure
 struct ebdf_channel {
@@ -69,24 +62,48 @@ struct ebdf_file {
 /******************************************************
  *            BDF type definition declaration         *
  ******************************************************/
+static const enum xdffield ch_supported_fields[] = {
+	XDF_CF_ARRTYPE,
+	XDF_CF_PMIN,
+	XDF_CF_PMAX,
+	XDF_CF_STOTYPE,
+	XDF_CF_DMIN,
+	XDF_CF_DMAX,
+	XDF_CF_ARRDIGITAL,
+	XDF_CF_ARROFFSET,
+	XDF_CF_ARRINDEX,
+	XDF_CF_LABEL,
+	XDF_CF_UNIT,
+	XDF_CF_TRANSDUCTER,
+	XDF_CF_PREFILTERING,
+	XDF_CF_RESERVED,
+	XDF_NOF
+};
+
+static const enum xdffield file_supported_fields[] = {
+	XDF_F_REC_DURATION,
+	XDF_F_REC_NSAMPLE,
+	XDF_F_SUBJ_DESC,
+	XDF_F_SESS_DESC,
+	XDF_NOF
+};
 
 static const struct format_operations bdf_ops = {
 	.set_channel = ebdf_set_channel,
 	.get_channel = ebdf_get_channel,
-	.copy_chconf = ebdf_copy_chconf,
-	.alloc_channel = ebdf_alloc_channel,
-	.free_channel = ebdf_free_channel,
 	.set_conf = ebdf_set_conf,
 	.get_conf = ebdf_get_conf,
-	.copy_conf = ebdf_copy_conf,
 	.write_header = ebdf_write_header,
 	.read_header = ebdf_read_header,
 	.complete_file = ebdf_complete_file,
-	.free_file = ebdf_free_file,
 	.type = XDF_BDF,
-	.supported_type = {
-		[XDFINT24] = true
-	}
+	.supported_type = {[XDFINT24] = true},
+	.choff = offsetof(struct ebdf_channel, xdfch),
+	.chlen = sizeof(struct ebdf_channel),
+	.fileoff = offsetof(struct ebdf_file, xdf),
+	.filelen = sizeof(struct ebdf_file),
+	.chfields = ch_supported_fields,
+	.filefields = file_supported_fields
 };
 
 static const unsigned char bdf_magickey[] = 
@@ -99,20 +116,19 @@ static const struct ebdf_channel bdfch_def = {
 static const struct format_operations edf_ops = {
 	.set_channel = ebdf_set_channel,
 	.get_channel = ebdf_get_channel,
-	.copy_chconf = ebdf_copy_chconf,
-	.alloc_channel = ebdf_alloc_channel,
-	.free_channel = ebdf_free_channel,
 	.set_conf = ebdf_set_conf,
 	.get_conf = ebdf_get_conf,
-	.copy_conf = ebdf_copy_conf,
 	.write_header = ebdf_write_header,
 	.read_header = ebdf_read_header,
 	.complete_file = ebdf_complete_file,
-	.free_file = ebdf_free_file,
 	.type = XDF_EDF,
-	.supported_type = {
-		[XDFINT16] = true
-	}
+	.supported_type = {[XDFINT16] = true},
+	.choff = offsetof(struct ebdf_channel, xdfch),
+	.chlen = sizeof(struct ebdf_channel),
+	.fileoff = offsetof(struct ebdf_file, xdf),
+	.filelen = sizeof(struct ebdf_file),
+	.chfields = ch_supported_fields,
+	.filefields = file_supported_fields
 };
 
 static const unsigned char edf_magickey[] = 
@@ -257,99 +273,6 @@ static int ebdf_get_channel(const struct xdfch* ch, enum xdffield field,
 }
 
 
-/* \param dst	pointer to a xdf channel (EDF/BDF) with XDF_WRITE mode
- * \param src	pointer to a xdf channel
- *
- * EDF/BDF METHOD.
- * Copy the fields of a xDF channel to EDF/BDF channel
- */
-static int ebdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
-{
-	double dmin, dmax, pmin, pmax;
-	enum xdftype ts, ta;
-	unsigned int offset, index, digital_inmem;
-	const char *label, *unit, *transducter, *filtinfo, *reserved;
-
-	// Fast copy if they are of the same type
-	if (src->owner->ops->type == dst->owner->ops->type) {
-		struct ebdf_channel* ebdfsrc = get_ebdfch(src);
-		struct ebdf_channel* ebdfdst = get_ebdfch(dst);
-		struct xdfch* next = dst->next;
-		struct xdf* owner = dst->owner;
-
-		memcpy(ebdfdst, ebdfsrc, sizeof(*ebdfsrc));
-
-		// Channel specific data
-		dst->owner = owner;
-		dst->next = next;
-
-		return 0;
-	}
-
-	xdf_get_chconf(src, 
-			XDF_CF_ARRTYPE, &ta,
-			XDF_CF_PMIN, &pmin,
-			XDF_CF_PMAX, &pmax,
-			XDF_CF_STOTYPE, &ts,
-			XDF_CF_DMIN, &dmin,
-			XDF_CF_DMAX, &dmax,
-			XDF_CF_ARRDIGITAL, &digital_inmem,
-			XDF_CF_ARROFFSET, &offset,
-			XDF_CF_ARRINDEX, &index,
-			XDF_CF_LABEL, &label,
-			XDF_CF_UNIT, &unit,
-			XDF_CF_TRANSDUCTER, &transducter,
-			XDF_CF_PREFILTERING, &filtinfo,
-			XDF_CF_RESERVED, &reserved,
-			XDF_NOF);
-
-	ts = get_closest_type(ts, dst->owner->ops->supported_type);
-	xdf_set_chconf(dst,
-			XDF_CF_ARRTYPE, ta,
-			XDF_CF_PMIN, pmin,
-			XDF_CF_PMAX, pmax,
-			XDF_CF_STOTYPE, ts,
-			XDF_CF_DMIN, dmin,
-			XDF_CF_DMAX, dmax,
-			XDF_CF_ARRDIGITAL, digital_inmem,
-			XDF_CF_ARROFFSET, offset,
-			XDF_CF_ARRINDEX, index,
-			XDF_CF_LABEL, label,
-			XDF_CF_UNIT, unit,
-			XDF_CF_TRANSDUCTER, transducter,
-			XDF_CF_PREFILTERING, filtinfo,
-			XDF_CF_RESERVED, reserved,
-			XDF_NOF);
-
-	return 0;
-}
-
-
-/* BDF METHOD.
- * Allocate a BDF channel 
- */
-static struct xdfch* ebdf_alloc_channel(void)
-{
-	struct ebdf_channel* ch;
-	
-	ch = malloc(sizeof(*ch));
-	if (!ch)
-		return NULL;
-	memset(ch, 0, sizeof(*ch));
-	return &(ch->xdfch);
-}
-
-
-/* \param ch	pointer to a xdf channel (underlying EDF/BDF)
- *
- * EDF/BDF METHOD.
- * Free a EDF/BDF channel
- */
-static void ebdf_free_channel(struct xdfch* ch)
-{
-	free(get_ebdfch(ch));
-}
-
 /* \param xdf	pointer to a xdf file (EDF/BDF) with XDF_WRITE mode
  * \param field identifier of the field to be changed
  * \param val	union holding the value to set
@@ -400,33 +323,6 @@ union optval *val, int prevretval)
 		retval = prevretval;
 
 	return retval;
-}
-
-/* \param dst	pointer to a xdf file (EDF/BDF) with XDF_WRITE mode
- * \param src	pointer to a xdf file
- *
- * EDF/BDF METHOD.
- * Copy the fields of a xDF file configuration to EDF/BDF file
- */
-static int ebdf_copy_conf(struct xdf* dst, const struct xdf* src)
-{
-	double recduration;
-	int ns_rec;
-	const char *subj, *rec;
-
-	xdf_get_conf(src, XDF_F_REC_DURATION, &recduration,
-				XDF_F_REC_NSAMPLE, &ns_rec,
-				XDF_F_SUBJ_DESC, &subj,
-				XDF_F_SESS_DESC, &rec,
-				XDF_NOF);
-
-	xdf_set_conf(dst, XDF_F_REC_DURATION, recduration,
-				XDF_F_REC_NSAMPLE, ns_rec,
-				XDF_F_SUBJ_DESC, subj,
-				XDF_F_SESS_DESC, rec,
-				XDF_NOF);
-
-	return 0;
 }
 
 
@@ -690,16 +586,6 @@ static int ebdf_read_channels_header(struct ebdf_file* ebdf, FILE* file)
 		if (read_string_field(file, get_ebdfch(ch)->reserved, 32))
 			return -1;
 
-	// Guess the infile type and setup the offsets
-	// (assuming only one array of packed values)
-	for (ch = ebdf->xdf.channels; ch != NULL; ch = ch->next) {
-		if (ebdf->xdf.ops->type == XDF_BDF)
-			ch->infiletype = XDFINT24;
-		else
-			ch->infiletype = XDFINT16;
-	}
-
-
 	return 0;
 }
 
@@ -714,7 +600,6 @@ static int ebdf_read_header(struct xdf* xdf)
 {
 	int retval = -1;
 	unsigned int i;
-	struct xdfch** curr = &(xdf->channels);
 	struct ebdf_file* ebdf = get_ebdf(xdf);
 	FILE* file = fdopen(dup(xdf->fd), "rb");
 	if (!file)
@@ -725,9 +610,8 @@ static int ebdf_read_header(struct xdf* xdf)
 
 	// Allocate all the channels
 	for (i=0; i<xdf->numch; i++) {
-		if (!(*curr = xdf_alloc_channel(xdf)))
+		if (xdf_alloc_channel(xdf) == NULL)
 			goto exit;
-		curr = &((*curr)->next);
 	}
 
 	if (ebdf_read_channels_header(ebdf, file))
@@ -740,18 +624,6 @@ exit:
 	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
 	return retval;
 }
-
-
-/* \param xdf	pointer to an xdf file
- *
- * BDF METHOD.
- * Free all memory allocated to the structure
- */
-static void ebdf_free_file(struct xdf* xdf)
-{
-	free(get_ebdf(xdf));
-}
-
 
 
 /* \param xdf	pointer to an xdf file with XDF_WRITE mode

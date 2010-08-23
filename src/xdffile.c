@@ -660,9 +660,9 @@ XDF_API int xdf_close(struct xdf* xdf)
 	while (ch) {
 		prev = ch;
 		ch = ch->next;
-		xdf->ops->free_channel(prev);
+		free((char*)prev - xdf->ops->choff);
 	}
-	xdf->ops->free_file(xdf);
+	free((char*)xdf - xdf->ops->fileoff);
 
 	return retval;
 }

@@ -86,6 +86,9 @@ static int get_field_type(int field)
  */
 static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 {
+	struct xdfch* ch = xdf->defaultch;
+	const double* lim;
+
 	xdf->ready = 0;
 	xdf->reportval = 0;
 	xdf->mode = mode;
@@ -96,39 +99,6 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 	xdf->convdata = NULL;
 	xdf->batch = NULL;
 	xdf->array_stride = NULL;
-}
-
-
-/* \param xdf	pointer to an structure xdf initialized for reading
- *
- * Initialize the metadata, i.e. it sets the initial
- * values of transfer to reasonable defaults: no scaling + iarray to 0
- */
-static void init_read_metadata(struct xdf* xdf)
-{
-	struct xdfch* ch;
-	int offset = 0;
-
-	// Set channel default values
-	for (ch = xdf->channels; ch != NULL; ch = ch->next) {
-		ch->inmemtype = ch->infiletype;
-		ch->digital_inmem = 1;
-		ch->iarray = 0;
-		ch->offset = offset;
-		offset += xdf_get_datasize(ch->inmemtype);
-	}
-}
-
-
-/* \param xdf	pointer to an structure xdf initialized for writing
- *
- * Initialize the metadata, i.e. it sets the initial values of transfer to
- * reasonable defaults
- */
-static void init_write_metadata(struct xdf* xdf)
-{
-	struct xdfch* ch = xdf->defaultch;
-	const double* lim;
 
 	// Set default values for the default channel 
 	ch->inmemtype = ch->infiletype;
@@ -138,6 +108,37 @@ static void init_write_metadata(struct xdf* xdf)
 	ch->digital_inmem = 0;
 	ch->iarray = 0;
 	ch->offset = 0;
+}
+
+
+/* \param xdf	pointer to an structure xdf initialized for reading
+ * \param fd	file descriptor of the opened file for reading
+ *
+ * Initialize the metadata, i.e. it initializes the xdf structure, read the
+ * file header and it sets the initial values of transfer to reasonable
+ * defaults: no scaling + iarray to 0
+ *
+ * Return 0 in case of success, -1 otherwise
+ */
+static int setup_read_xdf(struct xdf* xdf, int fd)
+{
+	struct xdfch* ch;
+	int offset = 0;
+
+	init_xdf_struct(xdf, fd, XDF_READ);
+	if (xdf->ops->read_header(xdf))
+		return -1;
+
+	// Set channel default values
+	for (ch = xdf->channels; ch != NULL; ch = ch->next) {
+		ch->inmemtype = ch->infiletype;
+		ch->digital_inmem = 1;
+		ch->iarray = 0;
+		ch->offset = offset;
+		offset += xdf_get_datasize(ch->inmemtype);
+	}
+
+	return 0;
 }
 
 
@@ -177,11 +178,8 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	}
 	
 	// Initialize by reading the file
-	init_xdf_struct(xdf, fd, XDF_READ);
-	if (xdf->ops->read_header(xdf) == 0) {
-		init_read_metadata(xdf);
+	if (setup_read_xdf(xdf, fd) == 0)
 		return xdf;
-	}
 	
 	// We have caught an error if we reach here
 	errnum = errno;
@@ -221,7 +219,6 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 	}
 
 	init_xdf_struct(xdf, fd, XDF_WRITE);
-	init_write_metadata(xdf);
 	return xdf;
 }
 
@@ -259,16 +256,33 @@ XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype ty
  ******************************************************/
 /* \param xdf	pointer to a valid xdf structure
  * 
- * Allocate a channel
+ * Allocate a channel, initialize it with default values and link it to
+ * the end of channel list
+ *
  * Return the pointer a new channel or NULL in case of failure
  */
-XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* owner)
+XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* xdf)
 {
-	struct xdfch* ch;
+	const struct format_operations* ops = xdf->ops;
+	struct xdfch *ch, **plastch;
+	char* data;
 
-	ch = owner->ops->alloc_channel();
-	if (ch)
-		ch->owner = owner;
+	if ((data = malloc(ops->chlen)) == NULL)
+		return NULL;
+	
+	// Initialize the channel
+	memcpy(data, (char*)xdf->defaultch - ops->choff, ops->chlen);
+	ch = (struct xdfch*)(data + ops->choff);
+	ch->owner = xdf;
+
+	// Link the channel to the end of the list
+	ch->next = NULL;
+	plastch = &(xdf->channels);
+	while (*plastch)
+		plastch = &((*plastch)->next);
+	*plastch = ch;
+
+	xdf->defaultch->offset += xdf_get_datasize(ch->inmemtype);
 
 	return ch;
 }
@@ -309,32 +323,20 @@ XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
  */
 XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
 {
+	struct xdfch *ch;
+
 	if ((xdf == NULL) || (xdf->mode != XDF_WRITE)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
 		return NULL;
 	}
 
-	struct xdfch** curr = &(xdf->channels);
-	struct xdfch *ch;
-
-	// go to the end of the list of channel of the xdffile
-	while (*curr) 
-		curr = &((*curr)->next);
-
 	ch = xdf_alloc_channel(xdf);
 	if (!ch)
 		return NULL;
+	xdf->numch++;
 
-	// Init the new channel with the default one
-	xdf_copy_chconf(ch, xdf->defaultch);
-	xdf->defaultch->offset += xdf_get_datasize(ch->inmemtype);
 	if (label)
 		xdf_set_chconf(ch, XDF_CF_LABEL, label, XDF_NOF);
-
-	// Link the channel to the end
-	ch->next = NULL;
-	*curr = ch;
-	xdf->numch++;
 
 	return ch;
 }
@@ -585,11 +587,40 @@ XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
  */
 XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
-	
 	if (!dst || !src)
 		return xdf_set_error(EINVAL);
+	
+	const struct format_operations* ops = dst->owner->ops;
+	const enum xdffield* req;
+	union optval val;
+	int errnum;
 
-	return dst->owner->ops->copy_chconf(dst, src);
+	// Use fast copy if channel come from the same type
+	if (src->owner->ops->type == dst->owner->ops->type) {
+		struct xdfch* next = dst->next;
+		struct xdf* owner = dst->owner;
+		memcpy(((char*)dst) - ops->choff, 
+		       ((const char*)src) - ops->choff,
+		       ops->chlen);
+		dst->owner = owner;
+		dst->next = next;
+
+		return 0;
+	}
+
+	errnum = errno; // copy_chconf is not allowed to fail
+	for (req = ops->chfields; *req != XDF_NOF; req++) {
+		if (proceed_get_chconf(src, *req, &val))
+			continue;
+
+		if (*req == XDF_CF_STOTYPE)
+			val.i = get_closest_type(val.i, ops->supported_type);
+
+		proceed_set_chconf(dst, *req, val);
+	}
+	errno = errnum;
+
+	return 0;
 }
 
 
@@ -801,7 +832,24 @@ XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 	if (!dst || !src)
 		return xdf_set_error(EINVAL);
 
-	return dst->ops->copy_conf(dst, src);
+	const struct format_operations* ops = dst->ops;
+	const enum xdffield* req;
+	union optval val;
+	int errnum;
+
+	errnum = errno; // copy_chconf is not allowed to fail
+	for (req = ops->filefields; *req != XDF_NOF; req++) {
+		if (proceed_get_conf(src, *req, &val))
+			continue;
+
+		if (*req == XDF_CF_STOTYPE)
+			val.i = get_closest_type(val.i, ops->supported_type);
+
+		proceed_set_conf(dst, *req, val);
+	}
+	errno = errnum;
+
+	return 0;
 }
 
 
