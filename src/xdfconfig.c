@@ -217,7 +217,8 @@ error:
  * Create a xdf structure of a xDF file for writing. If type is XDF_ANY,
  * the function will fail
  */
-static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
+static
+struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 {
 	struct xdf* xdf = NULL;
 	int fd = -1, errnum;
@@ -225,13 +226,15 @@ static struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 	mode_t mode = S_IRUSR|S_IWUSR/*|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH*/;
 
 	// Create the file
-	if ( ((fd = open(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL, mode)) == -1) 
-	    || !(xdf = xdf_alloc_file(type)) ) {
-		if (fd == -1) {
-			errnum = errno;
-			close(fd);
-			errno = errnum;
-		}
+	fd = open(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL, mode);
+	if (fd == -1)
+		return NULL;
+
+	xdf = xdf_alloc_file(type);
+	if (xdf == NULL) {
+		errnum = errno;
+		close(fd);
+		errno = errnum;
 		return NULL;
 	}
 
