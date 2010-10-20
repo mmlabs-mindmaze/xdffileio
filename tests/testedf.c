@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
 		unlink(genfilename);
 		retcode = copy_xdf(genfilename, reffilename, XDFFILETYPE);
 		if (!retcode)
-			retcode = cmp_files(genfilename, reffilename, 1, offskip, NULL);
+			retcode = cmp_files(genfilename, reffilename, 0, NULL, NULL);
 	}
 
 	if (!retcode)

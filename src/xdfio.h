@@ -73,6 +73,7 @@ enum xdffield
 	/* Format specific file fields */
 	XDF_F_SUBJ_DESC = 5000,		/* const char* */
 	XDF_F_SESS_DESC,		/* const char* */
+	XDF_F_RECTIME,			/* time_t      */
 
 
 	/* Channel configuration fields */

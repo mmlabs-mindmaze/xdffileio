@@ -69,7 +69,7 @@ struct gdf_file {
 	struct gdf_channel default_gdfch;
 	char subjstr[81];
 	char recstr[81];
-	struct tm rectime;
+	time_t rectime;
 	uint64_t epid, lid, tid;
 	char sn[21];
 };
@@ -124,6 +124,7 @@ static const enum xdffield gdf_file_supported_fields[] = {
 	XDF_F_REC_NSAMPLE,
 	XDF_F_SUBJ_DESC,
 	XDF_F_SESS_DESC,
+	XDF_F_RECTIME,
 	XDF_NOF
 };
 
@@ -186,6 +187,7 @@ XDF_LOCAL struct xdf* xdf_alloc_gdffile(void)
 	memcpy(&(gdf->default_gdfch), &gdfch_def, sizeof(gdfch_def));
 	gdf->default_gdfch.xdfch.owner = &(gdf->xdf);
 	gdf->xdf.rec_duration = 1.0;
+	gdf->rectime = time(NULL);
 	
 	return &(gdf->xdf);
 }
@@ -293,6 +295,8 @@ static int gdf_set_conf(struct xdf* xdf, enum xdffield field,
 		strncpy(gdf->subjstr, val.str, sizeof(gdf->subjstr)-1);
 	else if (field == XDF_F_SESS_DESC)
 		strncpy(gdf->recstr, val.str, sizeof(gdf->recstr)-1);
+	else if (field == XDF_F_RECTIME)
+		gdf->rectime = val.ts;
 	else
 		retval = prevretval;
 
@@ -319,6 +323,8 @@ static int gdf_get_conf(const struct xdf* xdf, enum xdffield field,
 		val->str = gdf->subjstr;
 	else if (field == XDF_F_SESS_DESC)
 		val->str = gdf->recstr;
+	else if (field == XDF_F_RECTIME)
+		val->ts = gdf->rectime;
 	else
 		retval = prevretval;
 
@@ -350,15 +356,16 @@ static int gdf_write_file_header(struct gdf_file* gdf, FILE* file)
 	char timestring[17];
  	uint32_t nch, recduration[2];
 	int64_t nrec = -1, hdrsize;
+	struct tm ltm;
 
 	convert_recduration(gdf->xdf.rec_duration, recduration);
 	nrec = gdf->xdf.nrecord;
 	nch = gdf->xdf.numch;
  	hdrsize = 256 + (gdf->xdf.numch)*256;
 
-	// format time string
-	strftime(timestring, sizeof(timestring), 
-		 "%d.%m.%y%H.%M.%S", &(gdf->rectime));
+	// format time string (drop centisec precision)
+	localtime_r(&(gdf->rectime), &ltm);
+	strftime(timestring, sizeof(timestring),"%Y%m%d%H%M%S00", &ltm);
 
 	// Write data format identifier
 	if (fwrite(gdf_magickey, 8, 1, file) < 1)
@@ -488,6 +495,7 @@ static int gdf_read_file_header(struct gdf_file* gdf, FILE* file)
 	char timestring[17];
 	uint32_t nch, recduration[2];
 	int64_t nrec, hdrsize;
+	struct tm ltm = {.tm_isdst = -1};
 
 	fseek(file, 8, SEEK_SET);
 
@@ -510,9 +518,14 @@ static int gdf_read_file_header(struct gdf_file* gdf, FILE* file)
 	gdf->xdf.nrecord = nrec;
 	gdf->xdf.numch = nch;
 
-	// format time string
-	strftime(timestring, sizeof(timestring), 
-			 "%d.%m.%y%H.%M.%S", &(gdf->rectime));
+	// format time string (drop centisec precision)
+	sscanf(timestring, "%4i%2i%2i%2i%2i%2i", 
+	                    &(ltm.tm_year), &(ltm.tm_mon), &(ltm.tm_mday),
+	                    &(ltm.tm_hour), &(ltm.tm_min), &(ltm.tm_sec));
+	ltm.tm_mon--;
+	// REMINDER: tm_year is number of years since 1900
+	ltm.tm_year -= 1900;
+	gdf->rectime = mktime(&ltm);
 
 	return 0;
 }

@@ -65,7 +65,7 @@ struct ebdf_file {
 	struct ebdf_channel default_ebdfch;
 	char subjstr[81];
 	char recstr[81];
-	struct tm rectime;
+	time_t rectime;
 };
 
 #define NUMREC_FIELD_LOC 236
@@ -103,6 +103,7 @@ static const enum xdffield file_supported_fields[] = {
 	XDF_F_REC_NSAMPLE,
 	XDF_F_SUBJ_DESC,
 	XDF_F_SESS_DESC,
+	XDF_F_RECTIME,
 	XDF_NOF
 };
 
@@ -178,6 +179,7 @@ static struct xdf* alloc_ebdffile(const struct format_operations* ops,
 	memcpy(&(ebdf->default_ebdfch), defch, sizeof(*defch));
 	ebdf->default_ebdfch.xdfch.owner = &(ebdf->xdf);
 	ebdf->xdf.rec_duration = 1.0;
+	ebdf->rectime = time(NULL);
 	
 	return &(ebdf->xdf);
 }
@@ -311,6 +313,8 @@ static int ebdf_set_conf(struct xdf* xdf, enum xdffield field,
 		strncpy(ebdf->subjstr, val.str, sizeof(ebdf->subjstr)-1);
 	else if (field == XDF_F_SESS_DESC)
 		strncpy(ebdf->recstr, val.str, sizeof(ebdf->recstr)-1);
+	else if (field == XDF_F_RECTIME)
+		ebdf->rectime = val.ts;
 	else
 		retval = prevretval;
 
@@ -337,6 +341,8 @@ union optval *val, int prevretval)
 		val->str = ebdf->subjstr;
 	else if (field == XDF_F_SESS_DESC)
 		val->str = ebdf->recstr;
+	else if (field == XDF_F_RECTIME)
+		val->ts = ebdf->rectime;
 	else
 		retval = prevretval;
 
@@ -358,12 +364,13 @@ static int ebdf_write_file_header(struct ebdf_file* ebdf, FILE* file)
 	int retval;
 	const unsigned char* mkey;
 	enum xdffiletype type = ebdf->xdf.ops->type;
+	struct tm ltm;
 
 	mkey = (type == XDF_BDF) ? bdf_magickey : edf_magickey;
 
 	// format time string
-	strftime(timestring, sizeof(timestring), 
-		 "%d.%m.%y%H.%M.%S", &(ebdf->rectime));
+	localtime_r(&(ebdf->rectime), &ltm);
+	strftime(timestring, sizeof(timestring),"%d.%m.%y%H.%M.%S", &ltm);
 
 	// Write data format identifier
 	if (fwrite(mkey, 8, 1, file) < 1)
@@ -479,6 +486,7 @@ static int ebdf_read_file_header(struct ebdf_file* bdf, FILE* file)
 {
 	char timestring[17], type[45];
 	int recdur, hdrsize, retval = 0;
+	struct tm ltm = {.tm_isdst = -1};
 
 	fseek(file, 8, SEEK_SET);
 
@@ -490,15 +498,20 @@ static int ebdf_read_file_header(struct ebdf_file* bdf, FILE* file)
 	   || read_int_field(file, &(bdf->xdf.nrecord), 8)
 	   || read_int_field(file, &recdur, 8)
 	   || read_int_field(file, (int*)&(bdf->xdf.numch), 4) )
-		retval = -1;
+		return -1;
 
 	bdf->xdf.rec_duration = (double)recdur;
 	bdf->xdf.hdr_offset = hdrsize;
 
 	// format time string
-	if (!retval)
-		strftime(timestring, sizeof(timestring), 
-			 "%d.%m.%y%H.%M.%S", &(bdf->rectime));
+	sscanf(timestring, "%2i.%2i.%2i%2i.%2i.%2i", 
+	                    &(ltm.tm_mday), &(ltm.tm_mon), &(ltm.tm_year),
+	                    &(ltm.tm_hour), &(ltm.tm_min), &(ltm.tm_sec));
+	ltm.tm_mon--;
+	// REMINDER: tm_year is number of years since 1900
+	if (ltm.tm_year < 80)
+		ltm.tm_year += 100;
+	bdf->rectime = mktime(&ltm);
 
 	return retval;
 }

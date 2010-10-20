@@ -61,6 +61,7 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_FILEFMT, TYPE_INT},
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
+	{XDF_F_RECTIME, TYPE_TIME_T},
 	/* Channel field */
 	{XDF_CF_ARRINDEX, TYPE_INT},
 	{XDF_CF_ARROFFSET, TYPE_INT},
@@ -102,6 +103,8 @@ static int set_arg_to_val(int field, va_list* ap, union optval* val)
 		val->str = va_arg(*ap, const char*);
 	else if (argtype == TYPE_DOUBLE)
 		val->d = va_arg(*ap, double);
+	else if (argtype == TYPE_TIME_T)
+		val->ts = va_arg(*ap, time_t);
 	else
 		return -1;
 
@@ -121,6 +124,8 @@ static int set_val_to_arg(int field, union optval val, va_list* ap)
 		*(va_arg(*ap, const char**)) = val.str;
 	else if (argtype == TYPE_DOUBLE)
 		*(va_arg(*ap, double*)) = val.d;
+	else if (argtype == TYPE_TIME_T)
+		*(va_arg(*ap, time_t*)) = val.ts;
 	else
 		return -1;
 

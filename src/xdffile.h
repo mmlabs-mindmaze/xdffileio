@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "xdfio.h"
 
@@ -29,12 +30,14 @@
 #define TYPE_STRING		1
 #define TYPE_DATATYPE		2
 #define TYPE_DOUBLE		3
+#define TYPE_TIME_T		4
 
 union optval {
 	int i;
 	const char* str;
 	enum xdftype type;
 	double d;
+	time_t ts;
 };
 
 struct format_operations {
