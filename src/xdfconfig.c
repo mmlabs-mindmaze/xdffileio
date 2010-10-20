@@ -90,6 +90,43 @@ static int get_field_type(int field)
 }
 
 
+static int set_arg_to_val(int field, va_list* ap, union optval* val)
+{
+	int argtype = get_field_type(field);
+
+	if (argtype == TYPE_INT)
+		val->i = va_arg(*ap, int);
+	else if (argtype == TYPE_DATATYPE)
+		val->type = va_arg(*ap, enum xdftype);
+	else if (argtype == TYPE_STRING)
+		val->str = va_arg(*ap, const char*);
+	else if (argtype == TYPE_DOUBLE)
+		val->d = va_arg(*ap, double);
+	else
+		return -1;
+
+	return 0;
+}
+
+
+static int set_val_to_arg(int field, union optval val, va_list* ap)
+{
+	int argtype = get_field_type(field);
+
+	if (argtype == TYPE_INT)
+		*(va_arg(*ap, int*)) = val.i;
+	else if (argtype == TYPE_DATATYPE)
+		*(va_arg(*ap, enum xdftype*)) = val.type;
+	else if (argtype == TYPE_STRING)
+		*(va_arg(*ap, const char**)) = val.str;
+	else if (argtype == TYPE_DOUBLE)
+		*(va_arg(*ap, double*)) = val.d;
+	else
+		return -1;
+
+	return 0;
+}
+
 /******************************************************
  *            xDF structure initialization            *
  ******************************************************/
@@ -453,7 +490,7 @@ field, union optval val)
 XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
-	int argtype, retval = 0;
+	int retval = 0;
 	union optval val;
 
 	if (ch == NULL)
@@ -466,18 +503,8 @@ XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 			break;
 		}
 
-		argtype = get_field_type(field);
-
 		// Assign the correct value type given the field
-		if (argtype == TYPE_INT)
-			val.i = va_arg(ap, int);
-		else if (argtype == TYPE_DATATYPE)
-			val.type = va_arg(ap, enum xdftype);
-		else if (argtype == TYPE_STRING)
-			val.str = va_arg(ap, const char*);
-		else if (argtype == TYPE_DOUBLE)
-			val.d = va_arg(ap, double);
-		else {
+		if (set_arg_to_val(field, &ap, &val)) {
 			retval = xdf_set_error(EINVAL);
 			break;
 		}
@@ -560,7 +587,7 @@ field, union optval* val)
 XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
-	int argtype, retval = 0;
+	int retval = 0;
 	union optval val;
 
 	if (ch == NULL)
@@ -577,16 +604,7 @@ XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 			break;
 
 		// Assign to correct value type to the provided pointer
-		argtype = get_field_type(field);
-		if (argtype == TYPE_INT)
-			*(va_arg(ap, int*)) = val.i;
-		else if (argtype == TYPE_DATATYPE)
-			*(va_arg(ap, enum xdftype*)) = val.type;
-		else if (argtype == TYPE_STRING)
-			*(va_arg(ap, const char**)) = val.str;
-		else if (argtype == TYPE_DOUBLE)
-			*(va_arg(ap, double*)) = val.d;
-		else {
+		if (set_val_to_arg(field, val, &ap)) {
 			retval = xdf_set_error(EINVAL);
 			break;
 		}
@@ -702,7 +720,7 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
-	int argtype, retval = 0;
+	int retval = 0;
 	union optval val;
 	struct xdfch* defch;
 
@@ -712,18 +730,8 @@ XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 
 	va_start(ap, field);
 	while (field != XDF_NOF) {
-		argtype = get_field_type(field);
-
 		// Assign the correct value type given the field
-		if (argtype == TYPE_INT)
-			val.i = va_arg(ap, int);
-		else if (argtype == TYPE_DATATYPE)
-			val.type = va_arg(ap, enum xdftype);
-		else if (argtype == TYPE_STRING)
-			val.str = va_arg(ap, const char*);
-		else if (argtype == TYPE_DOUBLE)
-			val.d = va_arg(ap, double);
-		else {
+		if (set_arg_to_val(field, &ap, &val)) {
 			retval = xdf_set_error(EINVAL);
 			break;
 		}
@@ -799,7 +807,7 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
 XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
-	int argtype, retval = 0;
+	int retval = 0;
 	union optval val;
 	struct xdfch* defch;
 
@@ -819,16 +827,7 @@ XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 			break;
 
 		// Assign to correct value type to the provided pointer
-		argtype = get_field_type(field);
-		if (argtype == TYPE_INT)
-			*(va_arg(ap, int*)) = val.i;
-		else if (argtype == TYPE_DATATYPE)
-			*(va_arg(ap, enum xdftype*)) = val.type;
-		else if (argtype == TYPE_STRING)
-			*(va_arg(ap, const char**)) = val.str;
-		else if (argtype == TYPE_DOUBLE)
-			*(va_arg(ap, double*)) = val.d;
-		else {
+		if (set_val_to_arg(field, val, &ap)) {
 			retval = xdf_set_error(EINVAL);
 			break;
 		}
