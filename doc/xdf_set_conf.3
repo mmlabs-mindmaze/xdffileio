@@ -40,35 +40,96 @@ channel (see \fBxdf_add_channel\fP(3)). The list of channel configuration
 fields and their meaning are specified in the documentation of
 \fBxdf_set_chconf\fP(3).
 .LP
+If the file is opened for writing, each field is initialized to sensible or
+non-informative values in case of optional field or incorrect values in the
+case of "must be set" field (only \fBXDF_F_REC_NSAMPLE\fP or
+\fBXDF_F_SAMPLING_FREQ\fB). The default value are specified in squared
+bracked in the list.
+.LP
 Here is the list of file configuration field value. The type of value
 expected is provided in the parenthesis (the expected type of the value for
-\fBxdf_set_conf\fP(), or a pointer to this type for \fBxdf_get_conf\fP()):
-.TP 7
-\fBXDF_F_REC_DURATION\fP (double)
+\fBxdf_set_conf\fP(), or a pointer to this type for \fBxdf_get_conf\fP()).
+If a list of data formats is specified in curl brackets, it means that the
+field is supported only in those formats (no list means that all formats
+support the field):
+.TP
+\fBXDF_F_REC_DURATION\fP (double) [1]
 Specify the duration of one record. The value should be positive.
-.TP 7
-\fBXDF_F_REC_NSAMPLE\fP (int)
+.TP
+\fBXDF_F_REC_NSAMPLE\fP (int) [0]
 Specify the number of time points contained in each record. The value should
 be positive. Setting the number of sample per record modifies the sampling
 frequency (field \fBXDF_SAMPLING_FREQ\fP).
-.TP 7
-\fBXDF_F_SAMPLING_FREQ\fP (int)
+.TP
+\fBXDF_F_SAMPLING_FREQ\fP (int) [0]
 Get or set the sampling frequency of the recording. Setting the sampling
 frequency modifies the number of sample per record (field
 \fBXDF_F_REC_NSAMPLE\fP).
-.TP 7
+.TP
 \fBXDF_F_NCHANNEL\fP (int)  (get function only)
 Get the number of channel in the file.
-.TP 7
+.TP
 \fBXDF_F_FILEFMT\fP (int)  (get function only)
 Get the file format type (one of the value defined by the enumeration
 xdffiletype other than \fBXDF_ANY\fP)
-.TP 7
-\fBXDF_F_SUBJ_DESC\fP (const char*)
+.TP
+\fBXDF_F_RECTIME\fP (time_t) [current time] {EDF BDF GDF}
+Date and time of recording. It is expressed as number of seconds elapsed
+since the Epoch, 1970-01-01 00:00:00 +0000 (UTC). This number is the value
+returned by the function \fBtime\fP(3) of the standard C library. On file
+creation, this field is initialized to the current time.
+.TP
+\fBXDF_F_SUBJ_DESC\fP (const char*) [""] {EDF BDF GDF}
 Specify the string describing the subject.
-.TP 7
-\fBXDF_F_SESS_DESC\fP (const char*)
+.TP
+\fBXDF_F_SESS_DESC\fP (const char*) [""] {EDF BDF GDF}
 Specify the string describing the session of recording.
+.TP
+\fBXDF_F_ADDICTION\fP (unsigned int) [0] {GDF}
+.TP
+\fBXDF_F_BIRTHDAY\fP (time_t) [0] {GDF}
+Birthday of the patient using the same format as specified for field
+\fBXDF_F_RECTIME\fP.
+.TP
+\fBXDF_F_HEIGHT\fP (double) [0] {GDF}
+Height of the subject in centimeters.
+.TP
+\fBXDF_F_WEIGHT\fP (double) [0] {GDF}
+Weight of the subject in kilograms.
+.TP
+\fBXDF_F_GENDER\fP (unsigned int) [0] {GDF}
+Sex of the subject. Use \fB1\fP for male, \fB2\fP for female and \fB0\fP if
+unknown.
+.TP
+\fBXDF_F_HANDNESS\fP (unsigned int) [0] {GDF}
+Handness of the subject. Use \fB0\fP if unknown, \fB1\fP if right, \fB2\fP
+if left and \fB3\fP if ambidextrious.
+.TP
+\fBXDF_F_VISUAL_IMP\fP (unsigned int) [0] {GDF}
+Visual impairment. Use \fB0\fP if unknown, \fB1\fP if no impairment, \fB2\fP
+if impaired and \fB3\fP if impaired but corrected.
+.TP
+\fBXDF_F_HEART_IMP\fP (unsigned int) [0] {GDF}
+Heart impairment. Use \fB0\fP if unknown, \fB1\fP if no impairment, \fB2\fP
+if impaired and \fB3\fP if the subject wear a pacemaker.
+.TP
+\fBXDF_F_LOCATION\fP (double[3]) [0,0,0] {GDF}
+Location of the recording. The first 2 component specify the latitude and
+longitude in degrees, the third specifies the altitude in meters.
+.TP
+\fBXDF_F_ICD_CLASS\fP (char[6]) [0x000000000000] {GDF}
+Patient classification according to the International Statistical
+Classification of Diseases and Related Health Problems (ICD).
+.TP
+\fBXDF_F_HEADSIZE\fP (double[3]) [0,0,0] {GDF}
+Size of the subject's head (circumference, distance nasion – inion, left to 
+right mastoid) expressed in millimeters.
+.TP
+\fBXDF_F_REF_POS\fP (double[3]) [0,0,0] {GDF}
+X, Y, Z coordinates of the reference electrode.
+.TP
+\fBXDF_F_GND_POS\fP (double[3]) [0,0,0] {GDF}
+X, Y, Z coordinates of the ground electrode.
 .SH "RETURN VALUE"
 .LP
 The two functions returns 0 in case of success. Otherwise -1 is returned and

@@ -18,8 +18,14 @@
 #ifndef STREAMOPS_H
 #define STREAMOPS_H
 
+#define read8bval(file, num, value) \
+   (fread((value), (num), 1, (file)) < 1 ? -1 : 0)
+#define write8bval(file, num, value) \
+   (fwrite((value), (num), 1, (file)) < 1 ? -1 : 0)
 XDF_LOCAL int read16bval(FILE* file, unsigned int num, void* value);
 XDF_LOCAL int write16bval(FILE* file, unsigned int num, const void* value);
+XDF_LOCAL int read24bval(FILE* file, unsigned int num, void* value);
+XDF_LOCAL int write24bval(FILE* file, unsigned int num, const void* value);
 XDF_LOCAL int read32bval(FILE* file, unsigned int num, void* value);
 XDF_LOCAL int write32bval(FILE* file, unsigned int num, const void* value);
 XDF_LOCAL int read64bval(FILE* file, unsigned int num, void* value);

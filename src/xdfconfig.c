@@ -62,6 +62,18 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
 	{XDF_F_RECTIME, TYPE_TIME_T},
+	{XDF_F_BIRTHDAY, TYPE_TIME_T},
+	{XDF_F_ADDICTION, TYPE_UINT},
+	{XDF_F_HEIGHT, TYPE_DOUBLE},
+	{XDF_F_WEIGHT, TYPE_DOUBLE},
+	{XDF_F_GENDER, TYPE_UINT},
+	{XDF_F_HANDNESS, TYPE_UINT},
+	{XDF_F_VISUAL_IMP, TYPE_UINT},
+	{XDF_F_LOCATION, TYPE_3DPOS},
+	{XDF_F_ICD_CLASS, TYPE_ICD},
+	{XDF_F_HEADSIZE, TYPE_3DPOS},
+	{XDF_F_REF_POS, TYPE_3DPOS},
+	{XDF_F_GND_POS, TYPE_3DPOS},
 	/* Channel field */
 	{XDF_CF_ARRINDEX, TYPE_INT},
 	{XDF_CF_ARROFFSET, TYPE_INT},
@@ -77,6 +89,8 @@ static const struct opt_detail field_table[] = {
 	{XDF_CF_TRANSDUCTER, TYPE_STRING},
 	{XDF_CF_PREFILTERING, TYPE_STRING},
 	{XDF_CF_RESERVED, TYPE_STRING},
+	{XDF_CF_ELECPOS, TYPE_3DPOS},
+	{XDF_CF_IMPEDANCE, TYPE_DOUBLE}
 };
 #define num_opts	(sizeof(field_table)/sizeof(field_table[0]))
 
@@ -105,6 +119,12 @@ static int set_arg_to_val(int field, va_list* ap, union optval* val)
 		val->d = va_arg(*ap, double);
 	else if (argtype == TYPE_TIME_T)
 		val->ts = va_arg(*ap, time_t);
+	else if (argtype == TYPE_UINT)
+		val->ui = va_arg(*ap, unsigned int);
+	else if (argtype == TYPE_3DPOS) 
+		memcpy(val->pos, va_arg(*ap, double*), sizeof(val->pos));
+	else if (argtype == TYPE_ICD) 
+		memcpy(val->icd, va_arg(*ap, char*), sizeof(val->icd));
 	else
 		return -1;
 
@@ -126,6 +146,12 @@ static int set_val_to_arg(int field, union optval val, va_list* ap)
 		*(va_arg(*ap, double*)) = val.d;
 	else if (argtype == TYPE_TIME_T)
 		*(va_arg(*ap, time_t*)) = val.ts;
+	else if (argtype == TYPE_UINT)
+		*(va_arg(*ap, unsigned int*)) = val.ui;
+	else if (argtype == TYPE_3DPOS) 
+		memcpy(va_arg(*ap, double*), val.pos, sizeof(val.pos));
+	else if (argtype == TYPE_ICD) 
+		memcpy(va_arg(*ap, char*), val.icd, sizeof(val.icd));
 	else
 		return -1;
 

@@ -74,7 +74,20 @@ enum xdffield
 	XDF_F_SUBJ_DESC = 5000,		/* const char* */
 	XDF_F_SESS_DESC,		/* const char* */
 	XDF_F_RECTIME,			/* time_t      */
-
+	XDF_F_ADDICTION,		/* unsigned int	*/
+	XDF_F_BIRTHDAY,			/* time_t	*/
+	XDF_F_HEIGHT,			/* double	*/
+	XDF_F_WEIGHT,			/* double	*/
+	XDF_F_GENDER,			/* unsigned int */
+	XDF_F_HANDNESS,			/* unsigned int */
+	XDF_F_VISUAL_IMP,		/* unsigned int */
+	XDF_F_HEART_IMP,		/* unsigned int */
+	XDF_F_LOCATION,			/* double[3]	*/
+	XDF_F_ICD_CLASS,		/* char[6]	*/
+	XDF_F_HEADSIZE,			/* double[3]	*/
+	XDF_F_REF_POS,			/* double[3]	*/
+	XDF_F_GND_POS,			/* double[3]	*/
+		
 
 	/* Channel configuration fields */
 	XDF_CF_ARRINDEX = XDF_CF_FIRST,/* int		*/
@@ -92,7 +105,9 @@ enum xdffield
 	XDF_CF_UNIT=20000,	/* const char*  */
 	XDF_CF_TRANSDUCTER,	/* const char*  */
 	XDF_CF_PREFILTERING,	/* const char*  */
-	XDF_CF_RESERVED		/* const char*	*/
+	XDF_CF_RESERVED,	/* const char*	*/
+	XDF_CF_ELECPOS,		/* double[3]	*/
+	XDF_CF_IMPEDANCE	/* double	*/
 };
 
 
