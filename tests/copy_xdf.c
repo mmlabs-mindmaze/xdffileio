@@ -28,12 +28,14 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 {
 	struct xdf *dst = NULL, *src = NULL;
 	struct xdfch *dstch, *srcch;
-	unsigned int ich = 0, samplesize;
+	unsigned int ich = 0, samplesize, evttype;
 	int nch, retcode = -1;
 	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
 	size_t nstot, stride[1];
-	int offset;
+	int i, offset, nevent, nevtcode, evtcode;
+	double onset, duration;
+	const char* desc;
 
 	src = xdf_open(reffilename, XDF_READ, fformat);
 	if (!src) {
@@ -64,10 +66,18 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 		}
 		ich++;
 	}
-	xdf_get_conf(src, XDF_F_NCHANNEL, &nch, XDF_NOF);
+	xdf_get_conf(src, XDF_F_NCHANNEL, &nch,
+	                  XDF_F_NEVENT, &nevent, XDF_F_NEVTTYPE, &nevtcode, XDF_NOF);
 	if (nch != (int)ich) {
 		fprintf(stderr, "\tich=%u, nch=%i\n", ich, nch);
 		goto exit;
+	}
+
+	// Copy event code table
+	for (i=0; i<nevtcode; i++) {
+		if (xdf_get_evttype(src, i, &evtcode, &desc) < 0
+		  || xdf_add_evttype(dst, evtcode, desc) < 0)
+			goto exit;
 	}
 
 	samplesize = nch*4;
@@ -107,6 +117,13 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 			goto exit;
 		}
 		nstot += nsdst;
+	}
+
+
+	for (i=0; i<nevent; i++) {
+		if (xdf_get_event(src, i, &evttype, &onset, &duration) < 0
+		  || xdf_add_event(dst, evttype, onset, duration) < 0)
+			goto exit;
 	}
 	retcode = 0;
 

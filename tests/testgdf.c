@@ -153,7 +153,7 @@ int generate_xdffile(const char* filename)
 	tri2_t* tri2data;
 	int retcode = -1;
 	struct xdf* xdf = NULL;
-	int i,j;
+	int i,j, evttype1, evttype2;
 	char tmpstr[16];
 	time_t birthday = 321032607; //4 Mar 1980 15:43:27
 	size_t strides[4] = {
@@ -220,6 +220,11 @@ int generate_xdffile(const char* filename)
 			goto exit;
 	}
 
+	// Add events code
+	evttype1 = xdf_add_evttype(xdf, 0x101, NULL);
+	evttype2 = xdf_add_evttype(xdf, 0x204, NULL);
+	if (evttype1 < 0 || evttype2 < 0)
+		goto exit;
 
 	// Make the the file ready for accepting samples
 	xdf_define_arrays(xdf, 4, strides);
@@ -231,6 +236,10 @@ int generate_xdffile(const char* filename)
 		// Set data signals and unscaled them
 		set_signal_values(eegdata, exgdata, tri1data, tri2data);
 		if (xdf_write(xdf, NSAMPLE, eegdata, exgdata, tri1data, tri2data) < 0)
+			goto exit;
+
+		if (xdf_add_event(xdf, evttype1, NSAMPLE*i/(double)SAMPLINGRATE, -1)
+		   || xdf_add_event(xdf, evttype2, (NSAMPLE*(i+1)-1)/(double)SAMPLINGRATE, -1))
 			goto exit;
 	}
 	retcode = 0;

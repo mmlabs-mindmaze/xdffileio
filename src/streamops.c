@@ -42,6 +42,22 @@ XDF_LOCAL int write16bval(FILE* file, unsigned int num, const void* value)
 }
 
 
+XDF_LOCAL int read24bval(FILE* file, unsigned int num, void* value)
+{
+	if (fread(value, 3, num, file)==0)
+		return -1;
+	return 0;
+}
+
+
+XDF_LOCAL int write24bval(FILE* file, unsigned int num, const void* value)
+{
+	if (fwrite(value, 3, num, file)==0)
+		return -1;
+	return 0;
+}
+
+
 XDF_LOCAL int read32bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint32_t), num, file)==0)

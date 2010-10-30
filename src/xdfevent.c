@@ -68,7 +68,7 @@ int add_event_entry(struct eventtable* table,
 			strcpy(elabel, label);
 		}
 
-		evttype = nentry-1;
+		evttype = nentry;
 		entry[evttype].code = code;
 		entry[evttype].label = elabel;
 		table->nentry++;
@@ -100,7 +100,10 @@ int add_event(struct eventtable* table, struct xdfevent* evt)
 			return -1;
 
 		batch->next = NULL;
-		table->last->next = batch;
+		if (table->last)
+			table->last->next = batch;
+		else
+			table->first = batch;
 		table->last = batch;
 	}
 
@@ -156,7 +159,7 @@ void destroy_event_table(struct eventtable* table)
 XDF_LOCAL
 struct xdfevent* get_event(struct eventtable* table, unsigned int index)
 {
-	struct eventbatch* batch = table->last;
+	struct eventbatch* batch = table->first;
 	
 	while (index >= N_EVT_BATCH) {
 		batch = batch->next;

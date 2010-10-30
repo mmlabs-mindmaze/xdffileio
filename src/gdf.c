@@ -32,6 +32,7 @@
 #include "xdfio.h"
 #include "xdffile.h"
 #include "xdftypes.h"
+#include "xdfevent.h"
 #include "streamops.h"
 
 #include "gdf.h"
@@ -224,19 +225,26 @@ static const struct gdf_channel gdfch_def = {
 XDF_LOCAL struct xdf* xdf_alloc_gdffile(void)
 {
 	struct gdf_file* gdf;
+	struct eventtable* table;
 
 	gdf = calloc(1, sizeof(*gdf));
-	if (!gdf)
+	table = create_event_table();
+	if (gdf == NULL || table == NULL) {
+		free(gdf);
+		destroy_event_table(table);
 		return NULL;
+	}
 
 	gdf->xdf.ops = &gdf_ops;
 	gdf->xdf.defaultch = &(gdf->default_gdfch.xdfch);
+	gdf->xdf.table = table;
 
 	// Set good default for the file format
 	memcpy(&(gdf->default_gdfch), &gdfch_def, sizeof(gdfch_def));
 	gdf->default_gdfch.xdfch.owner = &(gdf->xdf);
 	gdf->xdf.rec_duration = 1.0;
 	gdf->rectime = time_to_gdftime(time(NULL));
+	
 	
 	return &(gdf->xdf);
 }
@@ -621,6 +629,84 @@ static int gdf_write_header(struct xdf* xdf)
 }
 
 
+static
+int gdf_setup_events(struct eventtable* table, double fs, uint8_t* mode,
+                     uint32_t *pos, uint16_t* code,
+		     uint16_t *ch, uint32_t* dur)
+{
+	unsigned int i, nevent = table->nevent;
+	int codeval, use_extevt = 0;
+	unsigned int chval;
+	const char* desc;
+	struct xdfevent* evt;
+
+	for (i=0; i<nevent; i++) {
+		evt = get_event(table, i);
+		pos[i] = fs * evt->onset;
+		if (evt->duration > 0) {
+			dur[i] = fs * evt->duration;
+			use_extevt = 1;
+		} else
+			dur[i] = 0;
+		get_event_entry(table, evt->evttype, &codeval, &desc);
+		code[i] = codeval;
+		ch[i] = 0;
+		if (desc != NULL && sscanf(desc, "ch:%u", &chval) >= 1) {
+			ch[i] = chval;
+			use_extevt = 1;
+		} else
+			ch[i] = 0;
+	}
+	*mode = use_extevt ? 3 : 1;
+	return 0;
+}
+
+
+static
+int gdf_write_event_table(struct gdf_file* gdf, FILE* file)
+{
+	struct eventtable* table = gdf->xdf.table;
+	int retcode = 0;
+	uint32_t nevt = table->nevent;
+	uint8_t mode, nevt24[3];
+	float fs = (float)gdf->xdf.ns_per_rec/(float)gdf->xdf.rec_duration;
+	uint32_t *onset = NULL, *dur = NULL;
+	uint16_t *code = NULL, *ch = NULL;
+
+	if (nevt == 0)
+		return 0;
+
+	nevt24[0] = nevt & 0x000000FF;
+	nevt24[1] = (nevt & 0x0000FF00) / 256;
+	nevt24[2] = (nevt & 0x00FF0000) / 65536;
+	
+	onset = malloc(nevt*sizeof(*onset));
+	code = malloc(nevt*sizeof(*code));
+	ch = malloc(nevt*sizeof(*ch));
+	dur = malloc(nevt*sizeof(*dur));
+	if (onset == NULL || code == NULL || ch == NULL || dur == NULL)
+		retcode = -1;
+
+	gdf_setup_events(table, fs, &mode, onset, code, ch, dur);
+
+	if (retcode
+	  || write8bval(file, 1, &mode)
+	  || write24bval(file, 1, nevt24)
+	  || write32bval(file, 1, &fs)
+	  || write32bval(file, nevt, onset)
+	  || write16bval(file, nevt, code)
+	  || (mode == 3 && write16bval(file, nevt, ch))
+	  || (mode == 3 && write32bval(file, nevt, dur)))
+		retcode = -1;
+
+	free(onset);
+	free(code);
+	free(ch);
+	free(dur);
+	return retcode;
+}
+
+
 /* \param bdf	pointer to a gdf_file open for reading
  * \param file  stream associated to the file 
  *              (should be at the beginning of the file)
@@ -704,7 +790,7 @@ static int gdf_read_channels_header(struct gdf_file* gdf, FILE* file)
 			return -1;
 
 	for (ch = gdf->xdf.channels; ch != NULL; ch = ch->next)
-		if (read_string_field(file, get_gdfch(ch)->transducter, 80))
+		if (read_string_field(file, get_gdfch(ch)->transducter,80))
 			return -1;
 
 	for (ch = gdf->xdf.channels; ch != NULL; ch = ch->next)
@@ -776,6 +862,7 @@ static int gdf_read_channels_header(struct gdf_file* gdf, FILE* file)
 		ch->offset = offset;
 		offset += xdf_get_datasize(ch->inmemtype);
 	}
+	gdf->xdf.filerec_size = offset*gdf->xdf.ns_per_rec;
 
 	for (ch = gdf->xdf.channels; ch != NULL; ch = ch->next) 
 		if (read32bval(file, 3, get_gdfch(ch)->pos))
@@ -790,6 +877,101 @@ static int gdf_read_channels_header(struct gdf_file* gdf, FILE* file)
 			return -1;
 
 	return 0;
+}
+
+
+static 
+int gdf_read_event_hdr(struct gdf_file* gdf, FILE* file,
+                       uint32_t* nevent, uint8_t* mode, float* fs)
+{
+	long flen, evt_sect; 
+	uint8_t nevt24[3];
+
+	// Find the filesize
+	if (fseek(file, 0L, SEEK_END) || (flen = ftell(file))<0)
+		return -1;
+
+	// Check if there is an event table
+	evt_sect = gdf->xdf.hdr_offset + gdf->xdf.nrecord*
+	                                       gdf->xdf.filerec_size;
+	if ((gdf->xdf.nrecord < 0) || (flen <= evt_sect)) {
+		*nevent = 0;
+		return 0;
+	} 
+
+	// Read event header
+	if (fseek(file, evt_sect, SEEK_SET)
+	  || read8bval(file, 1, mode)
+	  || read24bval(file, 1, nevt24)
+	  || read32bval(file, 1, fs))
+		return -1;
+	*nevent = nevt24[0] + 256*nevt24[1] + 65536*nevt24[2];
+
+	return 0;
+}
+
+
+static
+int gdf_interpret_events(struct gdf_file* gdf, uint32_t nevent, double fs,
+                         uint32_t *pos, uint16_t* code,
+			 uint16_t *channel, uint32_t* dur)
+{
+	unsigned int i;
+	int evttype;
+	char desc[32];
+	struct xdfevent evt;
+
+	for (i=0; i<nevent; i++) {
+		if (channel[i])
+			sprintf(desc, "ch:%u", (unsigned int)(channel[i]));
+		else
+			strcpy(desc, "ch:all");
+		evttype = add_event_entry(gdf->xdf.table, code[i], desc);
+		if (evttype < 0)
+			return -1;
+
+		evt.onset = pos[i]/fs;
+		evt.duration = (dur == NULL) ? -1 : dur[i]/fs;
+		evt.evttype = evttype;
+		if (add_event(gdf->xdf.table, &evt))
+			return -1;
+	}
+	return 0;
+}
+
+
+static
+int gdf_read_event_table(struct gdf_file* gdf, FILE* file)
+{
+	int retcode = 0;
+	uint8_t mode;
+	float fs;
+	uint32_t nevt, *onset = NULL, *dur = NULL;
+	uint16_t *code = NULL, *ch = NULL;
+
+	if (gdf_read_event_hdr(gdf, file, &nevt, &mode, &fs))
+		return -1;
+	if (nevt == 0)
+		return 0;
+	
+	onset = calloc(nevt, sizeof(*onset));
+	code = calloc(nevt, sizeof(*code));
+	ch = calloc(nevt, sizeof(*ch));
+	dur = calloc(nevt, sizeof(*dur));
+
+	if (onset == NULL || code == NULL || ch == NULL || dur == NULL
+	  || read32bval(file, nevt, onset)
+	  || read16bval(file, nevt, code)
+	  || (mode == 3 && read16bval(file, nevt, ch))
+	  || (mode == 3 && read16bval(file, nevt, dur))
+	  || gdf_interpret_events(gdf, nevt, fs, onset, code, ch, dur))
+		retcode = -1;
+
+	free(onset);
+	free(code);
+	free(ch);
+	free(dur);
+	return retcode;
 }
 
 /* \param xdf	pointer to an xdf file with XDF_READ mode
@@ -819,10 +1001,10 @@ static int gdf_read_header(struct xdf* xdf)
 		curr = &((*curr)->next);
 	}
 
-	if (gdf_read_channels_header(gdf, file))
-		goto exit;
-
-	
+	if (gdf_read_channels_header(gdf, file)
+	   || gdf_read_event_table(gdf, file))
+	   	goto exit;
+		
 	retval = 0;
 exit:
 	fclose(file);
@@ -840,10 +1022,16 @@ static int gdf_complete_file(struct xdf* xdf)
 {
 	int retval = 0;
 	int64_t numrec = xdf->nrecord;
+	FILE* file = fdopen(dup(xdf->fd), "wb");
+	long evt_sect = xdf->hdr_offset + xdf->nrecord*xdf->filerec_size;
 
-	// Write the number of records in the header
-	if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
-	    || (write(xdf->fd, &numrec, sizeof(numrec)) < 0) )
+	// Write the event block and the number of records in the header
+	if (file == NULL
+	    || fseek(file, evt_sect, SEEK_SET)
+	    || gdf_write_event_table(get_gdf(xdf), file)
+	    || fseek(file, NUMREC_FIELD_LOC, SEEK_SET)
+	    || write64bval(file, 1, &numrec)
+	    || fclose(file))
 		retval = -1;
 
 	return retval;

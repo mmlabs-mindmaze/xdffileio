@@ -8,6 +8,10 @@ xdf_add_channel
 xdf_set_chconf
 xdf_get_chconf
 xdf_copy_chconf
+xdf_add_evttype
+xdf_get_evttype
+xdf_add_event
+xdf_get_event
 xdf_define_arrays
 xdf_prepare_transfer
 xdf_write
