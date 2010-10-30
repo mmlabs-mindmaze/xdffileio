@@ -93,8 +93,10 @@ struct xdf {
 	unsigned int narrays;
 	size_t* array_stride;	
 
-	struct xdfch* defaultch;
+	struct eventtable* table;
+
 	/* Data format specific behavior */
+	struct xdfch* defaultch;
 	const struct format_operations* ops;
 	
 	/* Background thread synchronization object */

@@ -31,6 +31,7 @@
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
+#include "xdfevent.h"
 
 /* To support those $!%@!!! systems that are not POSIX compliant
 and that distinguish between text and binary files */
@@ -59,6 +60,8 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_SAMPLING_FREQ, TYPE_INT},
 	{XDF_F_NCHANNEL, TYPE_INT},
 	{XDF_F_FILEFMT, TYPE_INT},
+	{XDF_F_NEVTTYPE, TYPE_INT},
+	{XDF_F_NEVENT, TYPE_INT},
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
 	{XDF_F_RECTIME, TYPE_TIME_T},
@@ -439,8 +442,8 @@ XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
  * Returns 1 if the type is not handled in that function, -1 in case of
  * error, 0 otherwise
  */
-static int proceed_set_chconf(struct xdfch* ch, enum xdffield
-field, union optval val)
+static int proceed_set_chconf(struct xdfch* ch, enum xdffield field,
+                              union optval val)
 {
 	int retval = 0;
 
@@ -615,7 +618,8 @@ field, union optval* val)
  *                       XDF_CF_DMAX, &max,
  *                       XDF_NOF);
  */
-XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
+XDF_API
+int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
 	int retval = 0;
@@ -654,7 +658,8 @@ XDF_API int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a channel
  */
-XDF_API int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
+XDF_API
+int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	if (!dst || !src)
 		return xdf_set_error(EINVAL);
@@ -748,7 +753,8 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  *                      XDF_F_REC_DURATION, time,
  *                      XDF_NOF);
  */
-XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
+XDF_API
+int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
 	int retval = 0;
@@ -807,6 +813,10 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
 		val->i = xdf->numch;
 	else if (field == XDF_F_FILEFMT)
 		val->i = xdf->ops->type;
+	else if (field == XDF_F_NEVTTYPE)
+		val->i = (xdf->table != NULL) ? xdf->table->nentry : 0;
+	else if (field == XDF_F_NEVENT)
+		val->i = (xdf->table != NULL) ? xdf->table->nevent : 0;
 	else
 		retval = 1;
 
@@ -835,7 +845,8 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
  *                      XDF_F_REC_DURATION, &time,
  *                      XDF_NOF);
  */
-XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
+XDF_API
+int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
 	int retval = 0;
@@ -877,7 +888,8 @@ XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a xDF file
  */
-XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
+XDF_API
+int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)
 		return xdf_set_error(EINVAL);
@@ -909,7 +921,8 @@ XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
  * API function
  * Returns the data type supported by xdf the closest to type or -1 
  */
-XDF_API int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
+XDF_API
+int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
 {
 	if ((xdf == NULL) || (type >= XDF_NUM_DATA_TYPES)) {
 		errno = EINVAL;
@@ -918,3 +931,93 @@ XDF_API int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
 
 	return get_closest_type(type, xdf->ops->supported_type);
 }
+
+
+XDF_API 
+int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
+{
+	int evttype;
+
+	if ((xdf == NULL) || (xdf->table == NULL)) {
+		errno = (xdf == NULL) ? EINVAL : EPERM;
+		return -1;
+	}
+
+	evttype = add_event_entry(xdf->table, code, desc);
+	if (evttype < 0)
+		errno = ENOMEM;
+	return evttype;
+}
+
+
+XDF_API 
+int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
+                    int *code, const char** desc)
+{
+	struct evententry* entry;
+
+	if ((xdf == NULL) || (code == NULL) || (desc == NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if ((xdf->table == NULL) || (evttype >= xdf->table->nentry)) {
+		errno = (xdf->table == NULL) ? EPERM : ERANGE;
+		return -1;
+	}
+
+	entry = xdf->table->entry + evttype;
+	*code = entry->code;
+	*desc = strlen(entry->label) ? entry->label : NULL;
+
+	return 0;
+}
+
+
+XDF_API 
+int xdf_add_event(struct xdf* xdf, int evttype,
+                          double onset, double duration)
+{
+	struct xdfevent evt = {
+		.onset = onset,
+		.duration = duration,
+		.evttype = evttype
+	};
+
+	if (xdf == NULL || evttype < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if ((xdf->table == NULL) || (evttype >= (int)xdf->table->nentry)) {
+		errno = (xdf->table == NULL) ? EPERM : EINVAL;
+		return -1;
+	}
+
+	return add_event(xdf->table, &evt);
+}
+
+
+XDF_API 
+int xdf_get_event(struct xdf* xdf, unsigned int index, 
+                         unsigned int *evttype, double* start, double* dur)
+{
+	struct xdfevent* evt;
+
+	if ((xdf==NULL)||(evttype==NULL)||(start==NULL)||(start==NULL)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if ((xdf->table == NULL) || (index >= xdf->table->nevent)) {
+		errno = (xdf->table == NULL) ? EPERM : ERANGE;
+		return -1;
+	}
+
+	evt = get_event(xdf->table, index);
+	*evttype = evt->evttype;
+	*start = evt->onset;
+	*dur = evt->duration;
+	return 0;
+}
+

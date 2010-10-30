@@ -1,0 +1,38 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_ADD_EVTTYPE 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_add_evttype - Adds a type of event
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_add_evttype(struct xdf* " xdf ", int " code ", const char* " desc ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_add_evttype\fP() adds an event type specified by combination of
+\fIcode\fP and the event description \fIdesc\fP to the file referenced by
+the handle \fIxdf\fP opened for writing. If there is no description
+associated with the event type, \fIdesc\fP should be set to NULL.
+.LP
+If an event type with the same combination has been already added, no new
+type will be added and the previous type will be returned.
+.SH "RETURN VALUE"
+.LP
+The function returns the event type in case of success. Otherwise -1 is
+returned and \fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL
+.TP
+.B ENOMEM
+The system is unable to allocate resources.
+.TP
+.B EPERM
+The file referenced by \fIxdf\fP has not been opened for writing or its
+file format does not support events.
+.SH "SEE ALSO"
+.BR xdf_add_event (3)
+
+

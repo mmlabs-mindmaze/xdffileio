@@ -1,0 +1,38 @@
+.\"Copyright 2010 (c) EPFL
+.TH XDF_ADD_EVENT 3 2010 "EPFL" "xdffileio library manual"
+.SH NAME
+xdf_add_event - Appends an event to the data file
+.SH SYNOPSIS
+.LP
+.B #include <xdfio.h>
+.sp
+.BI "int xdf_add_event(struct xdf* " xdf ", int " evttype ","
+.br
+.BI "                  double " onset ", double " dur ");"
+.br
+.SH DESCRIPTION
+.LP
+\fBxdf_add_event\fP() appends to the file referenced by the handle \fIxdf\fP
+opened for writing an event of type \fIevttype\fP at time \fIonset\fP
+lasting for a duration \fIdur\fP expressed in seconds. If the event has no
+notion of duration, \fIdur\fP should be set to 0. \fPevttype\fP should be a
+value returned by a successful call to \fBxdf_add_evttype\fP(3).
+.SH "RETURN VALUE"
+.LP
+\fBxdf_add_event\fP() returns 0 in case of success. Otherwise -1 is returned
+and \fIerrno\fP is set appropriately.
+.SH ERRORS
+.TP
+.B EINVAL
+\fIxdf\fP is NULL or \fIevttype\fP has not been previously created by
+\fBxdf_add_evttype\fP(3)
+.TP
+.B ENOMEM
+The system is unable to allocate resources.
+.TP
+.B EPERM
+The file referenced by \fIxdf\fP has not been opened for writing or its
+file format does not support events.
+.SH "SEE ALSO"
+.BR xdf_add_evttype (3)
+

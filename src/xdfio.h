@@ -69,6 +69,8 @@ enum xdffield
 	XDF_F_SAMPLING_FREQ,		/* int         */
 	XDF_F_NCHANNEL,			/* int         */
 	XDF_F_FILEFMT,			/* int		*/
+	XDF_F_NEVTTYPE,			/* int         */
+	XDF_F_NEVENT,			/* int         */
 
 	/* Format specific file fields */
 	XDF_F_SUBJ_DESC = 5000,		/* const char* */
@@ -124,6 +126,14 @@ XDF_API int xdf_close(struct xdf* xdf);
 XDF_API int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
 XDF_API int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
 XDF_API int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
+
+XDF_API int xdf_add_evttype(struct xdf* xdf, int code, const char* desc);
+XDF_API int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
+                            int *code, const char** desc);
+XDF_API int xdf_add_event(struct xdf* xdf, int evttype, double onset,
+                          double duration);
+XDF_API int xdf_get_event(struct xdf* xdf, unsigned int index, 
+                         unsigned int *evttype, double* start, double* dur);
 
 XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf,
 					unsigned int index);

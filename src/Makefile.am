@@ -5,6 +5,7 @@ include_HEADERS = xdfio.h
 
 libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdftypes.c xdftypes.h 		\
+			  xdfevent.c xdfevent.h 		\
 			  xdfio.h formatdecl.c			\
 			  streamops.h streamops.c		\
 			  ebdffile.c ebdf.h			\

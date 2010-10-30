@@ -39,6 +39,7 @@
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
+#include "xdfevent.h"
 
 /***************************************************
  *                Local declarations               *
@@ -673,6 +674,7 @@ XDF_API int xdf_close(struct xdf* xdf)
 
 	// Free channels and file
 	free(xdf->array_stride);
+	destroy_event_table(xdf->table);
 	ch=xdf->channels;
 	while (ch) {
 		prev = ch;
