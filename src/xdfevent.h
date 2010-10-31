@@ -43,14 +43,14 @@ struct eventtable {
 	struct eventbatch* last;
 };
 
-XDF_LOCAL struct eventtable* create_event_table(void);
-XDF_LOCAL void destroy_event_table(struct eventtable* table);
-XDF_LOCAL int add_event(struct eventtable* table, struct xdfevent* evt);
-XDF_LOCAL struct xdfevent* get_event(struct eventtable* table,
+LOCAL_FN struct eventtable* create_event_table(void);
+LOCAL_FN void destroy_event_table(struct eventtable* table);
+LOCAL_FN int add_event(struct eventtable* table, struct xdfevent* evt);
+LOCAL_FN struct xdfevent* get_event(struct eventtable* table,
                                      unsigned int index);
-XDF_LOCAL int add_event_entry(struct eventtable* table, int code,
+LOCAL_FN int add_event_entry(struct eventtable* table, int code,
                                                    const char* label);
-XDF_LOCAL int get_event_entry(struct eventtable* table, unsigned int ind,
+LOCAL_FN int get_event_entry(struct eventtable* table, unsigned int ind,
                               int *code, const char** label);
 
 #endif /* XDFEVENT_H */

@@ -59,7 +59,7 @@ static unsigned int num_support_datafmt = sizeof(support_datafmt)
 				/ sizeof(support_datafmt[0]);
 
 
-XDF_LOCAL enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
+LOCAL_FN enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
 {
 	unsigned int i;
 	enum xdffiletype type = XDF_ANY;
@@ -73,7 +73,7 @@ XDF_LOCAL enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
 	return type;
 }
 
-XDF_LOCAL struct xdf* xdf_alloc_file(enum xdffiletype type)
+LOCAL_FN struct xdf* xdf_alloc_file(enum xdffiletype type)
 {
 	unsigned int i;
 	for (i=0; i<num_support_datafmt; i++) {

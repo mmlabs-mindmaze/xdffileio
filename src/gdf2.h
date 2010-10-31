@@ -18,7 +18,7 @@
 #ifndef GDF2_H
 #define GDF2_H
 
-XDF_LOCAL struct xdf* xdf_alloc_gdf2file(void);
-XDF_LOCAL int xdf_is_gdf2file(const unsigned char* magickey);
+LOCAL_FN struct xdf* xdf_alloc_gdf2file(void);
+LOCAL_FN int xdf_is_gdf2file(const unsigned char* magickey);
 
 #endif /* GDF2_H */

@@ -318,7 +318,7 @@ struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
  * Create a xdf structure of a xDF file for writing or reading depending on
  * the mode. See the manpage for details
  */
-XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
+API_EXPORTED struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
 	struct xdf* xdf = NULL;
 
@@ -348,7 +348,7 @@ XDF_API struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype ty
  *
  * Return the pointer a new channel or NULL in case of failure
  */
-XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* xdf)
+LOCAL_FN struct xdfch* xdf_alloc_channel(struct xdf* xdf)
 {
 	const struct format_operations* ops = xdf->ops;
 	struct xdfch *ch, **plastch;
@@ -381,7 +381,7 @@ XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* xdf)
  * Returns a pointer to the index-th channel of the xdf file.
  * Returns NULL in case of failure.
  */
-XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
+API_EXPORTED struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 {
 	struct xdfch* ch = xdf->channels;
 	unsigned int ich = 0;
@@ -408,7 +408,7 @@ XDF_API struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
  * but its offset will correspond to neighbour of the last channel
  * Returns NULL in case of failure.
  */
-XDF_API struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
+API_EXPORTED struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
 {
 	struct xdfch *ch;
 
@@ -517,7 +517,7 @@ static int proceed_set_chconf(struct xdfch* ch, enum xdffield field,
  *                       XDF_CF_DMAX, max,
  *                       XDF_NOF);
  */
-XDF_API int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
+API_EXPORTED int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
 	int retval = 0;
@@ -614,7 +614,7 @@ field, union optval* val)
  *                       XDF_CF_DMAX, &max,
  *                       XDF_NOF);
  */
-XDF_API
+API_EXPORTED
 int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 {
 	va_list ap;
@@ -654,7 +654,7 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a channel
  */
-XDF_API
+API_EXPORTED
 int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
 {
 	if (!dst || !src)
@@ -749,7 +749,7 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  *                      XDF_F_REC_DURATION, time,
  *                      XDF_NOF);
  */
-XDF_API
+API_EXPORTED
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
@@ -841,7 +841,7 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
  *                      XDF_F_REC_DURATION, &time,
  *                      XDF_NOF);
  */
-XDF_API
+API_EXPORTED
 int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 {
 	va_list ap;
@@ -884,7 +884,7 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
  * API FUNCTION
  * Copy the configuration of a xDF file
  */
-XDF_API
+API_EXPORTED
 int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 {
 	if (!dst || !src)
@@ -917,7 +917,7 @@ int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
  * API function
  * Returns the data type supported by xdf the closest to type or -1 
  */
-XDF_API
+API_EXPORTED
 int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
 {
 	if ((xdf == NULL) || (type >= XDF_NUM_DATA_TYPES)) {
@@ -929,7 +929,7 @@ int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
 }
 
 
-XDF_API 
+API_EXPORTED 
 int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
 {
 	int evttype;
@@ -946,7 +946,7 @@ int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
 }
 
 
-XDF_API 
+API_EXPORTED 
 int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
                     int *code, const char** desc)
 {
@@ -970,7 +970,7 @@ int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
 }
 
 
-XDF_API 
+API_EXPORTED 
 int xdf_add_event(struct xdf* xdf, int evttype,
                           double onset, double duration)
 {
@@ -994,7 +994,7 @@ int xdf_add_event(struct xdf* xdf, int evttype,
 }
 
 
-XDF_API 
+API_EXPORTED 
 int xdf_get_event(struct xdf* xdf, unsigned int index, 
                          unsigned int *evttype, double* start, double* dur)
 {

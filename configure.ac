@@ -1,21 +1,26 @@
-# If the library source code has changed at all since the last update, then increment
-#      revision.
-# If any interfaces have been added, removed, or changed since the last update, increment
-#      current, and set revision to 0.
-# If any interfaces have been added since the last public release, then increment age.
-# If any interfaces have been removed since the last public release, then set age to 0.
+# - If the library source code has changed at all since the last update,
+# then increment revision.
+# - If any interfaces have been added, removed, or changed since the last
+# update, increment current, and set revision to 0.
+# - If any interfaces have been added since the last public release, then
+# increment age.
+# - If any interfaces have been removed since the last public release, then
+# set age to 0.
 
-m4_define([lib_release],0)
 m4_define([lib_current],0)
 m4_define([lib_revision],0)
 m4_define([lib_age],0)
 
-AC_INIT(xdffileio,[lib_release.lib_current.lib_age.lib_revision])
+# Setup autoconf
+AC_INIT(xdffileio,[lib_current.lib_age.lib_revision],
+        [nicolas.burdaud@epfl.ch])
 AC_CONFIG_SRCDIR([src/xdffile.c])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config/config.h])
+
+# Setup automake
 AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-bzip2 color-tests])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -30,38 +35,11 @@ AM_PROG_CC_C_O
 LT_INIT([win32-dll disable-static])
 AC_SUBST(LIBTOOL_DEPS)
 
-AC_HEADER_STDC
-AC_HEADER_TIME
-AC_C_CONST
-AC_C_VOLATILE
+AC_DEF_API_EXPORT_ATTRS
 AC_C_BIGENDIAN
-
-gl_VISIBILITY
-
-
-# If on windows, -no-undefined should be added to LDFLAGS to produce a DLL
-case $host in
-	*win32* | *mingw32* | *cygwin* | *windows*)
-		os_support=win32
-		AM_LDFLAGS="$AM_LDFLAGS -no-undefined"
-		;;
-	*)
-		os_support=other
-		;;
-esac
 
 # Test IEEE floating point calculation behavior 
 AC_CHECK_IEEE_FLOAT_ROUND
-
-# Define the correct attributes for API and local symbol 
-AC_DEFINE(XDF_LOCAL, [], [attribute of the non-exported symbols])
-AC_DEFINE(XDF_API, [], [attribute of the symbols exported in the API])
-if test $HAVE_VISIBILITY = 1 -a $os_support !=  "win32"; then
-     AC_DEFINE(XDF_LOCAL, [__attribute__ ((visibility ("hidden")))],
-     	[attribute of the non-exported symbols])
-     AC_DEFINE(XDF_API, [__attribute__ ((visibility ("default")))],
-     	[attribute of the symbols exported in the API])
-fi
 
 # Test missing functions
 AC_SEARCH_LIBS([pthread_create], [pthread posix4], 
@@ -73,12 +51,9 @@ AC_REPLACE_FUNCS([fsync])
 
 AM_CONDITIONAL(RUN_ERROR_TEST, [test "x$run_error_test" = "xtrue"])
 
-
-AC_SUBST([RELEASE],[lib_release])
 AC_SUBST([CURRENT],[lib_current])
 AC_SUBST([REVISION],[lib_revision])
 AC_SUBST([AGE],[lib_age])
-AC_SUBST(AM_LDFLAGS)
 
 AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile doc/Makefile tests/Makefile])
 AC_OUTPUT

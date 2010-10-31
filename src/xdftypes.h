@@ -63,14 +63,14 @@ struct convprm {
 	convproc cvfn3;
 };
 
-XDF_LOCAL const struct data_information* xdf_datinfo(enum xdftype type);
-XDF_LOCAL void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff);
-XDF_LOCAL int xdf_get_datasize(enum xdftype type);
-XDF_LOCAL int xdf_setup_transform(struct convprm* prm, 
+LOCAL_FN const struct data_information* xdf_datinfo(enum xdftype type);
+LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff);
+LOCAL_FN int xdf_get_datasize(enum xdftype type);
+LOCAL_FN int xdf_setup_transform(struct convprm* prm, 
 	    unsigned int in_str, enum xdftype in_tp, const double in_mm[2], 
 	    unsigned int out_str, enum xdftype out_tp, const double out_mm[2]);
 
-XDF_LOCAL enum xdftype get_closest_type(enum xdftype target,
+LOCAL_FN enum xdftype get_closest_type(enum xdftype target,
 					const bool *supported_type);
 
 

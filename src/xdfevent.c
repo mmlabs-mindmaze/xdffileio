@@ -41,7 +41,7 @@ int find_entry(struct eventtable* table, int code, const char* s)
 }
 
 
-XDF_LOCAL
+LOCAL_FN
 int add_event_entry(struct eventtable* table, 
                           int code, const char* label)
 {
@@ -77,7 +77,7 @@ int add_event_entry(struct eventtable* table,
 	return evttype;
 }
 
-XDF_LOCAL
+LOCAL_FN
 int get_event_entry(struct eventtable* table, unsigned int ind,
                               int *code, const char** label)
 {
@@ -87,7 +87,7 @@ int get_event_entry(struct eventtable* table, unsigned int ind,
 }
 
 
-XDF_LOCAL
+LOCAL_FN
 int add_event(struct eventtable* table, struct xdfevent* evt)
 {
 	struct eventbatch* batch = table->last;
@@ -114,7 +114,7 @@ int add_event(struct eventtable* table, struct xdfevent* evt)
 }
 
 
-XDF_LOCAL
+LOCAL_FN
 struct eventtable* create_event_table(void)
 {
 	struct eventtable* table = NULL;
@@ -132,7 +132,7 @@ struct eventtable* create_event_table(void)
 }
 
 
-XDF_LOCAL 
+LOCAL_FN 
 void destroy_event_table(struct eventtable* table)
 {
 	struct eventbatch *curr_batch, *next_batch;
@@ -156,7 +156,7 @@ void destroy_event_table(struct eventtable* table)
 }
 
 
-XDF_LOCAL
+LOCAL_FN
 struct xdfevent* get_event(struct eventtable* table, unsigned int index)
 {
 	struct eventbatch* batch = table->first;

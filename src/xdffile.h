@@ -105,10 +105,10 @@ struct xdf {
 	int order;
 };
 
-XDF_LOCAL enum xdffiletype xdf_guess_filetype(const unsigned char* magickey);
-XDF_LOCAL struct xdf* xdf_alloc_file(enum xdffiletype type);
-XDF_LOCAL struct xdfch* xdf_alloc_channel(struct xdf* owner);
-XDF_LOCAL int xdf_set_error(int error);
+LOCAL_FN enum xdffiletype xdf_guess_filetype(const unsigned char* magickey);
+LOCAL_FN struct xdf* xdf_alloc_file(enum xdffiletype type);
+LOCAL_FN struct xdfch* xdf_alloc_channel(struct xdf* owner);
+LOCAL_FN int xdf_set_error(int error);
 
 
 #endif /* XDFFILE_H */

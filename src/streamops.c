@@ -26,7 +26,7 @@
 #include "streamops.h"
 
 
-XDF_LOCAL int read16bval(FILE* file, unsigned int num, void* value)
+LOCAL_FN int read16bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint16_t), num, file)==0)
 		return -1;
@@ -34,7 +34,7 @@ XDF_LOCAL int read16bval(FILE* file, unsigned int num, void* value)
 }
 
 
-XDF_LOCAL int write16bval(FILE* file, unsigned int num, const void* value)
+LOCAL_FN int write16bval(FILE* file, unsigned int num, const void* value)
 {
 	if (fwrite(value, sizeof(uint16_t), num, file)==0)
 		return -1;
@@ -42,7 +42,7 @@ XDF_LOCAL int write16bval(FILE* file, unsigned int num, const void* value)
 }
 
 
-XDF_LOCAL int read24bval(FILE* file, unsigned int num, void* value)
+LOCAL_FN int read24bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, 3, num, file)==0)
 		return -1;
@@ -50,7 +50,7 @@ XDF_LOCAL int read24bval(FILE* file, unsigned int num, void* value)
 }
 
 
-XDF_LOCAL int write24bval(FILE* file, unsigned int num, const void* value)
+LOCAL_FN int write24bval(FILE* file, unsigned int num, const void* value)
 {
 	if (fwrite(value, 3, num, file)==0)
 		return -1;
@@ -58,7 +58,7 @@ XDF_LOCAL int write24bval(FILE* file, unsigned int num, const void* value)
 }
 
 
-XDF_LOCAL int read32bval(FILE* file, unsigned int num, void* value)
+LOCAL_FN int read32bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint32_t), num, file)==0)
 		return -1;
@@ -66,7 +66,7 @@ XDF_LOCAL int read32bval(FILE* file, unsigned int num, void* value)
 }
 
 
-XDF_LOCAL int write32bval(FILE* file, unsigned int num, const void* value)
+LOCAL_FN int write32bval(FILE* file, unsigned int num, const void* value)
 {
 	if (fwrite(value, sizeof(uint32_t), num, file)==0)
 		return -1;
@@ -74,7 +74,7 @@ XDF_LOCAL int write32bval(FILE* file, unsigned int num, const void* value)
 }
 
 
-XDF_LOCAL int read64bval(FILE* file, unsigned int num, void* value)
+LOCAL_FN int read64bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint64_t), num, file)==0)
 		return -1;
@@ -82,7 +82,7 @@ XDF_LOCAL int read64bval(FILE* file, unsigned int num, void* value)
 }
 
 
-XDF_LOCAL int write64bval(FILE* file, unsigned int num, const void* value)
+LOCAL_FN int write64bval(FILE* file, unsigned int num, const void* value)
 {
 	if (fwrite(value, sizeof(uint64_t), num, file)==0)
 		return -1;
@@ -92,7 +92,7 @@ XDF_LOCAL int write64bval(FILE* file, unsigned int num, const void* value)
 /* Parse the file (field of nch characters) and assign to the integer val.
  * Advance the file pointer of exactly nch byte.
  */
-XDF_LOCAL int read_int_field(FILE* file, int* val, unsigned int nch)
+LOCAL_FN int read_int_field(FILE* file, int* val, unsigned int nch)
 {
 	char format[8];
 	long pos = ftell(file);
@@ -110,7 +110,7 @@ XDF_LOCAL int read_int_field(FILE* file, int* val, unsigned int nch)
  * Advance the file pointer of exactly nch byte.
  * It also removes trailing space characters from the string
  */
-XDF_LOCAL int read_string_field(FILE* file, char* val, unsigned int nch)
+LOCAL_FN int read_string_field(FILE* file, char* val, unsigned int nch)
 {
 	int pos;
 

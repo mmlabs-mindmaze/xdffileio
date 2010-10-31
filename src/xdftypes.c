@@ -302,7 +302,7 @@ static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 
 
 /* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data useable by user */
-XDF_LOCAL void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
+LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
 {
 	void* in = src;
 	void* out = dst;
@@ -323,7 +323,7 @@ XDF_LOCAL void xdf_transconv_data(unsigned int ns, void* restrict dst, void* res
 	}
 }
 
-XDF_LOCAL int xdf_setup_transform(struct convprm* prm, 
+LOCAL_FN int xdf_setup_transform(struct convprm* prm, 
 		    unsigned int in_str, enum xdftype in_tp, const double* in_mm, 
 		    unsigned int out_str, enum xdftype out_tp, const double* out_mm)
 {
@@ -379,13 +379,13 @@ XDF_LOCAL int xdf_setup_transform(struct convprm* prm,
 }
 
 
-XDF_LOCAL int xdf_get_datasize(enum xdftype type)
+LOCAL_FN int xdf_get_datasize(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size):-1;
 }
 
 
-XDF_LOCAL const struct data_information* xdf_datinfo(enum xdftype type)
+LOCAL_FN const struct data_information* xdf_datinfo(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? &(data_info[type]) : NULL;
 }
@@ -454,7 +454,7 @@ static bool find_match(enum xdftype* match,
  * 
  * Returns the supported data type that is the closest to the target.
  */
-XDF_LOCAL enum xdftype get_closest_type(enum xdftype target, 
+LOCAL_FN enum xdftype get_closest_type(enum xdftype target, 
 					const bool *supported_type)
 {
 	unsigned int i;

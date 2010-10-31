@@ -171,7 +171,7 @@ static const struct gdf1_channel gdf1ch_def = {
 
 /* Allocate a GDF1 file
  */
-XDF_LOCAL struct xdf* xdf_alloc_gdf1file(void)
+LOCAL_FN struct xdf* xdf_alloc_gdf1file(void)
 {
 	struct gdf1_file* gdf1;
 	struct eventtable* table;
@@ -204,7 +204,7 @@ XDF_LOCAL struct xdf* xdf_alloc_gdf1file(void)
  *
  * Returns 1 if the supplied magickey corresponds to a GDF1 file
  */
-XDF_LOCAL int xdf_is_gdf1file(const unsigned char* magickey)
+LOCAL_FN int xdf_is_gdf1file(const unsigned char* magickey)
 {
 	char key[9];
 	unsigned int version;
