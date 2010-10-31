@@ -119,15 +119,15 @@ static const uint32_t gdf_types[XDF_NUM_DATA_TYPES] = {
 
 
 static
-uint64_t time_to_gdftime(time_t posixtime)
+uint64_t time_to_gdftime(double posixtime)
 {
 	double gdftime;
-	gdftime = (((double)posixtime)/86400.0 + 719529.0) * 4294967296.0;
-	return (gdftime + 0.5);	// round to the nearest integer
+	gdftime = (posixtime/86400.0 + 719529.0) * 4294967296.0;
+	return gdftime;	// round to the nearest integer
 }
 
 static
-time_t gdftime_to_time(uint64_t gdftime)
+double gdftime_to_time(uint64_t gdftime)
 {
 	double posixtime;
 	posixtime = (((double)gdftime)/4294967296.0 - 719529.0) * 86400.0;
@@ -360,9 +360,9 @@ static int gdf_set_conf(struct xdf* xdf, enum xdffield field,
 	else if (field == XDF_F_SESS_DESC)
 		strncpy(gdf->recstr, val.str, sizeof(gdf->recstr)-1);
 	else if (field == XDF_F_RECTIME)
-		gdf->rectime = time_to_gdftime(val.ts);
+		gdf->rectime = time_to_gdftime(val.d);
 	else if (field == XDF_F_BIRTHDAY)
-		gdf->birthday = time_to_gdftime(val.ts);
+		gdf->birthday = time_to_gdftime(val.d);
 	else if (field == XDF_F_ADDICTION)
 		gdf->addiction = val.ui;
 	else if (field == XDF_F_HEIGHT)
@@ -416,9 +416,9 @@ static int gdf_get_conf(const struct xdf* xdf, enum xdffield field,
 	else if (field == XDF_F_SESS_DESC)
 		val->str = gdf->recstr;
 	else if (field == XDF_F_RECTIME)
-		val->ts = gdftime_to_time(gdf->rectime);
+		val->d = gdftime_to_time(gdf->rectime);
 	else if (field == XDF_F_BIRTHDAY)
-		val->ts = gdftime_to_time(gdf->birthday);
+		val->d = gdftime_to_time(gdf->birthday);
 	else if (field == XDF_F_ADDICTION)
 		val->ui = gdf->addiction;
 	else if (field == XDF_F_HEIGHT)

@@ -79,11 +79,12 @@ Get the number of events.
 Get the file format type (one of the value defined by the enumeration
 xdffiletype other than \fBXDF_ANY\fP)
 .TP
-\fBXDF_F_RECTIME\fP (time_t) [current time] {EDF BDF GDF}
+\fBXDF_F_RECTIME\fP (double) [current time] {EDF BDF GDF}
 Date and time of recording. It is expressed as number of seconds elapsed
-since the Epoch, 1970-01-01 00:00:00 +0000 (UTC). This number is the value
-returned by the function \fBtime\fP(3) of the standard C library. On file
-creation, this field is initialized to the current time.
+since the Epoch, 1970-01-01 00:00:00 +0000 (UTC). This number is the
+convertion to \fBdouble\fP of the value returned by the function
+\fBtime\fP(3) of the standard C library. On file creation, this field is
+initialized to the current time.
 .TP
 \fBXDF_F_SUBJ_DESC\fP (const char*) [""] {EDF BDF GDF}
 Specify the string describing the subject.
@@ -93,7 +94,7 @@ Specify the string describing the session of recording.
 .TP
 \fBXDF_F_ADDICTION\fP (unsigned int) [0] {GDF}
 .TP
-\fBXDF_F_BIRTHDAY\fP (time_t) [0] {GDF}
+\fBXDF_F_BIRTHDAY\fP (double) [0] {GDF}
 Birthday of the patient using the same format as specified for field
 \fBXDF_F_RECTIME\fP.
 .TP

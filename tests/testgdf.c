@@ -155,7 +155,7 @@ int generate_xdffile(const char* filename)
 	struct xdf* xdf = NULL;
 	int i,j, evttype1, evttype2;
 	char tmpstr[16];
-	time_t birthday = 321032607; //4 Mar 1980 15:43:27
+	double birthday = 321032607; //4 Mar 1980 15:43:27
 	size_t strides[4] = {
 		NEEG*sizeof(*eegdata),
 		NEXG*sizeof(*exgdata),

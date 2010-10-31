@@ -314,7 +314,7 @@ static int ebdf_set_conf(struct xdf* xdf, enum xdffield field,
 	else if (field == XDF_F_SESS_DESC)
 		strncpy(ebdf->recstr, val.str, sizeof(ebdf->recstr)-1);
 	else if (field == XDF_F_RECTIME)
-		ebdf->rectime = val.ts;
+		ebdf->rectime = val.d;
 	else
 		retval = prevretval;
 
@@ -342,7 +342,7 @@ union optval *val, int prevretval)
 	else if (field == XDF_F_SESS_DESC)
 		val->str = ebdf->recstr;
 	else if (field == XDF_F_RECTIME)
-		val->ts = ebdf->rectime;
+		val->d = ebdf->rectime;
 	else
 		retval = prevretval;
 

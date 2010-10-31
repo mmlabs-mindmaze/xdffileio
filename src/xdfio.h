@@ -75,9 +75,9 @@ enum xdffield
 	/* Format specific file fields */
 	XDF_F_SUBJ_DESC = 5000,		/* const char* */
 	XDF_F_SESS_DESC,		/* const char* */
-	XDF_F_RECTIME,			/* time_t      */
+	XDF_F_RECTIME,			/* double      */
 	XDF_F_ADDICTION,		/* unsigned int	*/
-	XDF_F_BIRTHDAY,			/* time_t	*/
+	XDF_F_BIRTHDAY,			/* double	*/
 	XDF_F_HEIGHT,			/* double	*/
 	XDF_F_WEIGHT,			/* double	*/
 	XDF_F_GENDER,			/* unsigned int */

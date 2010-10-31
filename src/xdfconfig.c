@@ -64,8 +64,8 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_NEVENT, TYPE_INT},
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
-	{XDF_F_RECTIME, TYPE_TIME_T},
-	{XDF_F_BIRTHDAY, TYPE_TIME_T},
+	{XDF_F_RECTIME, TYPE_DOUBLE},
+	{XDF_F_BIRTHDAY, TYPE_DOUBLE},
 	{XDF_F_ADDICTION, TYPE_UINT},
 	{XDF_F_HEIGHT, TYPE_DOUBLE},
 	{XDF_F_WEIGHT, TYPE_DOUBLE},
@@ -120,8 +120,6 @@ static int set_arg_to_val(int field, va_list* ap, union optval* val)
 		val->str = va_arg(*ap, const char*);
 	else if (argtype == TYPE_DOUBLE)
 		val->d = va_arg(*ap, double);
-	else if (argtype == TYPE_TIME_T)
-		val->ts = va_arg(*ap, time_t);
 	else if (argtype == TYPE_UINT)
 		val->ui = va_arg(*ap, unsigned int);
 	else if (argtype == TYPE_3DPOS) 
@@ -147,8 +145,6 @@ static int set_val_to_arg(int field, union optval val, va_list* ap)
 		*(va_arg(*ap, const char**)) = val.str;
 	else if (argtype == TYPE_DOUBLE)
 		*(va_arg(*ap, double*)) = val.d;
-	else if (argtype == TYPE_TIME_T)
-		*(va_arg(*ap, time_t*)) = val.ts;
 	else if (argtype == TYPE_UINT)
 		*(va_arg(*ap, unsigned int*)) = val.ui;
 	else if (argtype == TYPE_3DPOS) 

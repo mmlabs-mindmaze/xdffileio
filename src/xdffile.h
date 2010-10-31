@@ -27,20 +27,18 @@
 #include "xdfio.h"
 
 #define TYPE_INT		0
-#define TYPE_STRING		1
-#define TYPE_DATATYPE		2
-#define TYPE_DOUBLE		3
-#define TYPE_TIME_T		4
-#define TYPE_UINT		5
-#define TYPE_3DPOS		6
-#define TYPE_ICD		7
+#define TYPE_UINT		1
+#define TYPE_DOUBLE		2
+#define TYPE_STRING		3
+#define TYPE_DATATYPE		4
+#define TYPE_3DPOS		5
+#define TYPE_ICD		6
 
 union optval {
 	int i;
 	const char* str;
 	enum xdftype type;
 	double d;
-	time_t ts;
 	unsigned int ui;
 	char icd[6];
 	double pos[3];
