@@ -22,7 +22,8 @@
 #include <stddef.h>
 #include "xdffile.h"
 #include "ebdf.h"
-#include "gdf.h"
+#include "gdf1.h"
+#include "gdf2.h"
 
 struct dataformat_entry {
 	enum xdffiletype type;
@@ -43,9 +44,14 @@ static struct dataformat_entry support_datafmt[] = {
 		.is_same_type = xdf_is_edffile
 	},
 	{
-		.type=XDF_GDF,
-		.alloc_file = xdf_alloc_gdffile,
-		.is_same_type = xdf_is_gdffile
+		.type=XDF_GDF1,
+		.alloc_file = xdf_alloc_gdf1file,
+		.is_same_type = xdf_is_gdf1file
+	},
+	{
+		.type=XDF_GDF2,
+		.alloc_file = xdf_alloc_gdf2file,
+		.is_same_type = xdf_is_gdf2file
 	}
 };
 

@@ -106,8 +106,6 @@ void set_signal_values(eeg_t* eeg, sens_t* exg, tri1_t* tri1, tri2_t* tri2)
 static int set_default_analog(struct xdf* xdf, int arrindex,
 						enum xdftype arrtype)
 {
-	double pos[3] = {1.0, 2.0, 3.0};
-
 	return xdf_set_conf(xdf, 
 		XDF_CF_ARRTYPE, arrtype,
 		XDF_CF_ARRINDEX, arrindex,
@@ -119,7 +117,6 @@ static int set_default_analog(struct xdf* xdf, int arrindex,
 		XDF_CF_PMIN, -262144.0,
 		XDF_CF_PMAX, 262143.0,
 		XDF_CF_UNIT, "uV",
-		XDF_CF_ELECPOS, pos,
 		XDF_CF_RESERVED, "EEG",
 		XDF_NOF);
 	
@@ -155,7 +152,6 @@ int generate_xdffile(const char* filename)
 	struct xdf* xdf = NULL;
 	int i,j, evttype1, evttype2;
 	char tmpstr[16];
-	double birthday = 321032607; //4 Mar 1980 15:43:27
 	size_t strides[4] = {
 		NEEG*sizeof(*eegdata),
 		NEXG*sizeof(*exgdata),
@@ -163,7 +159,6 @@ int generate_xdffile(const char* filename)
 		NTRI*sizeof(*tri2data),
 	};
 
-	
 
 	// Allocate the temporary buffers for samples
 	eegdata = malloc(NEEG*NSAMPLE*sizeof(*eegdata));
@@ -174,17 +169,12 @@ int generate_xdffile(const char* filename)
 		goto exit;
 		
 
-	xdf = xdf_open(filename, XDF_WRITE, XDF_GDF);
+	xdf = xdf_open(filename, XDF_WRITE, XDF_GDF1);
 	if (!xdf) 
 		goto exit;
 	xdf_set_conf(xdf, XDF_F_SAMPLING_FREQ, (int)SAMPLINGRATE,
 	                  XDF_F_SESS_DESC, sess_str,
 			  XDF_F_SUBJ_DESC, subj_str,
-			  XDF_F_BIRTHDAY, birthday,
-			  XDF_F_GENDER, 1,
-			  XDF_F_HANDNESS, 1,
-			  XDF_F_WEIGHT, 60.0,
-			  XDF_F_HEIGHT, 176.0,
 			  XDF_NOF);
 	
 	// Specify the structure (channels and sampling rate)
@@ -264,7 +254,7 @@ exit:
 int main(int argc, char *argv[])
 {
 	int retcode = 0, keep_file = 0, opt, testcopy = 1;
-	char genfilename[] = "essaiw.gdf";
+	char genfilename[] = "essaiw.gdf1";
 	char reffilename[128];
 
 	while ((opt = getopt(argc, argv, "kc:")) != -1) {
@@ -288,7 +278,7 @@ int main(int argc, char *argv[])
 
 	// Create the filename for the reference
 	snprintf(reffilename, sizeof(reffilename),
-		 "%s/ref%u-%u-%u-%u-%u-%u-%u.gdf", getenv("srcdir"),SAMPLINGRATE, DURATION,
+		 "%s/ref%u-%u-%u-%u-%u-%u-%u.gdf1", getenv("srcdir"),SAMPLINGRATE, DURATION,
 		 NITERATION, RAMP_NS, NEEG, NEXG, NTRI);
 
 	
@@ -301,13 +291,13 @@ int main(int argc, char *argv[])
 	// Test copy a file (implied reading)
 	if (!retcode && testcopy) {
 		unlink(genfilename);
-		retcode = copy_xdf(genfilename, reffilename, XDF_GDF);
+		retcode = copy_xdf(genfilename, reffilename, XDF_GDF1);
 		if (!retcode)
 			retcode = cmp_files(genfilename, reffilename, 0, NULL, NULL);
 	}
 
 	if (!retcode)
-		retcode = test_validation_param(XDF_GDF, numtype, 
+		retcode = test_validation_param(XDF_GDF1, numtype, 
 						supported_type);
 
 	if (!keep_file)

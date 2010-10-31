@@ -9,7 +9,8 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdfio.h formatdecl.c			\
 			  streamops.h streamops.c		\
 			  ebdffile.c ebdf.h			\
-			  gdf.c gdf.h
+			  gdf1.c gdf1.h				\
+			  gdf2.c gdf2.h
 
 libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(srcdir)/exports.sym 
 libxdffileio_la_LIBADD = $(LTLIBOBJS)

@@ -52,7 +52,8 @@ enum xdffiletype
 	XDF_EDF,
 	XDF_EDFP,
 	XDF_BDF,
-	XDF_GDF,
+	XDF_GDF1,
+	XDF_GDF2,
 	XDF_NUM_FILE_TYPES
 };
 

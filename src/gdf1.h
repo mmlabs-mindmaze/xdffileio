@@ -15,10 +15,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef GDF_H
-#define GDF_H
+#ifndef GDF1_H
+#define GDF1_H
 
-XDF_LOCAL struct xdf* xdf_alloc_gdffile(void);
-XDF_LOCAL int xdf_is_gdffile(const unsigned char* magickey);
+XDF_LOCAL struct xdf* xdf_alloc_gdf1file(void);
+XDF_LOCAL int xdf_is_gdf1file(const unsigned char* magickey);
 
-#endif /* GDF_H */
+#endif /* GDF1_H */
