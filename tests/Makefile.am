@@ -1,6 +1,7 @@
 AM_CFLAGS = -I$(top_srcdir)/src
 EXTRA_DIST = ref128-13-97-50-11-7-1.bdf \
              ref128-13-97-50-11-7-1.edf \
+             ref128-13-97-50-11-7-1.gdf1\ 
              ref128-13-97-50-11-7-1.gdf2 
 
 check_PROGRAMS = testbdf testedf testgdf1 testgdf2 readcheck
