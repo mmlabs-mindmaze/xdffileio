@@ -22,7 +22,7 @@
 #endif
 
 
-XDF_LOCAL int fsync(int fd)
+LOCAL_FN int fsync(int fd)
 {
 #if HAVE__COMMIT
 	return _commit(fd);

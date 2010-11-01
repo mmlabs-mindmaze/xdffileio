@@ -25,7 +25,7 @@
 #if HAVE_DECL_FSYNC
 # include <unistd.h>
 #else
-XDF_LOCAL int fsync(int fd);
+LOCAL_FN int fsync(int fd);
 #endif
 
 #endif /* FSYNC_H */
