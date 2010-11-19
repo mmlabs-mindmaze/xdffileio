@@ -55,7 +55,7 @@ AC_SUBST([CURRENT],[lib_current])
 AC_SUBST([REVISION],[lib_revision])
 AC_SUBST([AGE],[lib_age])
 
-AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile doc/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile])
 AC_OUTPUT
 
 if test "$HAVE_IEEE_FLOAT_ROUND" = -1 

@@ -18,3 +18,5 @@ libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) \
 			  -version-info $(CURRENT):$(REVISION):$(AGE) 
 libxdffileio_la_LIBADD = $(LTLIBOBJS)
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = xdffileio.pc
