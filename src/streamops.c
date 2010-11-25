@@ -120,7 +120,7 @@ LOCAL_FN int read_string_field(FILE* file, char* val, unsigned int nch)
 
 	// Remove trailing spaces
 	pos = strlen(val);
-	while (pos && (val[pos]==' '))
+	while (pos && (val[pos-1]==' '))
 		pos--;
 	val[pos] = '\0';
 
