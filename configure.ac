@@ -37,6 +37,9 @@ AC_SUBST(LIBTOOL_DEPS)
 
 AC_DEF_API_EXPORT_ATTRS
 AC_C_BIGENDIAN
+if test "x$ac_cv_c_bigendian" = "xyes"; then
+	AC_MSG_ERROR([The library supports currently only little endian byte order])
+fi
 
 # Test IEEE floating point calculation behavior 
 AC_CHECK_IEEE_FLOAT_ROUND

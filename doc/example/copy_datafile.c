@@ -46,7 +46,7 @@ const char filetype_args[XDF_NUM_FILE_TYPES][8] = {
 int copy_configuration(struct xdf* dst, struct xdf* src)
 {
 	struct xdfch *dstch, *srcch;
-	int i, nch, nevent, nevtcode, evtcode;
+	int i, nch, nevtcode, evtcode;
 	const char* desc;
 
 	// Copy header and channels
@@ -74,7 +74,7 @@ int copy_datastream(struct xdf* dst, struct xdf* src)
 {
 	void* buffer = NULL;
 	int nch;
-	ssize_t nssrc, nsdst;
+	ssize_t nssrc, nsdst = 0;
 	size_t samplesize, stride[1];
 
 	xdf_get_conf(src, XDF_F_NCHANNEL, &nch, XDF_NOF);
