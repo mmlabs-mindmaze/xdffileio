@@ -18,10 +18,6 @@
 #ifndef FSYNC_H
 #define FSYNC_H
 
-#if HAVE_CONFIG_H
-# include <config.h>
-#endif
-
 #if HAVE_DECL_FSYNC
 # include <unistd.h>
 #else
