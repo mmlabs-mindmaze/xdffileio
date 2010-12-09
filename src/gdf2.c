@@ -255,7 +255,7 @@ LOCAL_FN struct xdf* xdf_alloc_gdf2file(void)
  */
 LOCAL_FN int xdf_is_gdf2file(const unsigned char* magickey)
 {
-	char key[9];
+	char key[9] = {0};
 	unsigned int version;
 
 	strncpy(key, (const char*)magickey, 8);
