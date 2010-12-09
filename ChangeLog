@@ -1,0 +1,713 @@
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* lib/fsync.c, lib/fsync.h: Change lib/fsync.* to avoid including
+	config.h twice
+
+	* commit 88130e30db8e14c829dc5ce9142bcc26e953d88b
+
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfio.h: Remove API_EXPORTED from xdfio.h
+
+	* commit df1fae608d9a400ab0082bac9d1de0e492d4ec2f
+
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/gdf1.c, src/gdf2.c: gdf1&2: fix a unitialized string in
+	is_type_gdf{1-2}
+
+	* commit 78cac98ad30e1e60709f1931c9a93cc15b0b25e4
+
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, doc/example/copy_datafile.c, tests/Makefile.am:
+	Issue error if compiled for big endian
+
+	* commit 9197599a392ad521428ae7b7ba6b115c1ab1fc9e
+
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/example/copy_datafile.c, doc/example/create_bdf.c: Rewrite
+	the examples a little
+
+	* commit 6b3f71419a948c34ecf5006e596b3c01d0952404
+
+2010-11-25 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/streamops.c: bugfix: fix resurrected bug: trailing spaces
+
+	* commit c5042890d27dc1717ae3e5745e304138d32b1dc6
+
+2010-11-19 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, src/Makefile.am, src/xdffileio.pc.in: export
+	pkg-config file
+
+	* commit 424ed0e9428de1aac2b00896883ea7e0dc046c60
+
+2010-11-01 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* lib/fsync.c, lib/fsync.h: Update visibility specifiers in
+	replacement functions
+
+	* commit 8decfeaf199824fe6308099d81ff46d736c60c36
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* AUTHORS, Makefile.am, NEWS, README, src/Makefile.am: Prepare
+	the package for release
+
+	* commit f732e576193461e3c9501378a6f322eb5278b0b5
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* tests/Makefile.am: gdf1: forgot to add reference file in
+	the distribution
+
+	* commit fc13d7ee29c019b295553314902b69d67961730f
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, m4/api-exports.m4, src/ebdf.h, src/formatdecl.c,
+	src/gdf1.c, src/gdf1.h, src/gdf2.c, src/gdf2.h, src/streamops.c,
+	src/streamops.h, src/xdfconfig.c, src/xdfevent.c, src/xdfevent.h,
+	src/xdffile.c, src/xdffile.h, src/xdfio.h, src/xdftypes.c,
+	src/xdftypes.h: Clean configure.ac and be visibility macros than
+	other libs
+
+	* commit 07e648e4bdee7a41e2a68d7a75e961c0c9314dfc
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am, src/formatdecl.c, src/gdf.c, src/gdf.h,
+	src/gdf1.c, src/gdf1.h, src/gdf2.c, src/gdf2.h, src/xdfio.h,
+	tests/Makefile.am, tests/ref128-13-97-50-11-7-1.gdf,
+	tests/ref128-13-97-50-11-7-1.gdf1,
+	tests/ref128-13-97-50-11-7-1.gdf2, tests/testgdf.c,
+	tests/testgdf1.c, tests/testgdf2.c: Add GDF 1.X support
+
+	Separate the implementation for GDF 1.X to gdf1.h and gdf1.c and
+	for GDF 2.X to gdf2.h and gdf2.c. There is now two file types:
+	XDF_GDF1 and XDF_GDF2
+
+	* commit 2101402c76810e14593b12d83cf603b5bba27260
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_conf.3, src/ebdffile.c, src/gdf.c, src/xdfconfig.c,
+	src/xdffile.h, src/xdfio.h, tests/testgdf.c: Use double type
+	for timestamp instead of time_t
+
+	Some platform use unsigned integer for time_t. This makes
+	the representation of timestamp before Jan 1 1970 difficult
+	(particularly useful for birthday).  This affects the fields
+	XDF_F_RECTIME and XDF_F_BIRTHDAY.
+
+	* commit d08e56df3abdc09299e1f54f7f89d498473f2114
+
+2010-10-31 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/exports.sym, src/gdf.c, src/streamops.c, src/xdfevent.c,
+	tests/copy_xdf.c, tests/ref128-13-97-50-11-7-1.gdf,
+	tests/testgdf.c: gdf: Add support for events
+
+	Add support for event in GDF files modify tests/copyxdf.c to
+	support event Add support for 24 bit values in streamops.*
+
+	* commit 5063acb65f17a89904287cb6230434284b401882
+
+2010-10-30 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_add_event.3, doc/xdf_add_evttype.3,
+	doc/xdf_get_event.3, doc/xdf_get_evttype.3, doc/xdf_set_conf.3,
+	src/Makefile.am, src/xdfconfig.c, src/xdfevent.c, src/xdfevent.h,
+	src/xdffile.c, src/xdffile.h, src/xdfio.h: Add API support
+	for events
+
+	This adds 4 new API functions for setting and getting
+	events: xdf_add_event, xdf_get_event, xdf_add_evttype,
+	xdf_get_evttype. Adds also 2 new fields XDF_F_NEVENT and
+	XDF_F_NEVTTYPE. No support for event has been added yet in any
+	file format.
+
+	* commit 4f7087a4fc7d46705a0ec7b2d4d3430482f6e8e9
+
+2010-10-29 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3, doc/xdf_set_conf.3, src/gdf.c,
+	src/streamops.h, src/xdfconfig.c, src/xdffile.h, src/xdfio.h,
+	tests/ref128-13-97-50-11-7-1.gdf, tests/testgdf.c: gdf: Switch
+	to GDF 2.00
+
+	Switch due to the difficulty to debug GDF1.25 files (lack
+	of reference file). Implements numerous new fields (however
+	specific to GDF2) and documents them. Some features are still
+	not implemented like optional header or events (events should
+	be implmented very soon).
+
+	* commit 5af1cdce189eb42b416fbbed61212648a143f82f
+
+2010-10-20 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/ebdffile.c, src/gdf.c, src/xdfconfig.c, src/xdffile.h,
+	src/xdfio.h, tests/ref128-13-97-50-11-7-1.bdf,
+	tests/ref128-13-97-50-11-7-1.edf,
+	tests/ref128-13-97-50-11-7-1.gdf, tests/testbdf.c,
+	tests/testedf.c, tests/testgdf.c: Adds XDF_F_RECTIME field
+
+	This adds one new field XDF_F_RECTIME field representing the
+	date and time of recording. All current file formats support
+	it. Reference files have been updated since they were using
+	invalid dates.
+
+	* commit 29586c0e613a210d6967db77c1e2ceadca9933b7
+
+2010-10-20 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfconfig.c: Minimize code replication in {g/s}et_[ch]conf
+
+	* commit 8a5a72d89b8492229f99287dead0cc4736806f6a
+
+2010-10-20 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfconfig.c: bugfix in how create_write_xdf handle failure
+
+	* commit 2012818049cfc572815588b727d853888ab9a47a
+
+2010-10-20 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/example/copy_datafile.c, doc/example/create_bdf.c,
+	lib/fsync.c, lib/fsync.h, src/ebdf.h, src/ebdffile.c,
+	src/formatdecl.c, src/gdf.c, src/gdf.h, src/streamops.c,
+	src/streamops.h, src/xdfconfig.c, src/xdffile.c, src/xdffile.h,
+	src/xdfio.h, src/xdftypes.c, src/xdftypes.h, tests/copy_xdf.c,
+	tests/copy_xdf.h, tests/errorcheck.c, tests/filecmp.c,
+	tests/filecmp.h, tests/readcheck.c, tests/testbdf.c,
+	tests/testedf.c, tests/testgdf.c, tests/validation.c,
+	tests/validation.h: Add GPLv3 notice in each source code file
+
+	* commit 5eb441ffb6619588d5cb590516ce6e6d093540a0
+
+2010-10-01 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/streamops.c: bugfix: strings returned to the API contain
+	trailing space
+
+	* commit d22f7da943aaf629ba7d7a9f8e25d346fa488c68
+
+2010-08-23 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am, src/ebdffile.c, src/formatdecl.c, src/gdf.c,
+	src/gdf.h, src/streamops.c, src/streamops.h, tests/Makefile.am,
+	tests/ref128-13-97-50-11-7-1.gdf, tests/testgdf.c: Add early
+	GDF 1.00 support
+
+	This does not support out of band events
+
+	* commit ddefb3e1fb384532a3c1ceb5b28238111ce061ed
+
+2010-08-23 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/ebdffile.c, src/xdfconfig.c, src/xdffile.c, src/xdffile.h:
+	Remove unnecessary methods from format_operations
+
+	copy_chconf, alloc_channel, free_channel, copy_conf, free_file
+	have been removed from the format_operations struct. This allows
+	to reduce the duplication of code. Instead description of the
+	channel struct, file struct and supported field are used to
+	provide generic functions implemented at the level of xdf_config.g
+	and xdffile.c
+
+	* commit 2148447b13514dc8a04c4ba358b66eb012dcffed
+
+2010-08-23 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3, src/ebdffile.c, src/xdfconfig.c,
+	tests/copy_xdf.c, tests/readcheck.c: Specify the default of
+	channels when reading and writing
+
+	Part of the code initialising the channels default values has
+	moved to xdfconfig.c. This allows to have a consistent default
+	settings across file types. Specify defaults in manpage
+
+	* commit 978310d320531b5ebdead3f2027a07e7dc908817
+
+2010-08-19 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac: Add silent compilation
+
+	* commit 2e0e660fb8d670f38809460de766a10b07f3d672
+
+2010-08-19 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/example/Makefile,
+	doc/example/copy_datafile.c, doc/example/create_bdf.c,
+	doc/xdf_define_arrays.3, doc/xdf_set_conf.3, src/xdfconfig.c,
+	src/xdffile.h, src/xdfio.h: Add examples and XDF_F_FILEFMT field
+
+	Add create_bdf and copy_datafile examples in the doc. On the fly,
+	XDF_F_FILEFMT configuration field has been added: it allows to
+	obtain the underlying file format of an opened file. This cannot
+	be set, i.e. it cannot be used with xdf_set_conf().
+
+	* commit 4e666f79563d0ae030be497802bbffdd5c5d260e
+
+2010-08-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_closest_type.3, src/ebdffile.c,
+	src/exports.sym, src/xdfconfig.c, src/xdffile.h, src/xdfio.h,
+	src/xdftypes.c, src/xdftypes.h, tests/Makefile.am,
+	tests/testbdf.c, tests/testedf.c, tests/validation.c,
+	tests/validation.h: Add data type check and xdf_closest_type
+	to API
+
+	This adds checks when the XDF_CF_STOTYPE is set using
+	xdf_set_chconf or xdf_set_conf. Those ensures that the underlying
+	file will not be corrupted by wrong parameters supplied by the
+	user. In addition, a new function has been added to the API:
+	xdf_closest_type. This allows to select blindly the correct data
+	type supported by an xDF file.
+
+	* commit eb50e6bd75550b9bb50b66f0bfad6aaaef558fce
+
+2010-08-07 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdftypes.c: Fix data type table warnings
+
+	* commit 9b5542a86d35415321edf9f9d573c0335a839db5
+
+2010-08-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* Makefile.am, configure.ac, doc/xdf_open.3, doc/xdf_set_chconf.3,
+	lib/Makefile.am, lib/fsync.c, lib/fsync.h, m4/floatround.m4,
+	src/Makefile.am, src/ebdffile.c, src/xdfconfig.c, src/xdffile.c,
+	tests/Makefile.am, tests/copy_xdf.c, tests/filecmp.c,
+	tests/readcheck.c: Add windows support
+
+	To make the library windows compatible: - few errors have changed.
+	- add replacement for fsync.  - disable signal blocking if
+	pthread_sigmask is not available: this may have unforeseen
+	consequences if file size limit is reached, but no other solution
+	has been found to make it work on windows.  - errorcheck is
+	disable on windows (no setrlimit function to test properly)
+
+	* commit 38568f7cd98a6b41f68970cacc2102b5ab0a440f
+
+2010-08-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdffile.c, tests/copy_xdf.c, tests/errorcheck.c: Turn off
+	unharmful warnings
+
+	* commit df800619df6ea6a57b3c5bf2d2762816cb3f882d
+
+2010-08-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, m4/floatround.m4: Add IEEE float rounding check
+	to configure script
+
+	This add the check for making sure that the compiler will produce
+	the expected rounding behavior (especially when dealing with
+	double). On x86, the default FPU is x87 which use by default on
+	linux and different platform long double register internally. This
+	would settings might screw up the scaling computations and for
+	sure will make testbdf fail.
+
+	* commit 38d8a167af8e73262be55b22e1c10a81dd074724
+
+2010-08-05 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdftypes.c: bugfix: tests fail on 32bits arch
+
+	* commit ded0cd89fb8ee8e5f38278fab7e747f5021ef17f
+
+2010-08-04 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdffile.c, src/xdffile.h, src/xdfio.h, tests/copy_xdf.c,
+	tests/errorcheck.c, tests/readcheck.c, tests/testbdf.c,
+	tests/testedf.c: Change xdf_define_array API to be consistent
+	with other libraries
+
+	In xdf_define_array, change the type of the strides argument
+	(array of unsigned int to array of const size_t) to be more
+	consistent with the other libraries
+
+	* commit 262823538d755731047a2ff23d129c0fac38e35c
+
+2010-08-01 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3, doc/xdf_set_conf.3, src/xdfconfig.c,
+	src/xdftypes.c, src/xdftypes.h, tests/copy_xdf.c, tests/testbdf.c,
+	tests/testedf.c: Add check for physical/digital min/max and
+	default value
+
+	When physical or digital min/max is set, the library will check
+	that it don't go beyond the type limits. In addition, when stored
+	type is set, the digital min and max are set to the limit of
+	the data type.
+
+	* commit 89d76ead56186062b4fa8cad6699dcfc08d64f3b
+
+2010-08-01 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, doc/xdf_read.3, doc/xdf_write.3, src/ebdf.h,
+	src/ebdffile.c, src/formatdecl.c, src/xdfconfig.c, src/xdffile.c,
+	src/xdffile.h, src/xdfio.h, src/xdftypes.c, src/xdftypes.h,
+	tests/readcheck.c: Optimize : Add visibility attribute &
+	restrict qualifiers
+
+	* commit c5ba4c8dfbccdac03d6187b49160cf03f1bcf1d6
+
+2010-07-30 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdffile.c, src/xdffile.h, tests/Makefile.am,
+	tests/readcheck.c: Fix bug when channels are not all read
+
+	This fixes the bug found with files opened for reading. This
+	bug occurred when some channels were skip from being read. The
+	reason was that the feature of specifying -1 for an array index
+	was actually not implemented!!!  A unit is now provided to test
+	this feature as well as xdf_seek.
+
+	* commit 141bad0ad563cdb24f2818c3f0b8d55543493b7b
+
+2010-07-29 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdftypes.c, src/xdftypes.h, tests/Makefile.am,
+	tests/copy_xdf.c, tests/errorcheck.c, tests/filecmp.c,
+	tests/filecmp.h, tests/ref128-13-97-17-11-7-1.bdf,
+	tests/ref128-13-97-50-11-7-1.bdf,
+	tests/ref128-13-97-50-11-7-1.edf, tests/testbdf.c,
+	tests/testedf.c: Data conversion improved and bug fixed in it
+
+	This fixes a bug which can lead to interger overflow if data
+	is close to extrema. This has lead to incorporate the offset
+	value in addition to the scaling factor which in turn allows
+	to convert unsigned integer to/from signed integer.  bugfix:
+	integer overflow when converting a data close to minimal value
+	bugfix: Data conversion intermediate is sometime badly chosen
+
+	* commit a346e867a227094df80cac42382e0af9b445d3a8
+
+2010-07-28 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am, src/bdf.h, src/bdffile.c, src/ebdf.h,
+	src/ebdffile.c, src/formatdecl.c, src/xdffile.h,
+	src/xdftypes.h, tests/Makefile.am, tests/copy_xdf.c,
+	tests/copy_xdf.h, tests/filecmp.c, tests/filecmp.h,
+	tests/ref128-13-97-50-11-7-1.edf, tests/testbdf.c,
+	tests/testedf.c: Add EDF file format support
+
+	* commit 50b4a0212452f76dc2e72fe1f93691d150a30a42
+
+2010-07-26 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* change-xdfapi.sh, doc/xdf_add_channel.3, doc/xdf_set_chconf.3,
+	doc/xdf_set_conf.3, src/bdffile.c, src/xdfconfig.c, src/xdffile.h,
+	src/xdfio.h, tests/errorcheck.c, tests/testbdf.c: Add channel
+	configuration default values, xdf_add_channel changed
+
+	Change the way a channel is initialized when created:
+	default values are now set in the xdf structure (by call
+	to xdf_set_conf). This allows more flexibility in the way of
+	specifying the channel configuration.  On the way, xdf_add_channel
+	has been modified to accept a label parameter to initialize the
+	label of the created channel.  XDF_F_NSAMPLE_PER_RECORD has been
+	renamed into XDF_F_REC_NSAMPLE.
+
+	* commit 9d709dcb1bafcd27eac80356380bfb30de51b669
+
+2010-07-26 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* change-xdfapi.sh, doc/xdf_add_channel.3, doc/xdf_set_chconf.3,
+	doc/xdf_set_conf.3, src/bdffile.c, src/xdfconfig.c, src/xdfio.h,
+	tests/errorcheck.c, tests/testbdf.c: Rename fields name to make
+	them less "verbose"
+
+	fields name passed to xdf_{set/get}_{chconf/conf} have been
+	renamed from XDF_FIELD_* and XDF_CHFIELD_* to respectively XDF_F_*
+	and XDF_CF_*. Few fields name have also been completely renamed
+	to be more consistent with the naming convention of the other
+	fields. (Provide temporarely a script to rename all the fields
+	in sources: change-xdfapi.sh)
+
+	* commit 311bf70a07ec7b94f3445e70f37ba683ef2a1870
+
+2010-07-19 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, src/Makefile.am: Fix few package configuration
+
+	Distribute list of exported symbols (previously
+	forgotten). Disable static library by default.
+
+	* commit 86a160f311870001d30fbee06d0aa44ce6f75b2e
+
+2010-07-07 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am, src/bdf.h, src/bdffile.c, src/exports.sym,
+	src/formatdecl.c, src/xdfconfig.c, src/xdffile.c, src/xdffile.h,
+	src/xdftypes.c, src/xdftypes.h: Clean exported symbols and bugfix
+
+	Clean exported symbols: prefix any function that is not static and
+	set the list of functions exported in the shared library.  bugfix:
+	xdf_seek buggy if called with offset 0 before any call to xdf_read
+
+	* commit 518165883648234ca6d053c024b8cbdbf642e809
+
+2010-07-02 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_seek.3, doc/xdf_set_chconf.3,
+	doc/xdf_set_conf.3, src/bdffile.c, src/xdfconfig.c, src/xdffile.c,
+	src/xdffile.h, src/xdfio.h, tests/testbdf.c: Enhance the read
+	capabilities
+
+	Add the API function xdf_seek, two fields (XDF_FIELD_NCHANNEL
+	and XDF_FIELD_SAMPLING_FREQ) and allow negative values in array
+	index to prevent a channel from being read.
+
+	* commit 651cd8ee0acd99dd1217a1f2f58620dc7d99117c
+
+2010-06-04 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/bdffile.c, src/xdfconfig.c, src/xdffile.c, src/xdffile.h,
+	src/xdfio.h: Code cleanup and in source documentation
+
+	Clean the code a little bit. It provides a short description of
+	almost all function. In some function, the argument validation
+	test have been added.
+
+	* commit 3f2a07d85834bfe4daf09a880c6221211bf59426
+
+2010-06-02 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_read.3, doc/xdf_write.3, src/bdffile.c, src/xdffile.c,
+	src/xdffile.h, src/xdfio.h, tests/Makefile.am, tests/errorcheck.c,
+	tests/test1.c, tests/testbdf.c: Add read functionality
+
+	Read functionality is now implemented. The API of xdf_read and
+	xdf_write has slightly changed to report the number of samples
+	transfered.
+
+	* commit 3a9bdcc4612d3b79392fa7dc9c6ee30491572176
+
+2010-05-29 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_add_channel.3, doc/xdf_close.3, doc/xdf_define_arrays.3,
+	doc/xdf_get_channel.3, doc/xdf_open.3, doc/xdf_prepare_transfer.3,
+	doc/xdf_read.3, doc/xdf_set_chconf.3, doc/xdf_set_conf.3,
+	doc/xdf_write.3, src/Makefile.am, src/bdffile.c, src/xdfconfig.c,
+	src/xdferror.c, src/xdferror.h, src/xdffile.c, src/xdffile.h,
+	tests/Makefile.am, tests/errorcheck.c, tests/test1.c: reworks
+	error reporting
+
+	Errors are now reported using standard errno. The errors while
+	transfering on/from the file are now properly transfered. Manpages
+	describes the possible error numbers.
+
+	* commit cca0dfcfe556e823588728f43df0ec8744706abc
+
+2010-05-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_define_arrays.3,
+	doc/xdf_prepare_transfer.3, doc/xdf_read.3, doc/xdf_write.3:
+	Add new manpages
+
+	Add manpages: xdf_read, xdf_write, xdf_define_arrays,
+	xdf_prepare_transfer.  Some of the pages might not be updated but
+	they will act as the bases for later more complete documentation.
+
+	* commit bc7c7c06e9fe9e4dad9337ee3df4a99d6ad9a310
+
+2010-05-15 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3, src/bdffile.c, src/xdfconfig.c,
+	src/xdffile.c, src/xdffile.h, src/xdfio.h: Add noscaling option
+	to channel fields
+
+	Add the field XDF_CHFIELD_ARRAY_DIGITAL which indicates that the
+	data in the array are digital i.e. the tranfer to/from the disk
+	does not require the scaling phase.
+
+	* commit 727c7e9998e8ad1f110c06dc46af99b3c7140e33
+
+2010-05-15 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdftypes.c: Bugfixes in conversion function
+
+	Bugfixes:
+	 - forgot conversion i32 to i24 - type src and dst are inverted
+	 in the generic conversion function
+
+	* commit e94b6c2560a4e40f3a39ab506f80d892b9008991
+
+2010-05-13 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_add_channel.3, doc/xdf_close.3,
+	doc/xdf_copy_channel.3, doc/xdf_copy_chconf.3,
+	doc/xdf_copy_conf.3, doc/xdf_copy_info.3, doc/xdf_get_channel.3,
+	doc/xdf_get_chconf.3, doc/xdf_get_conf.3, doc/xdf_get_info.3,
+	doc/xdf_getconf_channel.3, doc/xdf_open.3, doc/xdf_set_chconf.3,
+	doc/xdf_set_conf.3, doc/xdf_set_info.3, doc/xdf_setconf_channel.3,
+	src/Makefile.am, src/bdf.h, src/bdffile.c, src/formatdecl.c,
+	src/xdfconfig.c, src/xdferror.c, src/xdferror.h, src/xdffile.c,
+	src/xdffile.h, src/xdfformatops.h, src/xdfio.h, tests/Makefile.am,
+	tests/test1.c: Rework and rename of set/get/copy functions. bugfix
+	in add_channel.
+
+	Rework of functions: internal type checks cleaned and value
+	passed to virtual functions now done using union, producing
+	a code much cleaner.  Rename: xdf_(set|get)conf_channel ->
+	xdf_(set|get)_chconf
+		xdf_copy_channel -> xdf_copy_chconf xdf_(set|get)_info ->
+		xdf_(set|get)_conf xdf_copy_info -> xdf_copy_conf struct
+		xdffile -> struct xdf struct xdf_channel -> struct xdfch
+		remove typedefs hxdf and hchxdf Add const when useful
+		in the api functions
+	Bugfix: Previous channel badly set in xdf_add_channel, bdf_copy_*
+	buggy
+
+	* commit dffdf1ec9fd310fefac7f636c85694f162a6c85b
+
+2010-05-11 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/bdffile.c, src/xdfconfig.c, src/xdferror.c, src/xdffile.c,
+	src/xdffile.h, src/xdfformatops.h, src/xdftypes.c, tests/test1.c:
+	Bug and memleaks fixes: test for BDF file support now passed
+
+	bugfixes: - duplicated field in struct xdffile narrays and
+	num_array_input - get_option_type returns incorrect type -
+	physical_min/max incorrectly handle - buff, backbuff and tmpbuff
+	not allocated - compute 1 batch fewer - batch->foff incorrect -
+	BDF: incorrect trigger type used in test1.c - prepare_transfer:
+	sample_size not computed - prepare_transfer: xdf->nbatch set
+	after being used - xdf_close: number of samples to fill is
+	incorrect (difference inverted) - BDF: header not flushed to
+	disk - compute_batch: first batch incorrectly initialized - BDF:
+	number of records incorrectly written - set_xdf_error: return
+	wrong value - Number of record not updated when record written on
+	disk - return values not returned when closing file - xdftypes.c:
+	copy_ui24_p8 incorrect - xdftypes.c: intermediate stride incorrect
+	in setup_transform - semaphore closed whereas it is an unnamed
+	semaphore - all channel are replication of the 1st channel
+
+	memory leaks: - array_stride not freed in xdf_close - channels
+	not freed in xdf_close
+
+	* commit 36d53bc386d3b100224d9e3193f5fcd56c31eddc
+
+2010-05-10 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* Makefile.am, configure.ac, src/Makefile.am, src/bdf.h,
+	src/bdffile.c, src/formatdecl.c, src/xdfconfig.c, src/xdfio.h,
+	tests/Makefile.am, tests/ref128-13-97-17-11-7-1.bdf,
+	tests/test1.c: Add BDF files support (not functional yet)
+
+	The support for BDF files is added. A test code is also added
+	for them.  Although the source code still requires bugfixes,
+	to get cleaned and polished, it is added in the devel branch to
+	test and debug the core of the library.
+
+	* commit c88be87f5f8e932c9994fbc91633bb52ca29b067
+
+2010-05-10 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfconfig.c, src/xdffile.c, src/xdfio.h: xdfcore: Bugfixes
+
+	fix: Bad flags for create file when open for writing fix:
+	numch in the xdffile structure is not updated when a channel
+	is added fix: xdf_get_error is not declared in xdfio.h fix:
+	setup_transfer_thread returns failure instead of success.
+
+	* commit b84797844c0d51cf7ea752dbd1f1240573705a96
+
+2010-05-10 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfconfig.c: Bug fix: missing rec. duration and ns. per
+	rec in option table
+
+	* commit a22520cf68d9e5889e4ff36729f6d9b865e28ee0
+
+2010-05-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_copy_info.3, doc/xdf_get_info.3,
+	doc/xdf_set_info.3, src/formatdecl.c, src/xdfconfig.c,
+	src/xdffile.c, src/xdffile.h, src/xdfio.h: xdfcore: Implement
+	xdf_set/get_info
+
+	Implements the function xdf_set_info, xdf_get_info and
+	xdf_copy_info in the same way than set/get_channel. It creates
+	the associated manpages. One bug has been fixed about pointer
+	arithmetic with xdf->buff.
+
+	* commit d5881cbe164c3038aa3b1334c8f8833ea5a9dfd0
+
+2010-05-05 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdfconfig.c, src/xdfio.h: xdfcore: Bug fix and common
+	behavior in set/get_channel
+
+	The bug preventing more than one option to be processed by
+	xdf_get/set_channel has been fixed. A number of channel option
+	are also now processed directly in the xdf core files. This
+	simplify the task of implementing a new data format. On the way,
+	few channel option constants have been renamed.
+
+	* commit c7076a009b8b7357dd01a25321da7345c0f0ea05
+
+2010-05-03 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/Makefile.am, doc/xdf_close.3, doc/xdf_open.3,
+	src/Makefile.am, src/formatdecl.c, src/xdfchannels.c,
+	src/xdfchannels.h, src/xdfconfig.c, src/xdferror.c, src/xdffile.c,
+	src/xdffile.h, src/xdfformatops.h, src/xdfio.h: Provides the
+	unified interface for open/close xdf files
+
+	This implements the call xdf_open and xdf_close in a unified
+	way. Minimal manpages for both functions have been added. To
+	continue the implementation of unified API, the sources codes have
+	been slightly rearrange (xdfchannels.c become xdfconfig.c). An
+	entry point for declaring a supported dataformat is provided
+	by formatdecl.c
+
+	* commit 8cee31ab42d4bd3fbc9e4842e9d87b10c9a6d247
+
+2010-04-29 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* Makefile.am, configure.ac, doc/Makefile.am,
+	doc/xdf_add_channel.3, doc/xdf_copy_channel.3,
+	doc/xdf_get_channel.3, doc/xdf_getconf_channel.3,
+	doc/xdf_setconf_channel.3, src/Makefile.am, src/xdfchannels.c,
+	src/xdfchannels.h, src/xdfdatatypes.h, src/xdferror.c,
+	src/xdferror.h, src/xdffile.c, src/xdffile.h, src/xdfio.h,
+	src/xdftypes.h: Rework the channel specification API, unify
+	the API
+
+	The API for all data format has been unified: the user manipulate
+	file of any format from the same API. An API for specifying
+	a channel has thus been created designed to be as flexible as
+	possible while minimizing the number of functions exposed by the
+	API. Now a channel is created from the XDF file and is accessed
+	through few channel specific calls. However, internally, virtual
+	functions implement the format specific behaviors. Manpages of
+	these channel specific API has been added.
+
+	* commit 7c076999bd8667fde9eacb5e430807243245592b
+
+2010-04-22 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am: Forgot changes in src/Makefile.am
+
+	* commit b6b8c75d2b1229616c9f3cc49e47080454dd6595
+
+2010-04-22 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* AUTHORS, COPYING, Makefile.am, configure.ac, src/Makefile.am,
+	src/xdfdatatypes.h, src/xdferror.c, src/xdferror.h, src/xdffile.c,
+	src/xdffile.h, src/xdftypes.c, src/xdftypes.h: XDF core code
+
+	Provides the code for the core functionality of XDF
+	library. Documentation is not yet ready. However, it can
+	start to be used to build BDF, GDF... etc.. file writer. Read
+	functionnality is not implemented yet.
+
+	* commit c52d7dcb72c7045fd44752b87ffd786e40c6ed61
+
