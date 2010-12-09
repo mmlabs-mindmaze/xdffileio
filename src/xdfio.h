@@ -25,10 +25,6 @@
 extern "C" {
 #endif
 
-#ifndef API_EXPORTED
-#define API_EXPORTED
-#endif
-
 enum xdftype
 {
 	XDFINT8 = 0,
@@ -120,39 +116,39 @@ enum xdffield
 struct xdf;
 struct xdfch;
 
-API_EXPORTED struct xdf* xdf_open(const char* filename, int mode,
-				enum xdffiletype type);
-API_EXPORTED int xdf_close(struct xdf* xdf);
+struct xdf* xdf_open(const char* filename, int mode,
+   		enum xdffiletype type);
+int xdf_close(struct xdf* xdf);
 
-API_EXPORTED int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
-API_EXPORTED int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
-API_EXPORTED int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
+int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);
+int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...);
+int xdf_copy_conf(struct xdf* dst, const struct xdf* src);
 
-API_EXPORTED int xdf_add_evttype(struct xdf* xdf, int code, const char* desc);
-API_EXPORTED int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
-                            int *code, const char** desc);
-API_EXPORTED int xdf_add_event(struct xdf* xdf, int evttype, double onset,
-                          double duration);
-API_EXPORTED int xdf_get_event(struct xdf* xdf, unsigned int index, 
-                         unsigned int *evttype, double* start, double* dur);
+int xdf_add_evttype(struct xdf* xdf, int code, const char* desc);
+int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
+               int *code, const char** desc);
+int xdf_add_event(struct xdf* xdf, int evttype, double onset,
+             double duration);
+int xdf_get_event(struct xdf* xdf, unsigned int index, 
+            unsigned int *evttype, double* start, double* dur);
 
-API_EXPORTED struct xdfch* xdf_get_channel(const struct xdf* xdf,
-					unsigned int index);
-API_EXPORTED struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
-API_EXPORTED int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
-API_EXPORTED int xdf_get_chconf(const struct xdfch* ch, enum xdffield field,...);
-API_EXPORTED int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
+struct xdfch* xdf_get_channel(const struct xdf* xdf,
+   			unsigned int index);
+struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label);
+int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...);
+int xdf_get_chconf(const struct xdfch* ch, enum xdffield field,...);
+int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 
-API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int narrays,
-				const size_t* strides);
-API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf);
+int xdf_define_arrays(struct xdf* xdf, unsigned int narrays,
+   		const size_t* strides);
+int xdf_prepare_transfer(struct xdf* xdf);
 
-API_EXPORTED ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
-API_EXPORTED ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
-API_EXPORTED off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
+ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
+ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
+off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
 
-API_EXPORTED int xdf_closest_type(const struct xdf* xdf, enum xdftype type);
-API_EXPORTED const char* xdf_get_string(void);
+int xdf_closest_type(const struct xdf* xdf, enum xdftype type);
+const char* xdf_get_string(void);
 
 #ifdef __cplusplus
 }
