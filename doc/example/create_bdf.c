@@ -15,6 +15,8 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+
 /*  Example : create_bdf.c
  *
  * This program demonstrates how to write a BDF file. In particular it shows
@@ -25,6 +27,7 @@
  * - NSENS channels containing each a sine wave of 1 to NSENS Hz of double
  * - 1 channel containing a integer value of 0xF0 every 0.5 seconds
  */  
+
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
