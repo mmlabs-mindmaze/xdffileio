@@ -616,7 +616,7 @@ static int gdf2_write_header(struct xdf* xdf)
 {
 	int retval = 0;
 	struct gdf2_file* gdf2 = get_gdf2(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "wb");
+	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
 	if (!file)
 		return -1;
 
@@ -992,7 +992,7 @@ static int gdf2_read_header(struct xdf* xdf)
 	unsigned int i;
 	struct xdfch** curr = &(xdf->channels);
 	struct gdf2_file* gdf2 = get_gdf2(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "rb");
+	FILE* file = fdopen(dup_cloexec(xdf->fd), "rb");
 	if (!file)
 		return -1;
 
@@ -1027,7 +1027,7 @@ static int gdf2_complete_file(struct xdf* xdf)
 {
 	int retval = 0;
 	int64_t numrec = xdf->nrecord;
-	FILE* file = fdopen(dup(xdf->fd), "wb");
+	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
 	long evt_sect = xdf->hdr_offset + xdf->nrecord*xdf->filerec_size;
 
 	// Write the event block and the number of records in the header

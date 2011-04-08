@@ -195,6 +195,40 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 }
 
 
+/* \param filename	path to the file
+ * \param flags		access mode and creation flags
+ * \param mode		permission used for created file
+ *
+ * Open the file using the system function open and set if
+ * possible the file descriptor with CLOEXEC flag. mode is
+ * ignored if flags does not contain O_CREAT flag.
+ *
+ * Return the file descriptor in case of success, -1 otherwise
+ */
+static
+int open_cloexec(const char* filename, int flags, mode_t mode)
+{
+	int fd;
+#if HAVE_DECL_O_CLOEXEC
+	flags |= O_CLOEXEC;
+#endif
+
+	if (flags & O_CREAT)
+		fd = open(filename, flags, mode);
+	else
+		fd = open(filename, flags);
+
+#if !HAVE_DECL_O_CLOEXEC & HAVE_DECL_FD_CLOEXEC
+	if (fd >= 0) {
+		int fd_flags = fcntl(fd, F_GETFD);
+		fcntl(fd, F_SETFD, fd_flags | FD_CLOEXEC);
+	}
+#endif
+
+	return fd;
+}
+
+
 /* \param xdf	pointer to an structure xdf initialized for reading
  * \param fd	file descriptor of the opened file for reading
  *
@@ -240,7 +274,7 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	int fd, errnum = 0;
 
 	// Open the file
-	if ((fd = open(filename, O_RDONLY|O_BINARY)) == -1) 
+	if ((fd = open_cloexec(filename, O_RDONLY|O_BINARY, 0)) == -1) 
 		return NULL;
 
 	// Guess file type
@@ -293,7 +327,7 @@ struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
 	mode_t mode = S_IRUSR|S_IWUSR/*|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH*/;
 
 	// Create the file
-	fd = open(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL, mode);
+	fd = open_cloexec(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL,mode);
 	if (fd == -1)
 		return NULL;
 

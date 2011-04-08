@@ -459,7 +459,7 @@ static int ebdf_write_header(struct xdf* xdf)
 {
 	int retval = 0;
 	struct ebdf_file* bdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "wb");
+	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
 	if (!file)
 		return -1;
 
@@ -592,7 +592,7 @@ static int ebdf_read_header(struct xdf* xdf)
 	int retval = -1;
 	unsigned int i;
 	struct ebdf_file* ebdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup(xdf->fd), "rb");
+	FILE* file = fdopen(dup_cloexec(xdf->fd), "rb");
 	if (!file)
 		return -1;
 
