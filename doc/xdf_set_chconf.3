@@ -132,7 +132,7 @@ Example of usage of \fBxdf_set_chconf\fP():
 \fB
 /* Assume xdf referenced an XDF file opened for writing */
 unsigned int iarray = 2, offset = 0;
-const char[] label = "Channel EEG";
+const char label[] = "Channel EEG";
 
 hchxdf ch = xdf_add_channel(xdf);
 xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray,
@@ -150,7 +150,7 @@ Example of usage of \fBxdf_get_chconf\fP():
 \fB
 /* Assume xdf referenced an XDF file opened for reading */
 unsigned int iarray, offset;
-const char[128] label;
+const char label[128];
 
 hchxdf ch = xdf_get_channel(xdf, 1);
 xdf_get_chconf(ch, XDF_CF_ARRINDEX, &iarray,
