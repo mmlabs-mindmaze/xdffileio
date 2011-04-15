@@ -86,15 +86,25 @@ XDF_READ. This is also automatically set by \fBXDF_CF_STOTYPE\fP.
 Set/get the maximal value that a digital value can get. Cannot be set if
 XDF_READ. This is also automatically set by \fBXDF_CF_STOTYPE\fP.
 .TP
-\fBXDF_CF_LABEL\fP (const char*) [""] {EDF BDF GDF}
-Set/get the label of the channel. This field cannot be set if the XDF file
-is in mode XDF_READ.
+\fBXDF_CF_LABEL\fP (const char*) [""]
+Set/get the label of the channel. Cannot be set if XDF_READ.
+.TP
+\fBXDF_CF_UNIT\fP (const char*) [""] {EDF BDF GDF}
+Set/get the unit of the channel. Cannot be set if XDF_READ.
+.TP
+\fBXDF_CF_TRANSDUCTER\fP (const char*) [""] {EDF BDF GDF}
+Set/get the type of sensor used for this channel. Cannot be set if XDF_READ.
+.TP
+\fBXDF_CF_PREFILTERING\fP (const char*) [""] {EDF BDF GDF}
+Set/get the information about the filters already applied on channel data.
+Cannot be set if XDF_READ.
 .TP
 \fBXDF_CF_ELECPOS\fP (double[3]) [0,0,0] {GDF}
 Position of the sensor/electrode expressed in X,Y,Z components
+Cannot be set if XDF_READ.
 .TP
 \fBXDF_CF_IMPEDANCE\fP (double) [0] {GDF}
-Impedance of the sensor/electrode.
+Impedance of the sensor/electrode. Cannot be set if XDF_READ.
 .SH "RETURN VALUE"
 .LP
 The two functions returns 0 in case of success. Otherwise -1 is returned and
