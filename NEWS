@@ -1,5 +1,10 @@
+xdffileio-0.0.1
+===============
 
-libxdffileio-0.0.0
-==================
+ * Open all files with CLOEXEC flag
+ * Fix some missing documentation
+
+xdffileio-0.0.0
+===============
 
  * Initial release

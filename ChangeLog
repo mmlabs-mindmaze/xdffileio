@@ -1,3 +1,48 @@
+2011-05-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* Makefile.am, change-xdfapi.sh, debian/changelog,
+	debian/compat, debian/control, debian/copyright, debian/docs,
+	debian/libxdffileio0-dev.install, debian/libxdffileio0.install,
+	debian/postinst.ex, debian/postrm.ex, debian/preinst.ex,
+	debian/prerm.ex, debian/rules: Add Debian packaging infrastructure
+
+	* commit 5653ab0d0f628adc47fe309d22e100d1236a1df4
+
+2011-04-15 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3: Fix 2 typos in the example of
+	xdf_set_chconf manpage
+
+	* commit ec5d7cdec689fc472210a6d7af0222e23f11ccfc
+
+2011-04-15 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* doc/xdf_set_chconf.3: Add missing information in xdf_set_chconf
+	man page
+
+	* commit acc91c74f2c2a6e4cd8b097a1d28172b7f81ec89
+
+2011-04-13 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* m4/floatround.m4: Use automatically SSE intruction set if CPU
+	architecture allows it
+
+	* commit 33c36f4e2873fbf0da3ba6e0c2570d19d697ceae
+
+2011-04-08 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, src/ebdffile.c, src/gdf1.c, src/gdf2.c,
+	src/streamops.c, src/streamops.h, src/xdfconfig.c: Add CLOEXEC
+	flag to any created file descriptor
+
+	* commit 29bad9bd360e82c8db1578e5aeeb292f922694e3
+
+2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* ChangeLog, Makefile.am: Prepare package for release
+
+	* commit 338b031a3a8ab2828b4e3aa9e5f5a482cfbd9fcb
+
 2010-12-09 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
 
 	* lib/fsync.c, lib/fsync.h: Change lib/fsync.* to avoid including
