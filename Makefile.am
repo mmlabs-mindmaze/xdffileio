@@ -4,9 +4,7 @@ SUBDIRS = lib src doc tests
 doc_DATA = AUTHORS NEWS README COPYING
 
 EXTRA_DIST = debian/changelog debian/compat debian/control\
-		debian/copyright debian/docs		\
-		debian/postinst.ex debian/postrm.ex	\
-		debian/preinst.ex debian/prerm.ex	\
+		debian/copyright debian/symbols		\
 		debian/rules				\
 		debian/libxdffileio0.install		\
 		debian/libxdffileio0-dev.install		
