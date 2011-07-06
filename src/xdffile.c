@@ -72,7 +72,7 @@ static void unblock_signals(sigset_t *oldmask)
 
 
 // Orders definitions for transfer
-#define ORDER_SEEK	3
+#define ORDER_INIT	3
 #define ORDER_QUIT	2
 #define ORDER_TRANSFER	1
 #define ORDER_NONE	0
@@ -109,7 +109,7 @@ LOCAL_FN int xdf_set_error(int error)
 
 /* \param xdf	pointer to a valid xdffile with mode XDF_WRITE
  * 
- * Transpose recorde data from (channel,sample) to a (sample,channel)
+ * Transpose recorded data from (channel,sample) to a (sample,channel)
  * organisation, performs any necessary conversion and write the record on
  * the file.
  *
@@ -213,8 +213,8 @@ static int read_diskrec(struct xdf* xdf)
  * This is the function implementing the background thread transfering data
  * from/to the underlying file. 
  * This performs the transfer of the back buffer whenever the condition is
- * signaled and order is ORDER_TRANSFER. The end of the transfer is notified by raising
- * the semaphore
+ * signaled and order is ORDER_TRANSFER. The end of the transfer is notified
+ * by clearing the order and signal the condition
  *
  * This function reports information back to the main thread using
  * xdf->reportval which is updated by read_diskrec and write_diskrec when
@@ -226,14 +226,16 @@ static void* transfer_thread_fn(void* ptr)
 	int wmode = (xdf->mode == XDF_WRITE) ? 1 : 0;
 
 	block_signals(NULL);
-	// Once the routine hold the mutex, it is in a ready state, notify
-	// the main thread with the semaphore
- 	pthread_mutex_lock(&(xdf->mtx));
-	sem_post(&(xdf->sem));
 	
  	// While a transfer is performed, this routine holds the mutex
 	// preventing from any early buffer swap
+ 	pthread_mutex_lock(&(xdf->mtx));
 	while (1) {
+		// The transfer ready to be performed
+		// => clear the previous order and notify the main thread
+		xdf->order = 0;
+		pthread_cond_signal(&(xdf->cond));
+
 		// Wait for an order of transfer
 		while (!xdf->order)
 			pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
@@ -248,10 +250,6 @@ static void* transfer_thread_fn(void* ptr)
 		else
 			read_diskrec(xdf);
 
-		// The transfer has been performed => clear the order
-		// and notify the main thread through the semaphore
-		xdf->order = 0;
-		sem_post(&(xdf->sem));
 	}
 	pthread_mutex_unlock(&(xdf->mtx));
 	return NULL;
@@ -274,12 +272,13 @@ static int disk_transfer(struct xdf* xdf)
 	int retval = 0;
 	void* buffer;
 
-	// Wait for the previous operation to be finished
-	sem_wait(&(xdf->sem));
-	
 	// If the mutex is hold by someone else, it means that the transfer
 	// routine has still not in a ready state
 	pthread_mutex_lock(&(xdf->mtx));
+
+	// Wait for the previous operation to be finished
+	while (xdf->order && !xdf->reportval)
+		pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
 
 	if (xdf->reportval) {
 		if (xdf->reportval < 0) {
@@ -287,7 +286,6 @@ static int disk_transfer(struct xdf* xdf)
 			retval = -1;
 		} else
 			retval = 1;
-		sem_post(&(xdf->sem));
 	} else {
 		// Swap front and back buffer
 		buffer = xdf->backbuff;
@@ -539,9 +537,8 @@ static int init_transfer_thread(struct xdf* xdf)
 		goto error;
 	done++;
 
-	sem_init(&(xdf->sem), 0, 0);
 	xdf->reportval = 0;
-	xdf->order = ORDER_NONE;
+	xdf->order = ORDER_INIT;
 	if ((ret = pthread_create(&(xdf->thid), NULL, transfer_thread_fn, xdf)))
 		goto error;
 
@@ -564,14 +561,17 @@ error:
  */
 static int finish_transfer_thread(struct xdf* xdf)
 {
-	// Wait for the last transfer to be done and 
-	sem_wait(&(xdf->sem));
 
-	// Stop the transfer thread and wait for its end
+	// Wait for the previous operation to be finished
+	// and stop the transfer thread
 	pthread_mutex_lock(&(xdf->mtx));
+	while (xdf->order && !xdf->reportval)
+		pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
 	xdf->order = ORDER_QUIT;
 	pthread_cond_signal(&(xdf->cond));
 	pthread_mutex_unlock(&(xdf->mtx));
+
+	// Wait for the transfer thread to complete
 	pthread_join(xdf->thid, NULL);
 
 	// Destroy synchronization primitives
@@ -906,17 +906,18 @@ API_EXPORTED off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 	irec = reqpoint / nsprec;
 	if (irec != xdf->nrecread) {
 		if (irec != xdf->nrecread + 1) {
-			// Wait for the previous operation to be finished
-			sem_wait(&(xdf->sem));
 
  			pthread_mutex_lock(&(xdf->mtx));
+			// Wait for the previous operation to be finished
+			while (xdf->order && !xdf->reportval)
+				pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
+			
 			fileoff = irec*xdf->filerec_size + xdf->hdr_offset;
 			if ( (lseek(xdf->fd, fileoff, SEEK_SET) < 0)
 			     || (read_diskrec(xdf)) )
 				errnum = errno;
  			pthread_mutex_unlock(&(xdf->mtx));
 			
-			sem_post(&(xdf->sem));
 			if (errnum)
 				return xdf_set_error(errnum);
 

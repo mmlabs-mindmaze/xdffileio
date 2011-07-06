@@ -20,7 +20,6 @@
 
 
 #include <pthread.h>
-#include <semaphore.h>
 #include <stdbool.h>
 #include <time.h>
 
@@ -101,7 +100,6 @@ struct xdf {
 	pthread_t thid;
 	pthread_mutex_t mtx;
 	pthread_cond_t cond;
-	sem_t sem;
 	int order;
 };
 
