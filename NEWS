@@ -1,4 +1,10 @@
-xdffileio-0.0.1
+xdffileio-0.2
+===============
+
+ * Reduce locking overhead
+ * Relicense to LGPL3
+
+xdffileio-0.1
 ===============
 
  * Open all files with CLOEXEC flag

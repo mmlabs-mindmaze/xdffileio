@@ -1,3 +1,11 @@
+xdffileio (0.2-0) lucid; urgency=low
+
+  * Stop using cdbs.
+  * Reduce locking overhead
+  * Relicense to LGPL3
+
+ -- Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>  Sun, 18 Sep 2011 10:16:51 +0200
+
 xdffileio (0.1-0) lucid; urgency=low
 
   * Remove dependency_libs from libtool files (*.la).

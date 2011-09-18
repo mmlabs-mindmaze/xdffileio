@@ -1,3 +1,89 @@
+2011-09-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* m4/floatround.m4: Make floatround.m4 compatible with new
+	version of autoconf
+
+	* commit ba536067e0a6f60a1d4d525b6dc10eb6dd497b0d
+
+2011-09-07 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* AUTHORS, doc/example/copy_datafile.c, doc/example/create_bdf.c,
+	lib/fsync.c, lib/fsync.h, src/ebdf.h, src/ebdffile.c,
+	src/formatdecl.c, src/gdf1.c, src/gdf1.h, src/gdf2.c,
+	src/gdf2.h, src/streamops.c, src/streamops.h, src/xdfconfig.c,
+	src/xdfevent.c, src/xdfevent.h, src/xdffile.c, src/xdffile.h,
+	src/xdfio.h, src/xdftypes.c, src/xdftypes.h, tests/copy_xdf.c,
+	tests/copy_xdf.h, tests/errorcheck.c, tests/filecmp.c,
+	tests/filecmp.h, tests/readcheck.c, tests/testbdf.c,
+	tests/testedf.c, tests/testgdf1.c, tests/testgdf2.c,
+	tests/validation.c, tests/validation.h: Add CNBI to license notice
+
+	* commit eb9f175363b6e0f69ab7f837d54830cf2b1ec6a2
+
+2011-08-05 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* COPYING, debian/copyright, lib/fsync.c, lib/fsync.h, src/ebdf.h,
+	src/ebdffile.c, src/formatdecl.c, src/gdf1.c, src/gdf1.h,
+	src/gdf2.c, src/gdf2.h, src/streamops.c, src/streamops.h,
+	src/xdfconfig.c, src/xdfevent.c, src/xdfevent.h, src/xdffile.c,
+	src/xdffile.h, src/xdfio.h, src/xdftypes.c, src/xdftypes.h:
+	Relicense the library into LGPL3+
+
+	* commit 33cfc0e10fb971ee6b6e4a1b174fc103e1a0fc54
+
+2011-07-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/xdffile.c, src/xdffile.h: Reduce locking overhead (remove
+	semaphore)
+
+	Semaphore has been replaced by the condition used to trigger
+	a transfer.
+
+	* commit 5c39b5f4b871e36c93a80fd66e3a6df5e1d0fb40
+
+2011-07-01 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* Makefile.am, debian/control, debian/docs,
+	debian/libxdffileio0-dev.install, debian/postinst.ex,
+	debian/postrm.ex, debian/preinst.ex, debian/prerm.ex,
+	debian/rules, debian/symbols: debian: stop using cdbs and package
+	symbols files
+
+	* commit e4b5363fc9ae76e8824e810bd3909f4201a4287a
+
+2011-06-04 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* src/Makefile.am, src/exports.sym: Remove useless exports.sym
+
+	* commit ca8c546a9b0581aa981ec31b81d19612e6153b31
+
+2011-05-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* debian/changelog: debian: fix 0.1-0 time of release
+
+	* commit 9a19b2afd4285055e47d31b775b6e4a2fe4a2b0a
+
+2011-05-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* debian/changelog, debian/rules: debian: remove dependency_libs
+	from installed .la
+
+	* commit 845c37c59d6e7ef3692b731194f2c143b9e6aaa3
+
+2011-05-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* configure.ac, debian/changelog: Use the correct naming
+	(release 0.1)
+
+	* commit 9b015931e804bbfb24e7f5cc5e4941e535116c97
+
+2011-05-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* ChangeLog, NEWS, configure.ac, debian/changelog: Prepare for
+	release 0.0.1
+
+	* commit 6744b6362a800d2ae01babc2bc15f63bb094d12f
+
 2011-05-06 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
 
 	* Makefile.am, change-xdfapi.sh, debian/changelog,
