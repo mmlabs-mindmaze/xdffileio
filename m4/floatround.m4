@@ -22,9 +22,9 @@ AC_DEFUN([AC_CHECK_IEEE_FLOAT_ROUND],
 AC_REQUIRE([AC_USE_SSEMATH])
 AC_MSG_CHECKING([FPU rounding behavior])
 HAVE_IEEE_FLOAT_ROUND=-1
-AC_RUN_IFELSE(AC_LANG_PROGRAM([[double a = 3.0, b = 7.0;]],
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[double a = 3.0, b = 7.0;]],
 		              [[volatile double c = a / b;] 
-		               [return (c == a/b) ? 0 : 1;]]),
+		               [return (c == a/b) ? 0 : 1;]])],
 	      [AC_MSG_RESULT([correct IEEE behavior])
 	      HAVE_IEEE_FLOAT_ROUND=1],
 	      [AC_MSG_ERROR([Bad FPU rounding behavior.
