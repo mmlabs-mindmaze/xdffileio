@@ -35,7 +35,7 @@ Here is the list of admissible value. The expected type of value is provided
 in the parenthesis (the expected type of the value for
 \fBxdf_set_chconf\fP(), or a pointer to this type for
 \fBxdf_get_chconf\fP()). The default value of each field is provided in
-squared brackets (however these defaults can be overriden by a call to
+squared brackets (however these defaults can be overridden by a call to
 \fBxdf_set_conf\fP(3) if the file is open for writing. If the file is
 opened for reading, the default are meaningful only for the fields
 \fBXDF_CF_ARR*\fP). 
@@ -107,7 +107,7 @@ Cannot be set if XDF_READ.
 Impedance of the sensor/electrode. Cannot be set if XDF_READ.
 .SH "RETURN VALUE"
 .LP
-The two functions returns 0 in case of success. Otherwise -1 is returned and
+The two functions returns 0 in case of success. Otherwise \-1 is returned and
 \fIerrno\fP is set appropriately.
 .SH ERROR
 .TP 7
