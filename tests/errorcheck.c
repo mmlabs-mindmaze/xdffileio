@@ -25,6 +25,7 @@
 #include <xdfio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include "filecmp.h"
@@ -157,6 +158,7 @@ int main(int argc, char *argv[])
 		 getenv("srcdir"),basename);
 
 
+	signal(SIGXFSZ, SIG_IGN);
 	getrlimit(RLIMIT_FSIZE, &lim);
 	lim.rlim_cur = MAXFSIZE; 
 	setrlimit(RLIMIT_FSIZE, &lim);
