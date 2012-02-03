@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2010  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2010,2012  EPFL (Ecole Polytechnique Fédérale de Lausanne)
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
 
@@ -117,8 +117,13 @@ exit:
 	    && (errno == EFBIG) )
 		retcode = 0;
 
-	fprintf(stderr, "\tError caught: %s\n\t\twhen adding %i samples after %u samples\n\t\tsample lost: %u (record length: %i samples)\n", 
-	                   strerror(errno), NSAMPLE, currns, currns+NSAMPLE - samwarn, recns);
+	fprintf(stderr, "\tError caught: %s\n"
+	                "\t\twhen adding %i samples after %u samples\n"
+	                "\t\tsample lost: %u (record length: %i samples)\n"
+			"\t\tsamwarn=%u, retcode=%i\n", 
+	                   strerror(errno), NSAMPLE, currns,
+			   currns+NSAMPLE - samwarn, recns,
+			   samwarn, retcode);
 
 	// Clean the structures and ressources
 	xdf_close(src);
@@ -161,7 +166,12 @@ int main(int argc, char *argv[])
 	signal(SIGXFSZ, SIG_IGN);
 	getrlimit(RLIMIT_FSIZE, &lim);
 	lim.rlim_cur = MAXFSIZE; 
-	setrlimit(RLIMIT_FSIZE, &lim);
+	if (setrlimit(RLIMIT_FSIZE, &lim)) {
+		fprintf(stderr, "limit could not have been set (error:%s)\n"
+		                "Assume success without actual test\n",
+				strerror(errno));
+		return EXIT_SUCCESS;
+	}
 
 	unlink(genfilename);
 
