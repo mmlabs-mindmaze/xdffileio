@@ -35,6 +35,7 @@
 
 static off_t offskip[] = {168, 184, 236, 244};
 static int nskip = sizeof(offskip)/(2*sizeof(offskip[0]));
+static int recns;
 
 int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned int fsize)
 {
@@ -44,7 +45,6 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 	unsigned int ich = 0, samplesize;
 	size_t stride[1];
 	int nch, retcode = -1;
-	int recns;
 	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
 	int offset;
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 	retcode = trycopy_xdffile(genfilename, reffilename, MAXFSIZE);
 	if (!retcode) {
 		if (!cmp_files(genfilename, reffilename, nskip, offskip, &pos) 
-		    || (pos != MAXFSIZE) )
+		    || (pos < MAXFSIZE - recns*3) )
 			retcode = -1;
 	}
 
