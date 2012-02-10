@@ -33,10 +33,6 @@
 #include <errno.h>
 #include <signal.h>
 
-#if !HAVE_DECL_FSYNC
-#include "../lib/fsync.h"
-#endif
-
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"

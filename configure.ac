@@ -29,10 +29,12 @@ AC_CANONICAL_BUILD
 
 
 AC_PROG_CC_C99
+gl_EARLY
 AM_PROG_CC_C_O
 
 LT_INIT([win32-dll disable-static])
 AC_SUBST(LIBTOOL_DEPS)
+gl_INIT
 
 AC_DEF_API_EXPORT_ATTRS
 AC_C_BIGENDIAN
@@ -50,9 +52,7 @@ AC_CHECK_DECLS([O_CLOEXEC, FD_CLOEXEC], [], [], [[#include <fcntl.h>]])
 AC_SEARCH_LIBS([pthread_create], [pthread posix4], 
                [], AC_MSG_ERROR([The pthread library has not been found]))
 AC_CHECK_FUNC(setrlimit, [run_error_test=true], [run_error_test=false])
-AC_CHECK_DECLS([fsync], [], [], [[#include <unistd.h>]])
-AC_CHECK_FUNCS([pthread_sigmask _commit])
-AC_REPLACE_FUNCS([fsync])
+AC_CHECK_FUNCS([pthread_sigmask])
 
 AM_CONDITIONAL(RUN_ERROR_TEST, [test "x$run_error_test" = "xtrue"])
 
