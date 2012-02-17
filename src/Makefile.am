@@ -10,7 +10,7 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  gdf1.c gdf1.h				\
 			  gdf2.c gdf2.h
 
-AM_CPPFLAGS=-I../lib
+AM_CPPFLAGS=-I../lib -I$(top_srcdir)/lib
 libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined \
 			  -version-info $(CURRENT):$(REVISION):$(AGE) 
 libxdffileio_la_LIBADD = ../lib/libgnu.la

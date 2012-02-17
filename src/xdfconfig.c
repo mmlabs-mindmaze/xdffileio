@@ -29,21 +29,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <binary-io.h>
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
 #include "xdfevent.h"
-
-/* To support those $!%@!!! systems that are not POSIX compliant
-and that distinguish between text and binary files */
-#ifndef O_BINARY
-# ifdef _O_BINARY
-#  define O_BINARY _O_BINARY
-# else
-#  define O_BINARY 0
-# endif
-#endif /* O_BINARY */
-
 
 /******************************************************
  *             options table definitions              *

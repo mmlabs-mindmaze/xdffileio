@@ -3,3 +3,4 @@
 /stddef.in.h
 /unistd.in.h
 /Makefile.am
+/binary-io.h
