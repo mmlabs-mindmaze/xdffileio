@@ -36,5 +36,13 @@ LOCAL_FN int read_double_field(FILE* file, double* val, unsigned int len);
 LOCAL_FN int read_int_field(FILE* file, int* val, unsigned int len);
 LOCAL_FN int read_string_field(FILE* file, char* val, unsigned int len);
 
+#if WORDS_BIGENDIAN
+# define LSB24	2
+# define MSB24	0
+#else
+# define LSB24	0
+# define MSB24	2
+#endif
+
 #endif /* STREAMOPS_H */
 

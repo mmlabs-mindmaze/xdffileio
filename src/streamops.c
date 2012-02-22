@@ -25,8 +25,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <byteswap.h>
 
 #include "streamops.h"
+
 
 
 LOCAL_FN
@@ -45,12 +47,29 @@ LOCAL_FN int read16bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint16_t), num, file)==0)
 		return -1;
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	int16_t* buff16 = value;
+	
+	for (i=0; i<num; i++)
+		buff16[i] = bswap_16(buff16[i]);
+#endif
 	return 0;
 }
 
 
 LOCAL_FN int write16bval(FILE* file, unsigned int num, const void* value)
 {
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	const int16_t *ibuff16 = value;
+	int16_t obuff16[num];
+	
+	for (i=0; i<num; i++)
+		obuff16[i] = bswap_16(ibuff16[i]);
+
+	value = obuff16;
+#endif
 	if (fwrite(value, sizeof(uint16_t), num, file)==0)
 		return -1;
 	return 0;
@@ -61,12 +80,36 @@ LOCAL_FN int read24bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, 3, num, file)==0)
 		return -1;
+#if WORDS_BIGENDIAN
+	unsigned int i;
+	int8_t* buff8 = value;
+	char tmp;
+	
+	for (i=0; i<num*3; i+=3) {
+		tmp = buff8[i];
+		buff8[i] = buff8[i+2];
+		buff8[i+2] = tmp;
+	}
+#endif
 	return 0;
 }
 
 
 LOCAL_FN int write24bval(FILE* file, unsigned int num, const void* value)
 {
+#if WORDS_BIGENDIAN
+	unsigned int i;
+	const int8_t *ibuff8 = value;
+	int8_t obuff8[3*num];
+	
+	for (i=0; i<num*3; i+=3) {
+		obuff8[i+2] = ibuff8[i];
+		obuff8[i+1] = ibuff8[i+1];
+		obuff8[i] = ibuff8[i+2];
+	}
+
+	value = obuff8;
+#endif
 	if (fwrite(value, 3, num, file)==0)
 		return -1;
 	return 0;
@@ -77,12 +120,29 @@ LOCAL_FN int read32bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint32_t), num, file)==0)
 		return -1;
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	int32_t* buff32 = value;
+	
+	for (i=0; i<num; i++)
+		buff32[i] = bswap_32(buff32[i]);
+#endif
 	return 0;
 }
 
 
 LOCAL_FN int write32bval(FILE* file, unsigned int num, const void* value)
 {
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	const int32_t *ibuff32 = value;
+	int32_t obuff32[num];
+	
+	for (i=0; i<num; i++)
+		obuff32[i] = bswap_32(ibuff32[i]);
+
+	value = obuff32;
+#endif
 	if (fwrite(value, sizeof(uint32_t), num, file)==0)
 		return -1;
 	return 0;
@@ -93,12 +153,29 @@ LOCAL_FN int read64bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint64_t), num, file)==0)
 		return -1;
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	int64_t* buff64 = value;
+	
+	for (i=0; i<num; i++)
+		buff64[i] = bswap_64(buff64[i]);
+#endif
 	return 0;
 }
 
 
 LOCAL_FN int write64bval(FILE* file, unsigned int num, const void* value)
 {
+#if WORDS_BIGENDIAN
+	unsigned int i; 
+	const int64_t *ibuff64 = value;
+	int64_t obuff64[num];
+	
+	for (i=0; i<num; i++)
+		obuff64[i] = bswap_64(ibuff64[i]);
+
+	value = obuff64;
+#endif
 	if (fwrite(value, sizeof(uint64_t), num, file)==0)
 		return -1;
 	return 0;

@@ -480,6 +480,7 @@ static void setup_convdata(struct xdf* xdf)
 	enum xdftype in_tp, out_tp;
 	const double *in_mm, *out_mm;
 	struct xdfch* ch = xdf->channels;
+	int swaptype = 0;
 
 	for (i=0; i<xdf->numch; i++) {
 		if (xdf->mode == XDF_WRITE) {
@@ -491,6 +492,7 @@ static void setup_convdata(struct xdf* xdf)
 			out_tp = ch->infiletype;
 			out_str = xdf_get_datasize(out_tp);
 			out_mm = ch->digital_mm;
+			swaptype = SWAP_OUT;
 		} else {
 			// In read mode, convertion in 
 			// from file/digital to mem/physical
@@ -500,6 +502,7 @@ static void setup_convdata(struct xdf* xdf)
 			out_tp = ch->inmemtype;
 			out_str = xdf->sample_size;
 			out_mm = ch->physical_mm;
+			swaptype = SWAP_IN;
 		}
 			
 		// If data manipulated in memory is digital => no scaling
@@ -509,7 +512,7 @@ static void setup_convdata(struct xdf* xdf)
 		xdf->convdata[i].skip = (ch->iarray < 0) ? 1 : 0;
 		xdf->convdata[i].filetypesize = xdf_get_datasize(ch->infiletype);
 		xdf->convdata[i].memtypesize = xdf_get_datasize(ch->inmemtype);
-		xdf_setup_transform(&(xdf->convdata[i].prm),
+		xdf_setup_transform(&(xdf->convdata[i].prm), swaptype,
 		                in_str, in_tp, in_mm,
 		                out_str, out_tp, out_mm);
 		ch = ch->next;

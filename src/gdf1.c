@@ -545,9 +545,9 @@ int gdf1_write_event_table(struct gdf1_file* gdf1, FILE* file)
 	if (nevt == 0)
 		return 0;
 
-	fs24[0] = (uint32_t)fs & 0x000000FF;
-	fs24[1] = ((uint32_t)fs & 0x0000FF00) / 256;
-	fs24[2] = ((uint32_t)fs & 0x00FF0000) / 65536;
+	fs24[LSB24] = (uint32_t)fs & 0x000000FF;
+	fs24[    1] = ((uint32_t)fs & 0x0000FF00) / 256;
+	fs24[MSB24] = ((uint32_t)fs & 0x00FF0000) / 65536;
 	
 	onset = malloc(nevt*sizeof(*onset));
 	code = malloc(nevt*sizeof(*code));
@@ -757,7 +757,7 @@ int gdf1_read_event_hdr(struct gdf1_file* gdf1, FILE* file,
 	  || read24bval(file, 1, fs24)
 	  || read32bval(file, 1, nevent))
 		return -1;
-	*fs = fs24[0] + 256*fs24[1] + 65536*fs24[2];
+	*fs = fs24[LSB24] + 256*fs24[1] + 65536*fs24[MSB24];
 
 	return 0;
 }

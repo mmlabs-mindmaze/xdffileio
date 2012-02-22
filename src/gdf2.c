@@ -682,9 +682,9 @@ int gdf2_write_event_table(struct gdf2_file* gdf2, FILE* file)
 	if (nevt == 0)
 		return 0;
 
-	nevt24[0] = nevt & 0x000000FF;
-	nevt24[1] = (nevt & 0x0000FF00) / 256;
-	nevt24[2] = (nevt & 0x00FF0000) / 65536;
+	nevt24[LSB24] = nevt & 0x000000FF;
+	nevt24[    1] = (nevt & 0x0000FF00) / 256;
+	nevt24[MSB24] = (nevt & 0x00FF0000) / 65536;
 	
 	onset = malloc(nevt*sizeof(*onset));
 	code = malloc(nevt*sizeof(*code));
@@ -911,7 +911,7 @@ int gdf2_read_event_hdr(struct gdf2_file* gdf2, FILE* file,
 	  || read24bval(file, 1, nevt24)
 	  || read32bval(file, 1, fs))
 		return -1;
-	*nevent = nevt24[0] + 256*nevt24[1] + 65536*nevt24[2];
+	*nevent = nevt24[LSB24] + 256*nevt24[1] + 65536*nevt24[MSB24];
 
 	return 0;
 }

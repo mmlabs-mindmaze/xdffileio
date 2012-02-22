@@ -25,8 +25,8 @@
 #include <float.h>
 #include <limits.h>
 #include <assert.h>
+#include <byteswap.h>
 #include "xdftypes.h"
-
 
 union ui24 {
 	int32_t i32;
@@ -34,13 +34,20 @@ union ui24 {
 	uint8_t p24[4];
 };
 
-#ifdef WORDS_BIGENDIAN
+#if WORDS_BIGENDIAN
 
 #  define copy_ui24_p8(src, pdst) 	\
 	do { 					\
 		pdst[0] = (src).p24[1];		\
 		pdst[1] = (src).p24[2];		\
 		pdst[2] = (src).p24[3];		\
+	} while (0)
+
+#  define copy_p8_ui24(psrc, dst) 	\
+	do { 					\
+		(dst).p24[1] = psrc[0];		\
+		(dst).p24[2] = psrc[1];		\
+		(dst).p24[3] = psrc[2];		\
 	} while (0)
 
 #else /* WORDS_BIGENDIAN */
@@ -50,6 +57,13 @@ union ui24 {
 		pdst[0] = (src).p24[0];		\
 		pdst[1] = (src).p24[1];		\
 		pdst[2] = (src).p24[2];		\
+	} while (0)
+
+#  define copy_p8_ui24(psrc, dst) 	\
+	do { 					\
+		(dst).p24[0] = psrc[0];		\
+		(dst).p24[1] = psrc[1];		\
+		(dst).p24[2] = psrc[2];		\
 	} while (0)
 
 #endif /* WORDS_BIGENDIAN */
@@ -152,16 +166,18 @@ static void fnname(unsigned int ns, void* restrict d, unsigned int std, const vo
 	}							\
 }
 
-#define DEFINE_CONV_FROM24_FN(fnname, otp, intertp)		\
+#define DEFINE_CONV_FROM24_FN(fnname, otp, ctp)		\
 static void fnname(unsigned int ns, void* restrict d, unsigned int std, const void* restrict s, unsigned int sts)	\
 {								\
-	const intertp* src = s;                                \
-	otp* dst = d;                                      	\
-	while (ns--) {                                          \
-		*dst = ((*src)<<8)>>8;                          \
-		src = (const intertp*)((const char*)src + sts);\
+	otp* dst = d;					\
+	const int8_t* src = s;					\
+	union ui24 tmp;						\
+	while (ns--) {						\
+		copy_p8_ui24(src, tmp);                         \
+		*dst = (tmp.ctp<<8)>>8;                         \
+		src += sts;				 	\
 		dst = (otp*)((char*)dst + std);			\
-	}                                                       \
+	}							\
 }                                                               
                                                                 
 
@@ -224,19 +240,19 @@ DEFINE_CONV_FN(conv_f_f, float, float)
 DEFINE_CONV_FN(conv_d_d, double, double)
 
 DEFINE_CONV_TO24_FN(conv_ui64_ui24, int64_t, i32)
-DEFINE_CONV_FROM24_FN(conv_i24_i64, int64_t, int32_t)
-DEFINE_CONV_FROM24_FN(conv_u24_u64, uint64_t, uint32_t)
+DEFINE_CONV_FROM24_FN(conv_i24_i64, int64_t, i32)
+DEFINE_CONV_FROM24_FN(conv_u24_u64, uint64_t, u32)
 DEFINE_CONV_TO24_FN(conv_ui32_ui24, int32_t, i32)
-DEFINE_CONV_FROM24_FN(conv_i24_i32, int32_t, int32_t)
-DEFINE_CONV_FROM24_FN(conv_u24_u32, uint32_t, uint32_t)
+DEFINE_CONV_FROM24_FN(conv_i24_i32, int32_t, i32)
+DEFINE_CONV_FROM24_FN(conv_u24_u32, uint32_t, u32)
 DEFINE_CONV_TO24_FN(conv_f_i24, float, i32)
 DEFINE_CONV_TO24_FN(conv_f_u24, float, u32)
-DEFINE_CONV_FROM24_FN(conv_i24_f, float, int32_t)
-DEFINE_CONV_FROM24_FN(conv_u24_f, float, uint32_t)
+DEFINE_CONV_FROM24_FN(conv_i24_f, float, i32)
+DEFINE_CONV_FROM24_FN(conv_u24_f, float, u32)
 DEFINE_CONV_TO24_FN(conv_d_i24, double, i32)
 DEFINE_CONV_TO24_FN(conv_d_u24, double, u32)
-DEFINE_CONV_FROM24_FN(conv_i24_d, double, int32_t)
-DEFINE_CONV_FROM24_FN(conv_u24_d, double, uint32_t)
+DEFINE_CONV_FROM24_FN(conv_i24_d, double, i32)
+DEFINE_CONV_FROM24_FN(conv_u24_d, double, u32)
 
 static void conv_ui24_ui24(unsigned int ns, void* restrict d, unsigned int std, const void * restrict s, unsigned int sts)
 {
@@ -302,12 +318,75 @@ static const convproc convtable[XDF_NUM_DATA_TYPES][XDF_NUM_DATA_TYPES] = {
 };
 
 
+#if WORDS_BIGENDIAN
+static
+void swap_array16(unsigned int ns, void* restrict buff, unsigned int stride)
+{
+	int16_t* buff16 = buff;
+	stride /= sizeof(*buff16);
+	
+	while (ns--) {
+		*buff16 = bswap_16(*buff16);
+		buff16 += stride;
+	}
+}
+
+static
+void swap_array24(unsigned int ns, void* restrict buff, unsigned int stride)
+{
+	char* buff24 = buff;
+	char tmp;
+	
+	while (ns--) {
+		tmp = buff24[0];
+		buff24[0] = buff24[2];
+		buff24[2] = tmp;
+		buff24 += stride;
+	}
+}
+
+static
+void swap_array32(unsigned int ns, void* restrict buff, unsigned int stride)
+{
+	int32_t* buff32 = buff;
+	stride /= sizeof(*buff32);
+	
+	while (ns--) {
+		*buff32 = bswap_32(*buff32);
+		buff32 += stride;
+	}
+}
+
+static
+void swap_array64(unsigned int ns, void* restrict buff, unsigned int stride)
+{
+	int64_t* buff64 = buff;
+	stride /= sizeof(*buff64);
+	
+	while (ns--) {
+		*buff64 = bswap_64(*buff64);
+		buff64 += stride;
+	}
+}
+
+static const swapproc swaptable[8] = {
+	[1] = swap_array16, [2] = swap_array24,
+	[3] = swap_array32, [7] = swap_array64
+};
+#endif
+
+
 /* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data useable by user */
 LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
 {
 	void* in = src;
 	void* out = dst;
 
+#if WORDS_BIGENDIAN
+	if (prm->swapinfn)
+		prm->swapinfn(ns, in, prm->stride1);
+#endif
+	
 	if (prm->cvfn1) {
 		if (prm->cvfn3)
 			out = tmpbuff;
@@ -322,11 +401,17 @@ LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* rest
 		out = dst;
 		prm->cvfn3(ns, out, prm->stride3, in, prm->stride2);
 	}
+
+#if WORDS_BIGENDIAN
+	if (prm->swapoutfn)
+		prm->swapoutfn(ns, out, prm->stride3);
+#endif
 }
 
-LOCAL_FN int xdf_setup_transform(struct convprm* prm, 
-		    unsigned int in_str, enum xdftype in_tp, const double* in_mm, 
-		    unsigned int out_str, enum xdftype out_tp, const double* out_mm)
+LOCAL_FN
+int xdf_setup_transform(struct convprm* prm, int swaptype, 
+	    unsigned int in_str, enum xdftype in_tp, const double* in_mm, 
+	    unsigned int out_str, enum xdftype out_tp, const double* out_mm)
 {
 	int scaling = 1;
 	enum xdftype ti;
@@ -375,6 +460,16 @@ LOCAL_FN int xdf_setup_transform(struct convprm* prm,
 		}
 		assert(prm->scfn2 != NULL);
 	}
+
+	// setup swap functions
+#if WORDS_BIGENDIAN
+	if (swaptype == SWAP_IN)
+		prm->swapinfn = swaptable[data_info[in_tp].size-1];
+	if (swaptype == SWAP_OUT)
+		prm->swapoutfn = swaptable[data_info[out_tp].size-1];
+#else
+	(void)swaptype;
+#endif
 
 	return 0;
 }
