@@ -47,7 +47,6 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 	int nch, retcode = -1;
 	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
-	int offset;
 
 	src = xdf_open(reffilename, XDF_READ, XDF_ANY);
 	if (!src) {
@@ -67,7 +66,6 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 
 	// Copy header and configuration
 	xdf_copy_conf(dst, src);
-	offset = 0;
 	while ((srcch = xdf_get_channel(src, ich))) {
 		dstch = xdf_add_channel(dst, NULL);
 		if (xdf_copy_chconf(dstch, srcch)) {

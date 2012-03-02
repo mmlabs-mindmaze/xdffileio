@@ -366,14 +366,14 @@ static void link_batches(struct xdf* xdf, unsigned int nb)
 static int compute_batches(struct xdf* xdf, int assign)
 {
 	struct data_batch curr, *currb;
-	unsigned int nbatch = 1, iarr, moff, foff, dlen;
+	unsigned int nbatch = 1, iarr, foff, dlen;
 	const struct xdfch* ch;
 
 	currb = assign ? xdf->batch : &curr;
 	reset_batch(currb, 0, 0);
 
 	for (iarr=0; iarr < xdf->narrays; iarr++) {
-		moff = foff = 0;
+		foff = 0;
 		
 		// Scan channels in order to find different batches
 		for (ch=xdf->channels; ch; ch=ch->next) {

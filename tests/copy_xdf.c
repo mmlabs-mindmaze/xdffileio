@@ -34,7 +34,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
 	size_t nstot, stride[1];
-	int i, offset, nevent, nevtcode, evtcode;
+	int i, nevent, nevtcode, evtcode;
 	double onset, duration;
 	const char* desc;
 
@@ -56,7 +56,6 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 
 	// Copy header and configuration
 	xdf_copy_conf(dst, src);
-	offset = 0;
 	while ((srcch = xdf_get_channel(src, ich))) {
 		xdf_set_chconf(srcch, XDF_CF_ARRINDEX, 0, XDF_NOF);
 		dstch = xdf_add_channel(dst, NULL);
