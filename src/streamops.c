@@ -188,7 +188,7 @@ LOCAL_FN int read_int_field(FILE* file, int* val, unsigned int nch)
 {
 	char format[8];
 	long pos = ftell(file);
-	sprintf(format, "%%%ui", nch);
+	snprintf(format, sizeof(format), "%%%ui", nch);
 	
 	if ((fscanf(file, format, val) <= 0)
 	    || fseek(file, pos+nch, SEEK_SET)) 

@@ -381,7 +381,7 @@ static int gdf1_write_file_header(struct gdf1_file* gdf1, FILE* file)
 	strftime(timestring, sizeof(timestring),"%Y%m%d%H%M%S00", &ltm);
 
 	// Write data format identifier
-	sprintf(key, "GDF 1.%02u", gdf1->version);
+	snprintf(key, sizeof(key), "GDF 1.%02u", gdf1->version);
 	if (fwrite(key, 8, 1, file) < 1)
 		return -1;
 
@@ -775,7 +775,8 @@ int gdf1_interpret_events(struct gdf1_file* gdf1, uint32_t nevent,
 
 	for (i=0; i<nevent; i++) {
 		if (channel[i])
-			sprintf(desc, "ch:%u", (unsigned int)(channel[i]));
+			snprintf(desc, sizeof(desc),
+			         "ch:%u", (unsigned int)(channel[i]));
 		else
 			strcpy(desc, "ch:all");
 		evttype = add_event_entry(gdf1->xdf.table, code[i], desc);

@@ -488,7 +488,7 @@ static int gdf2_write_file_header(struct gdf2_file* gdf2, FILE* file)
 	nch = gdf2->xdf.numch;
 
 	// Write data format identifier
-	sprintf(key, "GDF 2.%02u", gdf2->version);
+	snprintf(key, sizeof(key), "GDF 2.%02u", gdf2->version);
 	if (fwrite(key, 8, 1, file) < 1)
 		return -1;
 
@@ -929,7 +929,8 @@ int gdf2_interpret_events(struct gdf2_file* gdf2, uint32_t nevent,
 
 	for (i=0; i<nevent; i++) {
 		if (channel[i])
-			sprintf(desc, "ch:%u", (unsigned int)(channel[i]));
+			snprintf(desc, sizeof(desc),
+			         "ch:%u", (unsigned int)(channel[i]));
 		else
 			strcpy(desc, "ch:all");
 		evttype = add_event_entry(gdf2->xdf.table, code[i], desc);
