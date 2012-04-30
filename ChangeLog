@@ -1,3 +1,131 @@
+2012-04-30 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* autogen.sh, m4/gnulib-cache.m4: Use autogen.sh to import the
+	gnulib package
+
+	* commit 768975e9196daf8d8b75b2a2ed8634b26bb1c6d4
+
+2012-03-02 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* src/xdffile.c, tests/copy_xdf.c, tests/errorcheck.c: Fix
+	unused variables
+
+	* commit f865b592445467799a350afbe39e6a66995af797
+
+2012-03-02 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* src/gdf1.c, src/gdf2.c, src/streamops.c: Turn unsafe sprintf
+	into snprintf
+
+	* commit 95c51ed64a4aec2ac2831f1f079a82b459fb1720
+
+2012-02-22 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* m4/gnulib-cache.m4: Add byteswap to gnulib imports
+
+	* commit 4b28d1394f54b55f8c7f904f54e486f26c488c9a
+
+2012-02-22 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* lib/.gitignore, m4/.gitignore: Remove the gnulib related
+	.gitignore from versioning
+
+	* commit 676fdf16d667d599580f0fa21b4c678ba71cdac5
+
+2012-02-22 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* configure.ac, src/gdf1.c, src/gdf2.c, src/streamops.c,
+	src/streamops.h, src/xdffile.c, src/xdffile.h, src/xdftypes.c,
+	src/xdftypes.h: Add support for big endian architecture
+
+	The support is done through "static" swap functions: since the
+	currently supported file formats assume all little endian data,
+	all read/write from/to disk are swapped on big endian arch.
+
+	* commit cc6890ed0d497ab0d3ff935d9793d15da7991fb6
+
+2012-02-17 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* lib/.gitignore, m4/gnulib-cache.m4, src/Makefile.am,
+	src/xdfconfig.c: use gnulib for defining O_BINARY
+
+	* commit 69997cab60facca408e610eafd4e35796778d2de
+
+2012-02-17 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* autogen.sh: Add autogen.sh to quickly run gnulib-tool and
+	autoreconf
+
+	* commit fd6d7738454cdd9fcf90e3c973ebd2491209d719
+
+2012-02-10 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* m4/.gitignore, m4/gnulib-cache.m4: Set hidden visibility to
+	replacement function
+
+	* commit ed0755988aa3ffad5cb01ea8bad9bea3b68e8837
+
+2012-02-10 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* Makefile.am, build-aux/.gitignore, configure.ac, lib/.gitignore,
+	lib/Makefile.am, lib/fsync.c, lib/fsync.h, m4/.gitignore,
+	m4/gnulib-cache.m4, src/Makefile.am, src/xdffile.c: Use gnulib
+	for fsync replacement
+
+	* commit fcb2c4f0f4cae1e73ea43598c033994fb6adae3b
+
+2012-02-10 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* Makefile.am, debian/changelog, debian/compat, debian/control,
+	debian/copyright, debian/libxdffileio0-dev.install,
+	debian/libxdffileio0.install, debian/rules, debian/symbols:
+	Remove Debian packaging
+
+	* commit d9f333fb2c9fe57ccd02a51e060b68b89cde6022
+
+2012-02-05 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* tests/errorcheck.c: workaround freebsd bug in errorcheck.c
+
+	Bug report: http://www.freebsd.org/cgi/query-pr.cgi?pr=164793
+
+	* commit 8faab05b4b9c5712238c1b06d987d922f0f2eb3b
+
+2012-02-03 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* tests/errorcheck.c: Pass errorcheck if setrlimit is broken
+
+	* commit 42500dce4638db72cb519e05aad8acd9089ea861
+
+2012-01-14 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* tests/errorcheck.c: bugfix: errorcheck test fails on FreeBSD
+
+	This commit make sure that SIGXFSZ signal is ignored in errorcheck
+	test so that the process is not terminated but read fails
+
+	* commit f3ec4fd9a251cb2c16460073bb0a82d45f0a0c13
+
+2011-12-01 Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+
+	* doc/xdf_add_event.3, doc/xdf_add_evttype.3,
+	doc/xdf_close.3, doc/xdf_closest_type.3, doc/xdf_copy_chconf.3,
+	doc/xdf_copy_conf.3, doc/xdf_define_arrays.3, doc/xdf_get_event.3,
+	doc/xdf_get_evttype.3, doc/xdf_prepare_transfer.3, doc/xdf_read.3,
+	doc/xdf_seek.3, doc/xdf_set_chconf.3, doc/xdf_set_conf.3,
+	doc/xdf_write.3: Fix glitches in manpages
+
+	Correct the different hyphens used as minus characters and fix
+	spelling mistakes
+
+	* commit bafd448c9b8b7f8ca91777cbf4783abfbb127ebe
+
+2011-09-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
+
+	* ChangeLog, NEWS, configure.ac, debian/changelog: release 0.2
+
+	* commit 1302c196171940fddc974c9c49666f37874393c5
+
 2011-09-18 Nicolas Bourdaud <nicolas.bourdaud@epfl.ch>
 
 	* m4/floatround.m4: Make floatround.m4 compatible with new

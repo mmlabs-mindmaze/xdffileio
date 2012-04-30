@@ -1,3 +1,11 @@
+xdffileio-0.3
+===============
+
+ * Use gnulib to provide replacement
+ * Add support for big endian platform
+ * Various fix to build on freebsd
+ * Remove Debian packaging
+
 xdffileio-0.2
 ===============
 
