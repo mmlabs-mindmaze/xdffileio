@@ -1,5 +1,8 @@
 /*
     Copyright (C) 2010-2011  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2013  Nicolas Bourdaud
+
+    Authors:
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 
@@ -669,7 +672,7 @@ API_EXPORTED int xdf_close(struct xdf* xdf)
 			retval = -1;
 	}
 
-	if ((xdf->fd >= 0) && close(xdf->fd))
+	if ((xdf->fd >= 0) && xdf->closefd_ondestroy && close(xdf->fd))
 		retval = -1;
 
 	// Free channels and file

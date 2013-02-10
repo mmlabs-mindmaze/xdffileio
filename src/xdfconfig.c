@@ -177,6 +177,7 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 	xdf->convdata = NULL;
 	xdf->batch = NULL;
 	xdf->array_stride = NULL;
+	xdf->closefd_ondestroy = 0;
 
 	// Set default values for the default channel 
 	ch->inmemtype = ch->infiletype;
@@ -351,6 +352,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 
 	if (!xdf)
 		close(fd);
+	xdf->closefd_ondestroy = 1;
 	return xdf;
 }
 

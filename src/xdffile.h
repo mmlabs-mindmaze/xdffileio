@@ -1,5 +1,8 @@
 /*
     Copyright (C) 2010-2011  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2013  Nicolas Bourdaud
+
+    Authors:
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 
@@ -103,6 +106,8 @@ struct xdf {
 	pthread_mutex_t mtx;
 	pthread_cond_t cond;
 	int order;
+
+	int closefd_ondestroy;
 };
 
 LOCAL_FN enum xdffiletype xdf_guess_filetype(const unsigned char* magickey);
