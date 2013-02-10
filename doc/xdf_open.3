@@ -1,7 +1,8 @@
 .\"Copyright 2010 (c) EPFL
-.TH XDF_OPEN 3 2010 "EPFL" "xdffileio library manual"
+.\"Copyright 2013 (c) Nicolas Bourdaud
+.TH XDF_OPEN 3 2013-02-10 "xdffileio" "xdffileio library manual"
 .SH NAME
-xdf_open - Open a xDF file for reading or writing
+xdf_open, xdf_fdopen - Open a xDF file for reading or writing
 .SH SYNOPSIS
 .LP
 .B #include <xdfio.h>
@@ -10,28 +11,41 @@ xdf_open - Open a xDF file for reading or writing
 .br
 .BI "                     enum xdffiletype " type ");"
 .br
+.BI "struct xdf* xdf_fdopen(int " fd ", int " mode ", enum xdffiletype " type ");"
+.br
 .SH DESCRIPTION
 .LP
-\fBxdf_open\fP() opens a xDF the file refered by the path \fIfilename\fP for reading or writing.
+\fBxdf_open\fP() opens a xDF the file referred by the path \fIfilename\fP for reading or writing.
 .LP
 If \fImode\fP is \fBXDF_READ\fP, the file is opened for reading. Thus it
 must exist and \fItype\fP should be either \fBXDF_ANY\fP or set to the type
-of the file refered by \fItype\fP. Otherwise, the function will fail.
+of the file referred by \fItype\fP. Otherwise, the function will fail.
 .LP
 If \fImode\fP is \fBXDF_WRITE\fP, the file is opened for writing. Thus the
-path \fIfilename\fP must not refered to an existing file: the function will
+path \fIfilename\fP must not referred to an existing file: the function will
 fail if the file exist. This behavior prevents to overwrite any previous
 recording. \fItype\fP should be also be set to the desired type of data
 format (\fBXDF_ANY\fP will result in a error).
 .LP
 The possible file type values are defined in the header file \fI<xdfio.h>\fP
+.LP
+\fBxdf_fdopen\fP() is similar to \fBxdf_open\fP() excepting it takes as
+first argument a file descriptor \fIfd\fP instead of a filename. The file
+descriptor must have been opened with flags compatible with the \fImode\fP
+argument or the function will fail.
+.LP
+By default, the file descriptor \fIfd\fP is not closed when
+\fBxdf_close\fP(3) is called on the returned xDF structure. However, if
+\fImode\fP is a bitwise-inclusive OR combination of the possible opening
+mode with the \fBXDF_CLOSEFD\fP flag then the file descriptor \fIfd\fP will
+be closed when \fBxdf_close\fP(3) is called.
 .SH "RETURN VALUE"
 .LP
 The function returns an handle to xDF file opened in case of success.
 Otherwise, NULL is returned and \fIerrno\fP is set appropriately.
 .SH ERRORS
 In addition to the errors related to calls to \fBopen\fP(3) or
-\fBread\fP(3), the following errors can occur:
+\fBread\fP(3), the following errors can occur when calling \fBxdf_open\fP():
 .TP 7
 .B EILSEQ
 The file that is being opened does not correspond to a supported file format
@@ -43,6 +57,14 @@ The system is unable to allocate resources.
 .B EINVAL
 \fImode\fP is neither \fBXDF_READ\fP nor \fBXDF_WRITE\fP, or \fIfilename\fP
 is NULL.
+.LP
+When calling \fBxdf_fdopen\fP(), all the possible error of \fBxdf_open\fP()
+can occur as well as:
+.TP 7
+.B EBADF
+The \fIfd\fP argument is not a valid file descriptor or has been opened with
+flags incompatible with the \fImode\fP argument (\fBO_WRONLY\fP for
+\fBXDF_READ\fP or \fBO_RDONLY\fP for \fBXDF_WRITE\fP).
 .SH "SEE ALSO"
 .BR xdf_close (3)
 
