@@ -20,7 +20,8 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config/config.h])
 
 # Setup automake
-AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-bzip2 color-tests])
+AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-xz
+                  color-tests parallel-tests])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 
