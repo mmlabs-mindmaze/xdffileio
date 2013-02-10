@@ -335,7 +335,10 @@ API_EXPORTED
 struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 {
 	struct xdf* xdf = NULL;
-	int oflags, invalmode;
+	int oflags, invalmode, closefd;
+
+	closefd = mode & XDF_CLOSEFD;
+	mode &= ~XDF_CLOSEFD;
 
 	// Argument validation
 	if (((mode != XDF_WRITE) && (mode != XDF_READ))) {
@@ -357,6 +360,7 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 	else
 		xdf = create_write_xdf(type, fd);
 
+	xdf->closefd_ondestroy = closefd;
 	return xdf;
 }
 
