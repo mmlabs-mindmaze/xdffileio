@@ -1,5 +1,8 @@
 /*
     Copyright (C) 2010  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2013  Nicolas Bourdaud
+
+    Authors:
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 
@@ -21,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "copy_xdf.h"
 
 #define NSAMPLE	23
@@ -34,19 +39,21 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 	void* buffer = NULL;
 	ssize_t nssrc, nsdst;
 	size_t nstot, stride[1];
-	int i, nevent, nevtcode, evtcode;
+	int i, nevent, nevtcode, evtcode, fdref, fdgen;
 	double onset, duration;
 	const char* desc;
 
-	src = xdf_open(reffilename, XDF_READ, fformat);
+	fdref = open(reffilename, O_RDONLY);
+	src = xdf_fdopen(fdref, XDF_READ | XDF_CLOSEFD, fformat);
 	if (!src) {
 		fprintf(stderr, 
 		       "\tFailed opening reference file: (%i) %s\n",
 		       errno, strerror(errno));
 		goto exit;
 	}
-		
-	dst = xdf_open(genfilename, XDF_WRITE, fformat);
+
+	fdgen = open(genfilename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	dst = xdf_fdopen(fdgen, XDF_WRITE | XDF_CLOSEFD, fformat);
 	if (!dst) {
 		fprintf(stderr,
 		       "\tFailed opening file for writing: (%i) %s\n",
