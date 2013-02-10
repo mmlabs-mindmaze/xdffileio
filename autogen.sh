@@ -1,6 +1,6 @@
 #!/bin/sh -e
 
-glmodules="binary-io byteswap fsync lib-symbol-visibility"
+glmodules="binary-io byteswap fsync lib-symbol-visibility fcntl-h fcntl"
 gloptions="--local-dir=gnulib-local --lgpl --libtool"
 
 # Get absolute path of current and package path
