@@ -42,9 +42,6 @@ AC_C_BIGENDIAN
 # Test IEEE floating point calculation behavior 
 AC_CHECK_IEEE_FLOAT_ROUND
 
-# Test for the correct way to set CLOEXEC to file descriptors
-AC_CHECK_DECLS([O_CLOEXEC, FD_CLOEXEC], [], [], [[#include <fcntl.h>]])
-
 # Test missing functions
 AC_SEARCH_LIBS([pthread_create], [pthread posix4], 
                [], AC_MSG_ERROR([The pthread library has not been found]))

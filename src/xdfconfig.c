@@ -190,40 +190,6 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 }
 
 
-/* \param filename	path to the file
- * \param flags		access mode and creation flags
- * \param mode		permission used for created file
- *
- * Open the file using the system function open and set if
- * possible the file descriptor with CLOEXEC flag. mode is
- * ignored if flags does not contain O_CREAT flag.
- *
- * Return the file descriptor in case of success, -1 otherwise
- */
-static
-int open_cloexec(const char* filename, int flags, mode_t mode)
-{
-	int fd;
-#if HAVE_DECL_O_CLOEXEC
-	flags |= O_CLOEXEC;
-#endif
-
-	if (flags & O_CREAT)
-		fd = open(filename, flags, mode);
-	else
-		fd = open(filename, flags);
-
-#if !HAVE_DECL_O_CLOEXEC & HAVE_DECL_FD_CLOEXEC
-	if (fd >= 0) {
-		int fd_flags = fcntl(fd, F_GETFD);
-		fcntl(fd, F_SETFD, fd_flags | FD_CLOEXEC);
-	}
-#endif
-
-	return fd;
-}
-
-
 /* \param xdf	pointer to an structure xdf initialized for reading
  * \param fd	file descriptor of the opened file for reading
  *
@@ -339,8 +305,8 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 
 	// Create the file
 	oflag = (mode == XDF_READ) ? O_RDONLY : (O_WRONLY|O_CREAT|O_EXCL);
-	oflag |= O_BINARY;
-	fd = open_cloexec(filename, oflag, perm);
+	oflag |= O_BINARY | O_CLOEXEC;
+	fd = open(filename, oflag, perm);
 	if (fd == -1)
 		return NULL;
 
