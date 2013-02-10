@@ -1,5 +1,8 @@
 /*
     Copyright (C) 2010-2011  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2013  Nicolas Bourdaud
+
+    Authors:
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 
@@ -119,6 +122,7 @@ struct xdfch;
 
 struct xdf* xdf_open(const char* filename, int mode,
    		enum xdffiletype type);
+struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type);
 int xdf_close(struct xdf* xdf);
 
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...);

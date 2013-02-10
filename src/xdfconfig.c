@@ -357,6 +357,44 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 }
 
 
+/* \param fd		file descriptor of the storage
+ * \param mode		read or write
+ * \param type		expected/requested type
+ *
+ * API FUNCTION
+ * Create a xdf structure of a xDF file for writing or reading depending on
+ * the mode. See the manpage for details
+ */
+API_EXPORTED
+struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
+{
+	struct xdf* xdf = NULL;
+	int oflags, invalmode;
+
+	// Argument validation
+	if (((mode != XDF_WRITE) && (mode != XDF_READ))) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// validation of the file descriptor
+	oflags = fcntl(fd, F_GETFL);
+	invalmode = (mode == XDF_READ) ? O_WRONLY : O_RDONLY;
+	if (oflags == -1 || (oflags & O_ACCMODE) == invalmode) {
+		errno = EBADF;
+		return NULL;
+	}
+
+	// Structure creation
+	if (mode == XDF_READ)
+		xdf = create_read_xdf(type, fd);
+	else
+		xdf = create_write_xdf(type, fd);
+
+	return xdf;
+}
+
+
 /******************************************************
  *         Channel configuration functions            *
  ******************************************************/
