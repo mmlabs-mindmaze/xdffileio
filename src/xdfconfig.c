@@ -1,5 +1,8 @@
 /*
     Copyright (C) 2010-2011  EPFL (Ecole Polytechnique Fédérale de Lausanne)
+    Copyright (C) 2013  Nicolas Bourdaud
+
+    Authors:
     Laboratory CNBI (Chair in Non-Invasive Brain-Machine Interface)
     Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
 
@@ -252,39 +255,33 @@ static int setup_read_xdf(struct xdf* xdf, int fd)
 
 
 /* \param type		expected type for the file to be opened
- * \param filename	path of the file to be read
+ * \param fd		File descriptor of the storage
  *
- * Create a xdf structure of a xDF file for reading. if type is not XDF_ANY and
- * file is not of the same type, the function will fail.
+ * Create a xdf structure of a xDF file for reading. if type is not XDF_ANY
+ * and file is not of the same type, the function will fail.
  */
-static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
+static
+struct xdf* create_read_xdf(enum xdffiletype type, int fd)
 {
 	unsigned char magickey[8];
 	enum xdffiletype gtype;
 	struct xdf* xdf = NULL;
-	int fd, errnum = 0;
-
-	// Open the file
-	if ((fd = open_cloexec(filename, O_RDONLY|O_BINARY, 0)) == -1) 
-		return NULL;
+	int errnum = 0;
 
 	// Guess file type
 	if ( (read(fd, magickey, sizeof(magickey)) == -1)
-	    || (lseek(fd, 0, SEEK_SET) == -1) ) {
-	    	errnum = errno;
-		goto error;
-	}
+	    || (lseek(fd, 0, SEEK_SET) == -1) )
+		return NULL;
+
 	gtype = xdf_guess_filetype(magickey);
 	if ((gtype == XDF_ANY) || ((type != XDF_ANY)&&(type != gtype))) {
 		errnum = EILSEQ;
-		goto error;
+		return NULL;
 	}
 	
 	// Allocate structure
-	if (!(xdf = xdf_alloc_file(gtype))) {
-		errnum = errno;
-		goto error;
-	}
+	if (!(xdf = xdf_alloc_file(gtype)))
+		return NULL;
 	
 	// Initialize by reading the file
 	if (setup_read_xdf(xdf, fd) == 0)
@@ -295,40 +292,23 @@ static struct xdf* create_read_xdf(enum xdffiletype type, const char* filename)
 	xdf_close(xdf);
 	errno = errnum;
 	return NULL;
-
-error:
-	close(fd);
-	errno = errnum;
-	return NULL;
 }
 
 
 /* \param type		requested type for the file to be created
- * \param filename	path of the file to be written
+ * \param fd		File descriptor of the storage
  *
  * Create a xdf structure of a xDF file for writing. If type is XDF_ANY,
  * the function will fail
  */
 static
-struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
+struct xdf* create_write_xdf(enum xdffiletype type, int fd)
 {
 	struct xdf* xdf = NULL;
-	int fd = -1, errnum;
-	/* group and other permissions removed to make windows compatible */
-	mode_t mode = S_IRUSR|S_IWUSR/*|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH*/;
-
-	// Create the file
-	fd = open_cloexec(filename, O_BINARY|O_WRONLY|O_CREAT|O_EXCL,mode);
-	if (fd == -1)
-		return NULL;
 
 	xdf = xdf_alloc_file(type);
-	if (xdf == NULL) {
-		errnum = errno;
-		close(fd);
-		errno = errnum;
+	if (xdf == NULL)
 		return NULL;
-	}
 
 	init_xdf_struct(xdf, fd, XDF_WRITE);
 	return xdf;
@@ -343,9 +323,12 @@ struct xdf* create_write_xdf(enum xdffiletype type, const char* filename)
  * Create a xdf structure of a xDF file for writing or reading depending on
  * the mode. See the manpage for details
  */
-API_EXPORTED struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
+API_EXPORTED
+struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
+	int fd, oflag;
 	struct xdf* xdf = NULL;
+	mode_t perm = S_IRUSR|S_IWUSR;
 
 	// Argument validation
 	if (((mode != XDF_WRITE)&&(mode != XDF_READ)) || !filename) {
@@ -353,12 +336,21 @@ API_EXPORTED struct xdf* xdf_open(const char* filename, int mode, enum xdffilety
 		return NULL;
 	}
 
+	// Create the file
+	oflag = (mode == XDF_READ) ? O_RDONLY : (O_WRONLY|O_CREAT|O_EXCL);
+	oflag |= O_BINARY;
+	fd = open_cloexec(filename, oflag, perm);
+	if (fd == -1)
+		return NULL;
+
 	// Structure creation 
 	if (mode == XDF_READ)
-		xdf = create_read_xdf(type, filename);
+		xdf = create_read_xdf(type, fd);
 	else
-		xdf = create_write_xdf(type, filename);
+		xdf = create_write_xdf(type, fd);
 
+	if (!xdf)
+		close(fd);
 	return xdf;
 }
 
