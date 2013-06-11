@@ -36,7 +36,7 @@ static int keepch(int i, int nchskip)
 
 static int setup_files(const char* filename, int nchskip, int* nchr, int* ncht)
 {
-	int i, offset, arr;
+	int i, offset, arr, nrecr, nrect;
 	size_t st[1];
 	int arrtp = XDFDOUBLE;
 	struct xdfch* ch;
@@ -46,6 +46,11 @@ static int setup_files(const char* filename, int nchskip, int* nchr, int* ncht)
 		goto error;
 	xdft = xdf_open(filename, XDF_READ, XDF_ANY);
 	if (!xdft)
+		goto error;
+
+	if ( xdf_get_conf(xdfr, XDF_F_NREC, &nrecr, XDF_NOF)
+	  || xdf_get_conf(xdft, XDF_F_NREC, &nrect, XDF_NOF)
+	  || nrect != nrecr )
 		goto error;
 
 	// Setup reference file

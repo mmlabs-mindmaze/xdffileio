@@ -72,6 +72,7 @@ enum xdffield
 	XDF_F_FILEFMT,			/* int		*/
 	XDF_F_NEVTTYPE,			/* int         */
 	XDF_F_NEVENT,			/* int         */
+	XDF_F_NREC,			/* int         */
 
 	/* Format specific file fields */
 	XDF_F_SUBJ_DESC = 5000,		/* const char* */

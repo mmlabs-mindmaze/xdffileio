@@ -56,6 +56,7 @@ static const struct opt_detail field_table[] = {
 	{XDF_F_FILEFMT, TYPE_INT},
 	{XDF_F_NEVTTYPE, TYPE_INT},
 	{XDF_F_NEVENT, TYPE_INT},
+	{XDF_F_NREC, TYPE_INT},
 	{XDF_F_SUBJ_DESC, TYPE_STRING},
 	{XDF_F_SESS_DESC, TYPE_STRING},
 	{XDF_F_RECTIME, TYPE_DOUBLE},
@@ -840,6 +841,8 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
 		val->i = (xdf->table != NULL) ? xdf->table->nentry : 0;
 	else if (field == XDF_F_NEVENT)
 		val->i = (xdf->table != NULL) ? xdf->table->nevent : 0;
+	else if (field == XDF_F_NREC)
+		val->i = xdf->nrecord;
 	else
 		retval = 1;
 
