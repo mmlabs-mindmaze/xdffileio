@@ -28,6 +28,7 @@
 #include "filecmp.h"
 #include "copy_xdf.h"
 #include "validation.h"
+#include "checkseek.h"
 
 #define RAMP_NS		50
 #define SAMPLINGRATE	128
@@ -300,6 +301,9 @@ int main(int argc, char *argv[])
 	if (!retcode)
 		retcode = test_validation_param(XDF_GDF1, numtype, 
 						supported_type);
+
+	if (!retcode)
+		retcode = test_seek(XDF_GDF1);
 
 	if (!keep_file)
 		unlink(genfilename);

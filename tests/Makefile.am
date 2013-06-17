@@ -14,19 +14,19 @@ endif
 
 
 testbdf_SOURCES = testbdf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
-		  validation.c validation.h
+		  validation.c validation.h checkseek.h checkseek.c
 testbdf_LDADD = $(top_builddir)/src/libxdffileio.la
 
 testedf_SOURCES = testedf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
-		  validation.c validation.h
+		  validation.c validation.h checkseek.h checkseek.c
 testedf_LDADD = $(top_builddir)/src/libxdffileio.la
 
 testgdf1_SOURCES = testgdf1.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
-		  validation.c validation.h
+		  validation.c validation.h checkseek.h checkseek.c
 testgdf1_LDADD = $(top_builddir)/src/libxdffileio.la
 
 testgdf2_SOURCES = testgdf2.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
-		  validation.c validation.h
+		  validation.c validation.h checkseek.h checkseek.c
 testgdf2_LDADD = $(top_builddir)/src/libxdffileio.la
 
 errorcheck_SOURCES = errorcheck.c filecmp.c filecmp.h
