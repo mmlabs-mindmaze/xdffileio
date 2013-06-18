@@ -915,10 +915,15 @@ API_EXPORTED off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 			while (xdf->order && !xdf->reportval)
 				pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
 			
+			// Ignore pending end of file report
+			if (xdf->reportval == 1)
+				xdf->reportval = 0;
+
 			fileoff = irec*xdf->filerec_size + xdf->hdr_offset;
 			if ( (lseek(xdf->fd, fileoff, SEEK_SET) < 0)
 			     || (read_diskrec(xdf)) )
 				errnum = errno;
+
  			pthread_mutex_unlock(&(xdf->mtx));
 			
 			if (errnum)
