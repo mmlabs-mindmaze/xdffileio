@@ -361,7 +361,8 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 	else
 		xdf = create_write_xdf(type, fd);
 
-	xdf->closefd_ondestroy = closefd;
+	if (xdf)
+		xdf->closefd_ondestroy = closefd;
 	return xdf;
 }
 
