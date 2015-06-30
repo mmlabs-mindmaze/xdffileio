@@ -833,6 +833,29 @@ API_EXPORTED ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
 }
 
 
+/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE
+ * \param ns	number of samples to be added
+ * \param vbuff array of pointer to the array to write
+ *
+ * API FUNCTION
+ * Add samples coming from one or several input arrays containing the
+ * samples. The number of arrays that must be provided on the call depends
+ * on the specification of the channels.
+ * Returns the number of samples written, -1 in case of error
+ */
+API_EXPORTED ssize_t xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
+{
+	const char* restrict * in = (const char* restrict *)vbuff;
+
+	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_READ)) {
+		errno = (xdf == NULL) ? EINVAL : EPERM;
+		return -1;
+	}
+
+	return writev_buffers(xdf, ns, in);
+}
+
+
 /* \param xdf 	pointer to a valid xdffile with mode XDF_READ 
  * \param ns	number of samples to be read
  * \param other pointer to the arrays holding the output samples

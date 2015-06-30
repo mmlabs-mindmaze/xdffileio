@@ -152,6 +152,7 @@ int xdf_prepare_transfer(struct xdf* xdf);
 
 ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
 ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
+ssize_t xdf_writev(struct xdf* xdf, size_t ns, void** vbuff);
 off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
 
 int xdf_closest_type(const struct xdf* xdf, enum xdftype type);
