@@ -644,6 +644,46 @@ static int complete_file_content(struct xdf* xdf)
 }
 
 
+/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE 
+ * \param ns	number of samples to be added
+ * \param vbuff list of pointers to the arrays holding the input samples
+ *
+ * Add samples coming from one or several input arrays containing the
+ * samples. The number of arrays that must be provided on the call depends
+ * on the specification of the channels.
+ * Returns the number of samples written, -1 in case of error
+ */
+static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
+                              const char* restrict *in)
+{
+	unsigned int i, k, ia, nsrec = xdf->ns_per_rec;
+	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
+	char* restrict buff = xdf->buff + samsize * xdf->ns_buff;
+	struct data_batch* batch = xdf->batch;
+
+	for (i=0; i<ns; i++) {
+		// Write the content of the buffer if full
+		if (xdf->ns_buff == nsrec) {
+			if (disk_transfer(xdf)) 
+				return (i==0) ? -1 : (ssize_t)i;
+			buff = xdf->buff;
+			xdf->ns_buff = 0;
+		}
+
+		// Transfer the sample to the buffer by chunk
+		for (k=0; k<nbatch; k++) {
+			ia = batch[k].iarray;
+			memcpy(buff+batch[k].foff, in[ia], batch[k].len);
+			in[ia] += batch[k].mskip;
+		}
+		buff += samsize;
+		xdf->ns_buff++;
+	}
+
+	return (ssize_t)ns;
+}
+
+
 /***************************************************
  *                   API functions                 *
  ***************************************************/
@@ -779,39 +819,17 @@ API_EXPORTED ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
 		return -1;
 	}
 
-	unsigned int i, k, ia, nsrec = xdf->ns_per_rec;
-	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
-	char* restrict buff = xdf->buff + samsize * xdf->ns_buff;
-	struct data_batch* batch = xdf->batch;
+	unsigned int i;
 	const char* restrict in[xdf->narrays];
 	va_list ap;
 
 	// Initialization of the input buffers
 	va_start(ap, ns);
-	for (ia=0; ia<xdf->narrays; ia++)
-		in[ia] = va_arg(ap, const char*);
+	for (i=0; i<xdf->narrays; i++)
+		in[i] = va_arg(ap, const char*);
 	va_end(ap);
 
-	for (i=0; i<ns; i++) {
-		// Write the content of the buffer if full
-		if (xdf->ns_buff == nsrec) {
-			if (disk_transfer(xdf)) 
-				return (i==0) ? -1 : (ssize_t)i;
-			buff = xdf->buff;
-			xdf->ns_buff = 0;
-		}
-
-		// Transfer the sample to the buffer by chunk
-		for (k=0; k<nbatch; k++) {
-			ia = batch[k].iarray;
-			memcpy(buff+batch[k].foff, in[ia], batch[k].len);
-			in[ia] += batch[k].mskip;
-		}
-		buff += samsize;
-		xdf->ns_buff++;
-	}
-
-	return (ssize_t)ns;
+	return writev_buffers(xdf, ns, in);
 }
 
 
