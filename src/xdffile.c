@@ -928,6 +928,29 @@ API_EXPORTED ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 }
 
 
+/* \param xdf 	pointer to a valid xdffile with mode XDF_READ
+ * \param ns	number of samples to be read
+ * \param vbuff array of pointer to the array to write
+ *
+ * API FUNCTION
+ * Read samples in the buffer and transfer them to one or several output
+ * arrays. The number of arrays that must be provided on the call depends
+ * on the specification of the channels.
+ * Returns the number of samples read, -1 in case of error
+ */
+API_EXPORTED ssize_t xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
+{
+	char* restrict * out = (char* restrict *)vbuff;
+
+	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_WRITE)) {
+		errno = (xdf == NULL) ? EINVAL : EPERM;
+		return -1;
+	}
+
+	return readv_buffers(xdf, ns, out);
+}
+
+
 /* \param xdf 		pointer to a valid xdffile with mode XDF_READ 
  * \param offset	offset where the current sample pointer must move
  * \param whence	reference of the offset
