@@ -684,6 +684,47 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
 }
 
 
+/* \param xdf 	pointer to a valid xdffile with mode XDF_READ 
+ * \param ns	number of samples to be read
+ * \param vbuff list of pointers to the arrays holding the output samples
+ *
+ * Read samples in the buffer and transfer them to one or several output
+ * arrays. The number of arrays that must be provided on the call depends
+ * on the specification of the channels.
+ * Returns the number of samples read, -1 in case of error
+ */
+static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
+{
+	unsigned int i, k, ia;
+	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
+	char* restrict buff = xdf->buff + samsize * (xdf->ns_per_rec-xdf->ns_buff);
+	struct data_batch* batch = xdf->batch;
+	int ret;
+
+	for (i=0; i<ns; i++) {
+		// Trigger a disk read when the content of buffer is empty
+		if (!xdf->ns_buff) {
+			if ((ret = disk_transfer(xdf))) 
+				return ((ret<0)&&(i==0)) ? -1 : (ssize_t)i;
+			buff = xdf->buff;
+			xdf->ns_buff = xdf->ns_per_rec;
+			xdf->nrecread++;
+		}
+
+		// Transfer the sample to the buffer by chunk
+		for (k=0; k < nbatch; k++) {
+			ia = batch[k].iarray;
+			memcpy(out[ia], buff+batch[k].foff, batch[k].len);
+			out[ia] += batch[k].mskip;
+		}
+		buff += samsize;
+		xdf->ns_buff--;
+	}
+
+	return ns;
+}
+
+
 /***************************************************
  *                   API functions                 *
  ***************************************************/
@@ -873,41 +914,17 @@ API_EXPORTED ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
 		return -1;
 	}
 
-	unsigned int i, k, ia;
-	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
-	char* restrict buff = xdf->buff + samsize * (xdf->ns_per_rec-xdf->ns_buff);
-	struct data_batch* batch = xdf->batch;
+	unsigned int i;
 	char* restrict out[xdf->narrays];
 	va_list ap;
-	int ret;
 
 	// Initialization of the output buffers
 	va_start(ap, ns);
-	for (ia=0; ia<xdf->narrays; ia++)
-		out[ia] = va_arg(ap, char*);
+	for (i=0; i<xdf->narrays; i++)
+		out[i] = va_arg(ap, char*);
 	va_end(ap);
 
-	for (i=0; i<ns; i++) {
-		// Trigger a disk read when the content of buffer is empty
-		if (!xdf->ns_buff) {
-			if ((ret = disk_transfer(xdf))) 
-				return ((ret<0)&&(i==0)) ? -1 : (ssize_t)i;
-			buff = xdf->buff;
-			xdf->ns_buff = xdf->ns_per_rec;
-			xdf->nrecread++;
-		}
-
-		// Transfer the sample to the buffer by chunk
-		for (k=0; k < nbatch; k++) {
-			ia = batch[k].iarray;
-			memcpy(out[ia], buff+batch[k].foff, batch[k].len);
-			out[ia] += batch[k].mskip;
-		}
-		buff += samsize;
-		xdf->ns_buff--;
-	}
-
-	return ns;
+	return readv_buffers(xdf, ns, out);
 }
 
 
