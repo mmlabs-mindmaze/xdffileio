@@ -1,0 +1,6 @@
+binary-io
+byteswap
+fsync
+lib-symbol-visibility
+fcntl-h
+fcntl
