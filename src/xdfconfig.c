@@ -347,6 +347,7 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 		return NULL;
 	}
 
+#ifdef F_GETFL
 	// validation of the file descriptor
 	oflags = fcntl(fd, F_GETFL);
 	invalmode = (mode == XDF_READ) ? O_WRONLY : O_RDONLY;
@@ -354,6 +355,7 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 		errno = EBADF;
 		return NULL;
 	}
+#endif
 
 	// Structure creation
 	if (mode == XDF_READ)
