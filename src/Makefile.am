@@ -1,6 +1,10 @@
 lib_LTLIBRARIES = libxdffileio.la
 include_HEADERS = xdfio.h 
 
+defexecdir = $(bindir)
+defexec_DATA =
+DISTCLEANFILES = $(defexec_DATA)
+
 libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  xdftypes.c xdftypes.h 		\
 			  xdfevent.c xdfevent.h 		\
@@ -17,3 +21,8 @@ libxdffileio_la_LIBADD = ../lib/libgnu.la
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdffileio.pc
+
+if HAVE_LD_OUTPUT_DEF
+libxdffileio_la_LDFLAGS += -Wl,--output-def,libxdffileio-0.def
+defexec_DATA += libxdffileio-0.def
+endif

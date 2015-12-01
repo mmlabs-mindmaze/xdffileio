@@ -2,6 +2,7 @@ binary-io
 byteswap
 fsync
 lib-symbol-visibility
+lib-msvc-compat
 fcntl-h
 fcntl
 signal-h
