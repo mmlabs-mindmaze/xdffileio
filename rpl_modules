@@ -5,3 +5,4 @@ lib-symbol-visibility
 fcntl-h
 fcntl
 signal-h
+time_r
