@@ -30,7 +30,7 @@
 #define INT24_MIN	-8388608
 #endif
 #ifndef UINT24_MAX
-#define UINT24_MAX	16777216
+#define UINT24_MAX	16777215
 #endif
 
 #define SWAP_IN		1
