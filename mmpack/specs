@@ -1,0 +1,12 @@
+general:
+    name: xdffileio
+    version: 0.3
+    maintainer: Nicolas Bourdaud <nicolas.bourdaud@gmail.com>
+    url: ssh://intranet.mindmaze.ch:29418/xdffileio
+    description: |
+      This library provides a unified interface to read/write EEG file format
+      in realtime. It has been designed to provide a consistent and common
+      interface to all supported file formats while minimizing the CPU cost
+      on the main loop.
+      It thus performs all the expensive operation (scaling, data convertion
+      and file operation) in a separated thread.
