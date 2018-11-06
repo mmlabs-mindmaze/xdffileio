@@ -12,7 +12,7 @@ m4_define([lib_revision],3)
 m4_define([lib_age],0)
 
 # Setup autoconf
-AC_INIT(xdffileio,[lib_current.lib_revision],[nicolas.burdaud@epfl.ch])
+AC_INIT(xdffileio,[lib_current.lib_revision],[nicolas.bourdaud@gmail.com])
 AC_CONFIG_SRCDIR([src/xdffile.c])
 AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_AUX_DIR([build-aux])
