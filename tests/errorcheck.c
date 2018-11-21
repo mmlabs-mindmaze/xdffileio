@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 
 	// Create the filename for the reference
 	snprintf(reffilename, sizeof(reffilename),"%s/%s",
-		 getenv("srcdir"),basename);
+	         SRCDIR, basename);
 
 
 	signal(SIGXFSZ, SIG_IGN);

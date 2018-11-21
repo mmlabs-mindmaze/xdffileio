@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
 	(void)argc;
 	(void)argv;
 	char reffilename[512];
-	sprintf(reffilename, "%s/%s", getenv("srcdir"), FILENAME);
+	sprintf(reffilename, "%s/%s", SRCDIR, FILENAME);
 
 	fprintf(stderr, "\tfirst test\n");
 	if (test_seek_skip(reffilename, 0, 0))

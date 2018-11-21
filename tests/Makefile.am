@@ -1,8 +1,16 @@
-AM_CFLAGS = -I$(top_srcdir)/src
-EXTRA_DIST = ref128-13-97-50-11-7-1.bdf \
-             ref128-13-97-50-11-7-1.edf \
-	     ref128-13-97-50-11-7-1.gdf1 \
-             ref128-13-97-50-11-7-1.gdf2 
+eol=
+
+AM_CFLAGS = -I$(top_srcdir)/src \
+	-DSRCDIR=\"$(abs_srcdir)\" \
+	-DBUILDDIR=\"$(abs_builddir)\" \
+	$(eol)
+
+EXTRA_DIST = \
+	ref128-13-97-50-11-7-1.bdf \
+	ref128-13-97-50-11-7-1.edf \
+	ref128-13-97-50-11-7-1.gdf1 \
+	ref128-13-97-50-11-7-1.gdf2 \
+	$(eol)
 
 check_PROGRAMS = testbdf testedf testgdf1 testgdf2 readcheck
 TESTS = testbdf testedf testgdf1 testgdf2 readcheck

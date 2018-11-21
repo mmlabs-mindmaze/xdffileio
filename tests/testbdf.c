@@ -265,7 +265,7 @@ int main(int argc, char *argv[])
 
 	// Create the filename for the reference
 	snprintf(reffilename, sizeof(reffilename),
-		 "%s/ref%u-%u-%u-%u-%u-%u-%u.bdf", getenv("srcdir"),SAMPLINGRATE, DURATION,
+		 "%s/ref%u-%u-%u-%u-%u-%u-%u.bdf", SRCDIR, SAMPLINGRATE, DURATION,
 		 NITERATION, RAMP_NS, NEEG, NEXG, NTRI);
 
 	
