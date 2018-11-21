@@ -243,7 +243,7 @@ struct xdf* create_read_xdf(enum xdffiletype type, int fd)
 
 	gtype = xdf_guess_filetype(magickey);
 	if ((gtype == XDF_ANY) || ((type != XDF_ANY)&&(type != gtype))) {
-		errnum = EILSEQ;
+		errno = EILSEQ;
 		return NULL;
 	}
 	
