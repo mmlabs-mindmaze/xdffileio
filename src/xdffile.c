@@ -415,7 +415,7 @@ static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
 {
 	unsigned int sample_size = 0;
 	enum xdftype type;
-	struct xdfch* ch = xdf->channels;
+	struct xdfch* ch;
 
 	for (ch=xdf->channels; ch; ch = ch->next) {
 		if (ch->iarray < 0)
