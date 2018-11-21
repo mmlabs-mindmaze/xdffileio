@@ -106,6 +106,7 @@ struct xdf* setup_read(int fd)
 	if (!xdf) 
 		goto error;
 
+	offset = 0;
 	for (i = 0; i < NCH; i++) {
 		if (xdf_set_chconf(xdf_get_channel(xdf, i),
 		                   XDF_CF_ARRTYPE, XDFINT32,
