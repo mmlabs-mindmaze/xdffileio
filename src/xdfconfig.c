@@ -317,9 +317,11 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	else
 		xdf = create_write_xdf(type, fd);
 
-	if (!xdf)
+	if (xdf == NULL)
 		close(fd);
-	xdf->closefd_ondestroy = 1;
+	else
+		xdf->closefd_ondestroy = 1;
+
 	return xdf;
 }
 
