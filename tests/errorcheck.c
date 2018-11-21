@@ -77,7 +77,7 @@ int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned i
 	}
 	xdf_get_conf(src, XDF_F_NCHANNEL, &nch,
 	                  XDF_F_REC_NSAMPLE, &recns, XDF_NOF);
-	if (nch != (int)ich) {
+	if (nch <= 0 || nch != (int)ich) {
 		fprintf(stderr, "\tich=%u, nch=%i\n", ich, nch);
 		goto exit;
 	}
