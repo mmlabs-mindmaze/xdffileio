@@ -30,8 +30,8 @@
 #include <sys/resource.h>
 #include "filecmp.h"
 
-#define MAXFSIZE	60000	
-#define NSAMPLE		17
+#define MAXFSIZE 59999
+#define NSAMPLE 17
 
 static off_t offskip[] = {168, 184, 236, 244};
 static int nskip = sizeof(offskip)/(2*sizeof(offskip[0]));
