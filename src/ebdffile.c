@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "xdfio.h"
 #include "xdffile.h"
