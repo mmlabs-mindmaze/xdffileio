@@ -271,6 +271,9 @@ int main(int argc, char *argv[])
 	
 	// Test generation of a file
 	unlink(genfilename);
+	unlink("essaiw.bdf.event");
+	unlink("essaiw.bdf.code");
+
 	retcode = generate_xdffile(genfilename);
 	if (!retcode)
 		retcode = cmp_files(genfilename, reffilename, 1, offskip, NULL);

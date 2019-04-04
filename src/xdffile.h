@@ -77,6 +77,9 @@ struct xdfch {
 
 struct xdf {
 	int fd;					
+	char * filename;
+	int tmp_event_fd;
+	int tmp_code_fd;
 	off_t hdr_offset;
 	unsigned int ready, mode;			
 	long pointer;			

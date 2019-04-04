@@ -33,6 +33,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <binary-io.h>
+
+#include "streamops.h"
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
@@ -172,6 +174,8 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 	xdf->reportval = 0;
 	xdf->mode = mode;
 	xdf->fd = fd;
+	xdf->tmp_event_fd = -1;
+	xdf->tmp_code_fd = -1;
 	xdf->buff = xdf->backbuff = NULL;
 	xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
 	xdf->channels = NULL;
@@ -263,6 +267,24 @@ struct xdf* create_read_xdf(enum xdffiletype type, int fd)
 }
 
 
+static
+int create_tmp_writefile_with_suffix(struct xdf* xdf, char const * suffix)
+{
+	size_t filename_len;
+	int fd;
+	mode_t perm = S_IRUSR|S_IWUSR;
+	int oflag = (O_WRONLY|O_CREAT|O_EXCL|O_BINARY|O_CLOEXEC);
+
+	/* <root>.<suffix>\0 */
+	filename_len = strlen(xdf->filename);
+	strcat(xdf->filename, suffix);
+
+	fd = open(xdf->filename, oflag, perm);
+
+	xdf->filename[filename_len] = '\0';
+	return fd;
+}
+
 /* \param type		requested type for the file to be created
  * \param fd		File descriptor of the storage
  *
@@ -270,7 +292,8 @@ struct xdf* create_read_xdf(enum xdffiletype type, int fd)
  * the function will fail
  */
 static
-struct xdf* create_write_xdf(enum xdffiletype type, int fd)
+struct xdf* create_write_xdf(enum xdffiletype type, int fd,
+                             const char * filename)
 {
 	struct xdf* xdf = NULL;
 
@@ -279,7 +302,25 @@ struct xdf* create_write_xdf(enum xdffiletype type, int fd)
 		return NULL;
 
 	init_xdf_struct(xdf, fd, XDF_WRITE);
+	if (filename != NULL) {
+		/* reserve more than needed to allow re-using this buffer in xdf_close()
+		 * without needing to alloc() */
+		xdf->filename = malloc(strlen(filename) + 8);
+		if (!xdf->filename)
+			goto error;
+		strcpy(xdf->filename, filename);
+
+		xdf->tmp_event_fd = create_tmp_writefile_with_suffix(xdf, ".event");
+		xdf->tmp_code_fd = create_tmp_writefile_with_suffix(xdf, ".code");
+		if (xdf->tmp_event_fd < 0 || xdf->tmp_code_fd < 0)
+			goto error;
+	}
+
 	return xdf;
+
+error:
+	xdf_close(xdf);
+	return NULL;
 }
 
 
@@ -315,7 +356,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	if (mode == XDF_READ)
 		xdf = create_read_xdf(type, fd);
 	else
-		xdf = create_write_xdf(type, fd);
+		xdf = create_write_xdf(type, fd, filename);
 
 	if (xdf == NULL)
 		close(fd);
@@ -363,7 +404,7 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 	if (mode == XDF_READ)
 		xdf = create_read_xdf(type, fd);
 	else
-		xdf = create_write_xdf(type, fd);
+		xdf = create_write_xdf(type, fd, NULL);
 
 	if (xdf)
 		xdf->closefd_ondestroy = closefd;
@@ -963,6 +1004,38 @@ int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
 	return get_closest_type(type, xdf->ops->supported_type);
 }
 
+static
+int write_event(struct xdf* xdf, struct xdfevent* evt)
+{
+#if WORDS_BIGENDIAN
+	struct xdfevent be_evt = {
+		.evttype = bswap_32(evt->evttype),
+		.onset = bswap_64(evt->onset),
+		.duration = bswap_64(evt->duration),
+	};
+	evt = &be_evt;
+#endif
+
+	return (write(xdf->tmp_event_fd, evt, sizeof(*evt)) == -1);
+}
+
+static
+int write_code(struct xdf* xdf, int code, const char* desc, int evttype)
+{
+	size_t host_desc_len = desc ? strlen(desc) : 0;
+	uint32_t desc_len = host_desc_len;
+
+#if WORDS_BIGENDIAN
+	evttype = bswap_32(evttype);
+	code = bswap_32(code);
+	desc_len = bswap_32(desc_len);
+#endif
+	return (write(xdf->tmp_code_fd, &evttype, sizeof(evttype)) == -1
+	        || write(xdf->tmp_code_fd, &code, sizeof(code)) == -1
+	        || write(xdf->tmp_code_fd, &desc_len, sizeof(desc_len)) == 1
+	        || write(xdf->tmp_code_fd, desc, host_desc_len) == -1);
+}
+
 
 API_EXPORTED 
 int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
@@ -977,6 +1050,10 @@ int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
 	evttype = add_event_entry(xdf->table, code, desc);
 	if (evttype < 0)
 		errno = ENOMEM;
+
+	if (xdf->tmp_code_fd >= 0)
+		write_code(xdf, code, desc, evttype);
+
 	return evttype;
 }
 
@@ -1024,6 +1101,9 @@ int xdf_add_event(struct xdf* xdf, int evttype,
 		errno = (xdf->table == NULL) ? EPERM : EINVAL;
 		return -1;
 	}
+
+	if (xdf->tmp_event_fd >= 0)
+		write_event(xdf, &evt);
 
 	return add_event(xdf->table, &evt);
 }

@@ -725,6 +725,28 @@ static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 }
 
 
+static
+void remove_tmp_event_files(struct xdf* xdf)
+{
+	size_t len;
+
+	if (xdf == NULL || xdf->filename == NULL)
+		return;
+
+	len = strlen(xdf->filename);
+
+	/* room for the suffix has been ensured during opening */
+	strcat(xdf->filename, ".event");
+	close(xdf->tmp_event_fd);
+	remove(xdf->filename);
+
+	xdf->filename[len] = '\0';
+	strcat(xdf->filename, ".code");
+	close(xdf->tmp_code_fd);
+	remove(xdf->filename);
+}
+
+
 /***************************************************
  *                   API functions                 *
  ***************************************************/
@@ -759,6 +781,13 @@ API_EXPORTED int xdf_close(struct xdf* xdf)
 	// Free channels and file
 	free(xdf->array_stride);
 	destroy_event_table(xdf->table);
+
+	/* destroy temporary event and code files */
+	if (retval == 0)
+		remove_tmp_event_files(xdf);
+
+	free(xdf->filename);
+
 	ch=xdf->channels;
 	while (ch) {
 		prev = ch;

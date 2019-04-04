@@ -172,6 +172,8 @@ int main(int argc, char *argv[])
 	}
 
 	unlink(genfilename);
+	unlink("essaiw.bdf.event");
+	unlink("essaiw.bdf.code");
 
 	retcode = trycopy_xdffile(genfilename, reffilename, MAXFSIZE);
 	if (!retcode) {
