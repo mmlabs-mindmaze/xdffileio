@@ -620,6 +620,8 @@ static int init_file_content(struct xdf* xdf)
 	block_signals(&oldmask);
 	if (xdf->ops->write_header(xdf) || fsync(xdf->fd))
 		retval = -1;
+	else
+		xdf->nrecord = 0;
 	
 	unblock_signals(&oldmask);
 	return retval;

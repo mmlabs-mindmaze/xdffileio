@@ -183,6 +183,7 @@ static void init_xdf_struct(struct xdf* xdf, int fd, int mode)
 	xdf->batch = NULL;
 	xdf->array_stride = NULL;
 	xdf->closefd_ondestroy = 0;
+	xdf->nrecord = -1;
 
 	// Set default values for the default channel 
 	ch->inmemtype = ch->infiletype;
