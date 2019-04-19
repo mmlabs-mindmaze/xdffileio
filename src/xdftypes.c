@@ -461,6 +461,11 @@ int xdf_setup_transform(struct convprm* prm, int swaptype,
 		assert(prm->scfn2 != NULL);
 	}
 
+	// data is never copied, so we need to call at least once conv
+	// function to copy data to back buffer
+	if (prm->cvfn1 == NULL && prm->cvfn3 == NULL)
+		prm->cvfn1 = convtable[in_tp][in_tp];
+
 	// setup swap functions
 #if WORDS_BIGENDIAN
 	if (swaptype == SWAP_IN)
