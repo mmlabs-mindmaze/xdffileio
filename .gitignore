@@ -30,6 +30,7 @@ config/config.h.in
 autom4te.cache/*
 build-aux/*
 .libs/
+config/config.h.in~
 
 # gnulibtool generated file
 .gnulib-tool-cmd.cache
@@ -43,8 +44,13 @@ build-aux/*
 
 # C generated objects
 *.o
+*.so
 *.la
 *.lo
 
 # nfs tmp files
 *.nfs*
+
+# python generated files
+*.pyc
+__pycache__

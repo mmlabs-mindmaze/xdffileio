@@ -29,6 +29,12 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD
 
+# hack to only consider python3 interpreter (NOT python == python3)
+m4_define_default([_AM_PYTHON_INTERPRETER_LIST], [python3 ])
+AM_PATH_PYTHON([3])
+PKG_CHECK_MODULES_EXT(PYTHONDEV, python3)
+MM_PYTHON_MODULE([numpy], required)
+
 
 AC_PROG_CC_C99
 gl_EARLY
@@ -38,6 +44,7 @@ LT_INIT([win32-dll disable-static])
 AC_SUBST(LIBTOOL_DEPS)
 gl_INIT
 
+AC_SET_HOSTSYSTEM
 AC_DEF_API_EXPORT_ATTRS
 AC_C_BIGENDIAN
 
@@ -75,7 +82,7 @@ AM_CONDITIONAL(BUILD_CHECK_TESTS, [test "$build_check_tests" = yes])
 AM_CONDITIONAL(TAP_SUPPORT_IN_CHECK, [test "x$tap_in_check" = xyes])
 
 
-AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile])
+AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile pyxdf/Makefile])
 AC_OUTPUT
 
 if test "$HAVE_IEEE_FLOAT_ROUND" = -1 

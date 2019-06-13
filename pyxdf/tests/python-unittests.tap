@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+set -x
+
+TESTDIR=$builddir/builddir-test
+
+rm -rf $TESTDIR
+mkdir -p $TESTDIR/xdf
+cp -uvf $srcdir/__init__.py $TESTDIR/xdf
+# linux || windows (with rename)
+cp -uvf $builddir/.libs/_pyxdf.so $TESTDIR/xdf/ || cp -uvf $builddir/.libs/_pyxdf.pyd $TESTDIR/xdf/
+
+# update the PATH for windows (it's used as library path)
+export PATH="../src/.libs/:$PATH"
+
+# do not leave potential trailing ':' char for cygpath ...
+export PYTHONPATH="$TESTDIR${PYTHONPATH:+:$PYTHONPATH}"
+
+python3 $srcdir/tests/pytests.py
+
+# since set -e, this is only reached if the tests are successful
+[ -n "$NOCLEAN" ] || rm -rf $TESTDIR
