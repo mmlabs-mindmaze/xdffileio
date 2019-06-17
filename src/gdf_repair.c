@@ -213,7 +213,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "%s only works with gdf files\n", argv[0]);
 		goto exit;
 	}
-	dst_fd = open(argv[2], O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
+	dst_fd = open(argv[2], O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR);
 	if (dst_fd < 0) {
 		fprintf(stderr, "%s failed to open %s for writing\n", argv[0], argv[2]);
 		goto exit;
