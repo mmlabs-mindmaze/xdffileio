@@ -195,7 +195,7 @@ int main(int argc, char ** argv)
 	strcpy(tmp, argv[1]);
 	srcfile = xdf_open(argv[1], XDF_READ, XDF_ANY);
 	if (!srcfile) {
-		fprintf(stderr, "Cannot load %s: %s\n", argv[0], strerror(errno));
+		fprintf(stderr, "Cannot load %s: %s\n", argv[1], strerror(errno));
 		free(tmp);
 		return -1;
 	}
