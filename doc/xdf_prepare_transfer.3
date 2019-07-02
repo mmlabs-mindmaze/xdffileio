@@ -1,13 +1,15 @@
 .\"Copyright 2010 (c) EPFL
-.TH XDF_PREPARE_TRANSFER 3 2010 "EPFL" "xdffileio library manual"
+.TH XDF_PREPARE_TRANSFER 3 2019-07-04 "EPFL" "xdffileio library manual"
 .SH NAME
-xdf_prepare_transfer - Setup the internals of the xDF file to be ready to
-receive or send data.
+xdf_prepare_transfer, xdf_end_transfer - Setup or cleanup the internals of
+the xDF file to be ready to receive or send data.
 .SH SYNOPSIS
 .LP
 .B #include <xdfio.h>
 .sp
 .BI "int xdf_prepare_transfer(struct xdf* " xdf ");"
+.br
+.BI "int xdf_end_transfer(struct xdf* " xdf ");"
 .br
 .SH DESCRIPTION
 .LP
@@ -24,10 +26,13 @@ succeed. In particular, \fBxdf_set_conf\fP(3), \fBxdf_setchconf\fP(3) and
 In case of failure due to I/O (file to big, connection to file system
 lost...), the best procedure is to close the file since the underlying file
 will be in a undertermined stated.
+.LP
+\fBxdf_end_transfer\fP() is the opposite of  \fBxdf_define_arrays\fP(): it
+reset the xdf file to the state where it can be reconfigured for reading.
 .SH "RETURN VALUE"
 .LP
-\fBxdf_define_arrays\fP() returns 0 in case of success. Otherwise \-1 is
-returned and \fIerrno\fP is set appropriately.
+Both \fBxdf_define_arrays\fP() and \fBxdf_end_transfer\fP() return 0 in
+case of success. Otherwise \-1 is returned and \fIerrno\fP is set appropriately.
 .SH ERRORS
 .TP
 .B EINVAL

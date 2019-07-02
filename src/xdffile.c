@@ -873,6 +873,32 @@ error:
 	return -1;
 }
 
+/* \param xdf	pointer to a valid xdf file
+ *
+ * API FUNCTION
+ * End transfer.
+ * This is the opposite of xdf_prepare_transfer(), it reset the xdf file
+ * to a state where it can be reconfigured for reading.
+ */
+API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
+{
+	off_t pos;
+
+	if (xdf == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (xdf->ready == 0)
+		return 0;
+
+	finish_transfer_thread(xdf);
+	free_transfer_objects(xdf);
+	xdf->nbatch = 0;
+	xdf->ready = 0;
+
+	pos = lseek(xdf->fd, xdf->hdr_offset, SEEK_SET);
+	return (pos < 0) ? -1 : 0;
+}
 
 /* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE 
  * \param ns	number of samples to be added

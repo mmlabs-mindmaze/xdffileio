@@ -148,6 +148,7 @@ int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src);
 int xdf_define_arrays(struct xdf* xdf, unsigned int narrays,
    		const size_t* strides);
 int xdf_prepare_transfer(struct xdf* xdf);
+int xdf_end_transfer(struct xdf* xdf);
 
 ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
 ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
