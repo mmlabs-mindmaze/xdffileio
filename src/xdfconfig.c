@@ -338,7 +338,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 {
 	int fd, oflag;
 	struct xdf* xdf = NULL;
-	mode_t perm = S_IRUSR|S_IWUSR;
+	mode_t perm = 0666;
 
 	// Argument validation
 	if (((mode != XDF_WRITE)&&(mode != XDF_READ)) || !filename) {
