@@ -10,6 +10,7 @@ api_test_suite(void)
     Suite * s = suite_create("api");
 
     suite_add_tcase(s, create_xdf_prepare_end_transfer_tcase());
+    suite_add_tcase(s, create_open_tcase());
 
     return s;
 }

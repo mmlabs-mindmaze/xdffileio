@@ -269,12 +269,12 @@ struct xdf* create_read_xdf(enum xdffiletype type, int fd)
 
 
 static
-int create_tmp_writefile_with_suffix(struct xdf* xdf, char const * suffix)
+int create_tmp_writefile_with_suffix(struct xdf* xdf, char const * suffix,
+                                     int oflag)
 {
 	size_t filename_len;
 	int fd;
 	mode_t perm = S_IRUSR|S_IWUSR;
-	int oflag = (O_WRONLY|O_CREAT|O_EXCL|O_BINARY|O_CLOEXEC);
 
 	/* <root>.<suffix>\0 */
 	filename_len = strlen(xdf->filename);
@@ -288,13 +288,16 @@ int create_tmp_writefile_with_suffix(struct xdf* xdf, char const * suffix)
 
 /* \param type		requested type for the file to be created
  * \param fd		File descriptor of the storage
+ * \param filename	filename used to create fd (NULL with xdf_fopen())
+ * \param oflag         flag used when opening event file descriptor
+ *
  *
  * Create a xdf structure of a xDF file for writing. If type is XDF_ANY,
  * the function will fail
  */
 static
 struct xdf* create_write_xdf(enum xdffiletype type, int fd,
-                             const char * filename)
+                             const char * filename, int oflag)
 {
 	struct xdf* xdf = NULL;
 
@@ -311,8 +314,8 @@ struct xdf* create_write_xdf(enum xdffiletype type, int fd,
 			goto error;
 		strcpy(xdf->filename, filename);
 
-		xdf->tmp_event_fd = create_tmp_writefile_with_suffix(xdf, ".event");
-		xdf->tmp_code_fd = create_tmp_writefile_with_suffix(xdf, ".code");
+		xdf->tmp_event_fd = create_tmp_writefile_with_suffix(xdf, ".event", oflag);
+		xdf->tmp_code_fd = create_tmp_writefile_with_suffix(xdf, ".code", oflag);
 		if (xdf->tmp_event_fd < 0 || xdf->tmp_code_fd < 0)
 			goto error;
 	}
@@ -341,13 +344,14 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	mode_t perm = 0666;
 
 	// Argument validation
-	if (((mode != XDF_WRITE)&&(mode != XDF_READ)) || !filename) {
+	if ((mode & ~(XDF_WRITE|XDF_READ|XDF_TRUNC)) || !filename) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	// Create the file
-	oflag = (mode == XDF_READ) ? O_RDONLY : (O_WRONLY|O_CREAT|O_EXCL);
+	oflag = (mode & XDF_READ) ? O_RDONLY : (O_WRONLY|O_CREAT);
+	oflag |= (mode & XDF_TRUNC) ? O_TRUNC : O_EXCL;
 	oflag |= O_BINARY | O_CLOEXEC;
 	fd = open(filename, oflag, perm);
 	if (fd == -1)
@@ -357,7 +361,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	if (mode == XDF_READ)
 		xdf = create_read_xdf(type, fd);
 	else
-		xdf = create_write_xdf(type, fd, filename);
+		xdf = create_write_xdf(type, fd, filename, oflag);
 
 	if (xdf == NULL)
 		close(fd);
@@ -405,7 +409,7 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 	if (mode == XDF_READ)
 		xdf = create_read_xdf(type, fd);
 	else
-		xdf = create_write_xdf(type, fd, NULL);
+		xdf = create_write_xdf(type, fd, NULL, 0);
 
 	if (xdf)
 		xdf->closefd_ondestroy = closefd;

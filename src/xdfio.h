@@ -117,6 +117,7 @@ enum xdffield
 #define XDF_WRITE	0
 #define XDF_READ	1
 #define XDF_CLOSEFD	0x10
+#define XDF_TRUNC	0x20
 
 struct xdf;
 struct xdfch;

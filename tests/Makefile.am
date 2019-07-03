@@ -72,6 +72,7 @@ check_PROGRAMS += unittests.tap
 
 unittests_tap_SOURCES = \
 	testcases.h \
+	open_test.c \
 	unittests.c \
 	xdf_prepare_end_transfer_test.c \
     $(eol)
