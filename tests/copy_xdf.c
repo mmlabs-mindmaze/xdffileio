@@ -28,6 +28,11 @@
 #include <fcntl.h>
 #include "copy_xdf.h"
 
+// O_BINARY only exists on Win32
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
+
 #define NSAMPLE	23
 
 int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
@@ -43,7 +48,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 	double onset, duration;
 	const char* desc;
 
-	fdref = open(reffilename, O_RDONLY);
+	fdref = open(reffilename, O_RDONLY|O_BINARY);
 	src = xdf_fdopen(fdref, XDF_READ | XDF_CLOSEFD, fformat);
 	if (!src) {
 		fprintf(stderr, 
@@ -52,7 +57,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 		goto exit;
 	}
 
-	fdgen = open(genfilename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	fdgen = open(genfilename, O_WRONLY|O_CREAT|O_BINARY, S_IRUSR|S_IWUSR);
 	dst = xdf_fdopen(fdgen, XDF_WRITE | XDF_CLOSEFD, fformat);
 	if (!dst) {
 		fprintf(stderr,

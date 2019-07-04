@@ -154,20 +154,19 @@ int seek_and_readcmp(struct xdf* xdf, int offset)
 
 
 static
-int open_tmpfd(void)
+int open_tmpfd(char path[16])
 {
 	int fd;
-	char path[512];
-	const char* tmpdir;
 
-	tmpdir = getenv("TMPDIR");
-	sprintf(path, "%s/xdf-XXXXXX", tmpdir ? tmpdir : "/tmp");
-	if ((fd = mkstemp(path)) == -1)
+	// Set the pattern used to generate temporary filename
+	strcpy(path, "xdf-XXXXXX");
+
+	// mkstemp() modifies array containing template to the actual path used
+	if ((fd = mkstemp(path)) == -1) {
+		fprintf(stderr, "mkstemp(%s) failed\n", path);
 		return -1;
+	}
 
-	// preventively unlink file so that it will be deleted when fd will
-	// be closed;
-	unlink(path);
 	return fd;
 }
 
@@ -176,8 +175,9 @@ int test_seek(int type)
 {
 	int offset, fd, ret = -1;
 	struct xdf* xdf;
+	char path[16];
 
-	if ( (fd = open_tmpfd()) == -1
+	if ( (fd = open_tmpfd(path)) == -1
 	  || genfile(fd, type)
 	  || lseek(fd, 0, SEEK_SET) == -1
 	  || !(xdf = setup_read(fd)) )
@@ -192,8 +192,10 @@ int test_seek(int type)
 	ret = 0;
 
 exit:
-	if (fd >= 0)
+	if (fd >= 0) {
 		close(fd);
+		unlink(path);
+	}
 	if (ret)
 		perror("Failed in testseek: ");
 	return ret;
