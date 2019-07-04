@@ -357,7 +357,8 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	if (fd == -1)
 		return NULL;
 
-	// Structure creation 
+	// Structure creation
+	mode &= ~XDF_TRUNC;
 	if (mode == XDF_READ)
 		xdf = create_read_xdf(type, fd);
 	else

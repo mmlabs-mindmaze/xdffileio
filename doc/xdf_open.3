@@ -24,8 +24,10 @@ of the file referred by \fItype\fP. Otherwise, the function will fail.
 If \fImode\fP is \fBXDF_WRITE\fP, the file is opened for writing. Thus the
 path \fIfilename\fP must not referred to an existing file: the function will
 fail if the file exist. This behavior prevents to overwrite any previous
-recording. \fItype\fP should be also be set to the desired type of data
-format (\fBXDF_ANY\fP will result in a error).
+recording. \fBXDF_TRUNC\fP flag can be added to disable this behavior and
+overwrite existing file (this flag is ignored if combined with \fBXDF_READ\fP.
+\fItype\fP should be also be set to the desired type of data format
+(\fBXDF_ANY\fP will result in a error).
 .LP
 The possible file type values are defined in the header file \fI<xdfio.h>\fP
 .LP
