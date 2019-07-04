@@ -18,6 +18,7 @@ AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config/config.h])
+AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 # Setup automake
 AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-xz
@@ -54,6 +55,25 @@ AM_CONDITIONAL(RUN_ERROR_TEST, [test "x$run_error_test" = "xtrue"])
 AC_SUBST([CURRENT],[lib_current])
 AC_SUBST([REVISION],[lib_revision])
 AC_SUBST([AGE],[lib_age])
+
+# Optional build of 'check' based tests
+PKG_CHECK_MODULES_EXT(CHECK, [check >= 0.9.12],
+                      [has_check=yes; tap_in_check=yes],
+                      [PKG_CHECK_MODULES_EXT(CHECK, [check], [has_check=yes], [has_check=no])])
+AC_ARG_WITH([check], AC_HELP_STRING([--with-check], [Build and run check based tests. @<:@default=detect@:>@]),
+            [], [with_check=detect])
+AS_CASE([$with_check],
+        [yes], [AS_IF([test "$has_check" != no],
+            [build_check_tests=yes],
+            [AC_MSG_FAILURE([check required but not found])])
+        ],
+        [no], [build_check_tests=no],
+        [detect], [build_check_tests=$has_check],
+        [AC_MSG_FAILURE([invalid argument for '--with-check' option])]
+)
+AM_CONDITIONAL(BUILD_CHECK_TESTS, [test "$build_check_tests" = yes])
+AM_CONDITIONAL(TAP_SUPPORT_IN_CHECK, [test "x$tap_in_check" = xyes])
+
 
 AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile])
 AC_OUTPUT
