@@ -1,0 +1,25 @@
+.\"Copyright 2010 (c) MindMaze
+.TH GDF-REPAIR 1 "2019-07-16" "MindMaze" ""
+.SH NAME
+gdf-repair \- fix broken gdf files
+.
+.SH SYNOPSIS
+.sp
+\fBgdf\-repair\fP <in\-file> <out\-file>
+.sp
+.SH DESCRIPTION
+.sp
+The gdf file format writes some metadata such as events right at the end of the
+file. This means that all those metadata need to be saved right up until the
+end, and appended after the eeg data just before closing the file.
+.sp
+Should something go wrong (ie. crash), the file will not be closed correctly!
+Instead of loosing all that data that can only be written when closing,
+xdffileio save it in two temporary files respectively called *.event and *.code
+.sp
+\fBgdf\-repair\fP makes use of those two temporary files and recreate a full
+gdf file by merging those three.
+.sp
+.SH AUTHOR
+Gabriel Ganne <gabriel.ganne@mindmaze.ch>,
+Nicolas Bourdaud <nicolas.bourdaud@mindmaze.ch>
