@@ -59,6 +59,9 @@ int copy_configuration(struct xdf* dstfile, struct xdf* srcfile, FILE * codefile
 			return -1;
 	}
 
+	if (codefile == NULL)
+		goto exit;
+
 	/* Copy event code table */
 	while (1) {
 		if (fread(&evttype, sizeof(evttype), 1, codefile) != 1
@@ -88,6 +91,7 @@ int copy_configuration(struct xdf* dstfile, struct xdf* srcfile, FILE * codefile
 			goto error;
 	}
 
+exit:
 	free(desc);
 	return 0;
 
@@ -138,6 +142,9 @@ static
 int copy_eventtable(struct xdf* dstfile, FILE * eventfile)
 {
 	struct xdfevent evt;
+
+	if (eventfile == NULL)
+		return 0;
 
 	/* Copy the event table */
 	while (1) {
@@ -194,7 +201,7 @@ int main(int argc, char ** argv)
 	}
 	strcpy(tmp, argv[1]);
 	srcfile = xdf_open(argv[1], XDF_READ, XDF_ANY);
-	if (!srcfile) {
+	if (srcfile == NULL) {
 		fprintf(stderr, "Cannot load %s: %s\n", argv[1], strerror(errno));
 		free(tmp);
 		return -1;
@@ -202,10 +209,16 @@ int main(int argc, char ** argv)
 
 	strcat(tmp, ".event");
 	eventfile = fopen(tmp, "rb");
+	if (eventfile == NULL)
+		fprintf(stderr, "[WARN] %s failed to open %s ... "
+		                "Proceeding anyway as if empty\n", argv[0], tmp);
 
 	tmp[tmp_len] = '\0';
 	strcat(tmp, ".code");
 	codefile = fopen(tmp, "rb");
+	if (eventfile == NULL)
+		fprintf(stderr, "[WARN] %s failed to open %s ... "
+		                "Proceeding anyway as if empty\n", argv[0], tmp);
 
 	/* only support gdf format */
 	xdf_get_conf(srcfile, XDF_F_FILEFMT, &srcfmt, XDF_NOF);
@@ -219,9 +232,9 @@ int main(int argc, char ** argv)
 		goto exit;
 	}
 	dstfile = xdf_fdopen(dst_fd, XDF_WRITE|XDF_CLOSEFD, srcfmt);
-
-	if (!srcfile || !eventfile || !codefile || !dstfile) {
-		fprintf(stderr, "%s failed to open the required files\n", argv[0]);
+	if (dstfile == NULL) {
+		fprintf(stderr, "%s failed to open the destination file: %s\n",
+		        argv[0], argv[2]);
 		goto exit;
 	}
 
