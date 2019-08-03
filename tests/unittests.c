@@ -11,6 +11,7 @@ api_test_suite(void)
 
     suite_add_tcase(s, create_xdf_prepare_end_transfer_tcase());
     suite_add_tcase(s, create_open_tcase());
+    suite_add_tcase(s, create_read_tcase());
 
     return s;
 }
