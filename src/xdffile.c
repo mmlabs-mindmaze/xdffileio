@@ -81,13 +81,20 @@ static void unblock_signals(sigset_t *oldmask)
 struct data_batch {
 	int len;
 	int iarray;
-	int foff, moff, mskip;
+	int foff, moff;
 };
 
 struct convertion_data {
 	struct convprm prm;
 	unsigned int filetypesize, memtypesize;
 	int skip;
+	int buff_offset;
+};
+
+struct ch_array_map {
+	int index;
+	const struct xdfch* ch;
+	struct data_batch batch;
 };
 
 /**************************************************
@@ -121,7 +128,8 @@ static int write_diskrec(struct xdf* xdf)
 	size_t reqsize;
 	unsigned ich;
 	struct convertion_data* ch;
-	char *fbuff, *src = xdf->backbuff;
+	char *fbuff, *src;
+	char* srcbase = xdf->backbuff;
 	void* dst = xdf->tmpbuff[0];
 	void* buff = xdf->tmpbuff[1];
 
@@ -130,6 +138,7 @@ static int write_diskrec(struct xdf* xdf)
 		ch = xdf->convdata + ich;
 
 		// Convert data
+		src = srcbase + ch->buff_offset;
 		xdf_transconv_data(xdf->ns_per_rec, dst, src, &(ch->prm), buff);
 
 		// Write the converted data to the file. Continue writing
@@ -145,7 +154,6 @@ static int write_diskrec(struct xdf* xdf)
 			reqsize -= wsize;
 			fbuff += wsize;
 		} while (reqsize);
-		src += ch->memtypesize;
 	}
 
 	// Make sure that the whole record has been sent to hardware
@@ -174,7 +182,8 @@ static int read_diskrec(struct xdf* xdf)
 	size_t reqsize;
 	unsigned int ich;
 	struct convertion_data* ch;
-	char *fbuff, *dst = xdf->backbuff;
+	char *fbuff, *dst;
+	char* dstbase = xdf->backbuff;
 	void* src = xdf->tmpbuff[0];
 	void* buff = xdf->tmpbuff[1];
 
@@ -199,9 +208,9 @@ static int read_diskrec(struct xdf* xdf)
 		if (ch->skip) 
 			continue;
 		// Convert data if the it will be sent to one of the arrays
+		dst = dstbase + ch->buff_offset;
 		xdf_transconv_data(xdf->ns_per_rec, dst,
 		                   src, &(ch->prm), buff);
-		dst += ch->memtypesize;
 	}
 
 	return 0;
@@ -308,122 +317,125 @@ static int disk_transfer(struct xdf* xdf)
  *           Batch preparation functions           *
  ***************************************************/
 
-static void reset_batch(struct data_batch* batch, unsigned int iarray, unsigned int foff)
+
+/* \param a     pointer to first struct ch_array_map pointer element
+ * \param b     pointer to second struct ch_array_map pointer element
+ *
+ * This implements the order comparison between 2 elements of struct
+ * ch_array_map. The order is first determined by index of the array whose
+ * channel maps its data and then the offset within this array.
+ *
+ * Returns an integer less than, equal to, or greater than zero if the first
+ * argument is considered to be respectively less than, equal to, or greater
+ * than the second.
+ */
+static
+int ch_array_map_cmp(const void* a, const void* b)
 {
-	memset(batch, 0, sizeof(*batch));
-	batch->iarray = iarray;
-	batch->foff = foff;
-	batch->len = 0;
+	const struct ch_array_map* map1 = a;
+	const struct ch_array_map* map2 = b;
+
+	if (map1->batch.iarray != map2->batch.iarray)
+		return map1->batch.iarray - map2->batch.iarray;
+
+	return map1->batch.moff - map2->batch.moff;
 }
 
 
-static int add_to_batch(struct data_batch *curr, const struct xdfch *ch, int foff)
+/* \param xdf   pointer of a valid xdf file
+ * \param map   array of struct ch_array_map element. It must be of the length
+ *              of the number of channel in xdf
+ *
+ * Initial map with the content of channel. This determines for each channel a
+ * suitable mapping between arrays and memory offset within transfer buffer.
+ *
+ * Return the sample_size (stride) of the transfer buffer.
+ */
+static
+size_t init_ch_array_mapping(struct xdf* xdf, struct ch_array_map* map)
 {
-	unsigned int datalen = xdf_get_datasize(ch->inmemtype);
-
-	if (!curr)
-		return 0;
-
-	if ((curr->iarray == ch->iarray) || (curr->len == 0)) {
-		// Check for the start of the batch
-		if (curr->len == 0) {
-			curr->iarray = ch->iarray;
-			curr->foff = foff;
-			curr->moff = ch->offset;
-			curr->len = datalen;
-			return 1;
-		}
-
-		// Add channel to batch
-	    	if ((curr->foff+curr->len == foff)
-	    	   && (curr->moff+curr->len == (int)(ch->offset))) {
-			curr->len += datalen;
-			return 1;
-		}
-	}
-	return 0;
-}
-
-
-static void link_batches(struct xdf* xdf, unsigned int nb)
-{
-	unsigned int i;
-	int ia;
-	struct data_batch* batch = xdf->batch;
-	size_t* stride = xdf->array_stride; 
-
-	if (!nb)
-		return;
-
-	for (i=0; i<nb-1; i++) {
-		ia = batch[i].iarray;
-		if (ia == batch[i+1].iarray)
-			batch[i].mskip = batch[i+1].moff - batch[i].moff;
-		else
-			batch[i].mskip = stride[ia] - batch[i].moff;
-	}
-	batch[nb-1].mskip = stride[batch[nb-1].iarray] - batch[nb-1].moff;
-}
-
-
-static int compute_batches(struct xdf* xdf, int assign)
-{
-	struct data_batch curr, *currb;
-	unsigned int nbatch = 1, iarr, foff, dlen;
 	const struct xdfch* ch;
+	size_t sample_size;
+	int nch = xdf->numch;
+	int i;
 
-	currb = assign ? xdf->batch : &curr;
-	reset_batch(currb, 0, 0);
+	// Initialize the map element in the same order as the channels
+	ch = xdf->channels;
+	for (i = 0; i < nch; i++) {
+		map[i] = (struct ch_array_map) {
+			.index = i,
+			.ch = ch,
+			.batch = {
+				.moff = ch->offset,
+				.iarray = ch->iarray,
+				.len = xdf_get_datasize(ch->inmemtype),
+			},
+		};
+		ch = ch->next;
+	}
 
-	for (iarr=0; iarr < xdf->narrays; iarr++) {
-		foff = 0;
-		
-		// Scan channels in order to find different batches
-		for (ch=xdf->channels; ch; ch=ch->next) {
-			if (ch->iarray < 0)
-				continue;
-			dlen = xdf_get_datasize(ch->inmemtype);
+	// reorder ch_array_mapping according to iarray first then array offset.
+	qsort(map, nch, sizeof(map[0]), ch_array_map_cmp);
 
-			// Consistency checks
-			if ((unsigned int)ch->iarray > xdf->narrays
-			    || ch->offset + dlen > xdf->array_stride[ch->iarray])
-				return -1;
+	// Allocate offset for each channel within the transfer buffer
+	sample_size = 0;
+	for (i = 0; i < nch; i++) {
+		map[i].batch.foff = sample_size;
+		if (map[i].batch.iarray >= 0)
+			sample_size += map[i].batch.len;
+	}
 
-			// Linearize the processing of channel sourcing
-			// the same input array
-			if ((iarr == (unsigned int)ch->iarray)
-			   && !add_to_batch(currb, ch, foff)) {
-				nbatch++;
-				if (assign)
-					currb++;
-				reset_batch(currb, iarr, foff);
-				add_to_batch(currb, ch, foff);
-			}
-			foff += dlen;
+	return sample_size;
+}
+
+
+
+/* \param nch   number of channels
+ * \param map   array of channel array mapping (length: nch)
+ *
+ * Given an initialized (and ordered) array of channel-array mapping, determine
+ * the number of batches to copy the data in array to/from the transfer buffer.
+ *
+ * After execution of this function, the batches will be set in the .batch
+ * field of the first element of map (up the determined number of batch).
+ *
+ * Return the number of batches
+ */
+static
+int link_batches(int nch, struct ch_array_map* map)
+{
+	int i, nbatch;
+	struct data_batch* last;
+
+	// Init first batch to the first channel mapped to an array
+	nbatch = 0;
+	last = &map[0].batch;
+	for (i = 0; i < nch; i++) {
+		if (map[i].batch.iarray >= 0) {
+			nbatch = 1;
+			*last = map[i].batch;
+			i++;  // the next loop will start from the next index
+			break;
 		}
 	}
-	if (assign)
-		link_batches(xdf, nbatch);
+
+	// The batches are already ordered by array then offset. Merging is then
+	// only checked if batches have same array and have consecutive mapping
+	for (; i < nch; i++) {
+		// test if incoming raw batch can be merged in last batch
+		if (last->iarray == map[i].batch.iarray
+		   && last->moff + last->len == map[i].batch.moff
+		   && last->foff + last->len == map[i].batch.foff) {
+			// do merge: extent last batch size
+			last->len += map[i].batch.len;
+		} else {
+			// cannot merge: create a new batch from the raw batch
+			last = &map[nbatch++].batch;
+			*last = map[i].batch;
+		}
+	}
 
 	return nbatch;
-}
-
-
-// channels in the buffer are assumed to be packed
-// TODO: verify this assumption
-static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
-{
-	unsigned int sample_size = 0;
-	enum xdftype type;
-	struct xdfch* ch;
-
-	for (ch=xdf->channels; ch; ch = ch->next) {
-		if (ch->iarray < 0)
-			continue;
-		type = inmem ? ch->inmemtype : ch->infiletype;
-		sample_size += xdf_get_datasize(type);
-	}
-	return sample_size;
 }
 
 
@@ -431,24 +443,27 @@ static unsigned int compute_sample_size(const struct xdf* xdf, int inmem)
  *          Transfer preparation functions         *
  ***************************************************/
 
-/* \param xdf	pointer of a valid xdf file
+/* \param xdf           pointer of a valid xdf file
+ * \param nbatch        computer number of batches
+ * \param sample_size   size in byte of a sample in transfer buffer
  *
  * Allocate all the buffers and temporary objects needed for the transfer
  */
-static int alloc_transfer_objects(struct xdf* xdf)
+static
+int alloc_transfer_objects(struct xdf* xdf, int nbatch, size_t sample_size)
 {
-	unsigned int samsize;
-	xdf->sample_size = samsize = compute_sample_size(xdf, 1);
-	xdf->filerec_size = compute_sample_size(xdf, 0) * xdf->ns_per_rec;
+	xdf->sample_size = sample_size;
+	xdf->nbatch = nbatch;
 
 	if ( !(xdf->convdata = malloc(xdf->numch*sizeof(*(xdf->convdata))))
-	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))  
-	    || !(xdf->buff = malloc(xdf->ns_per_rec * samsize)) 
-	    || !(xdf->backbuff = malloc(xdf->ns_per_rec * samsize)) 
-	    || !(xdf->tmpbuff[0] = malloc(xdf->ns_per_rec * 8)) 
+	    || !(xdf->batch = malloc(xdf->nbatch*sizeof(*(xdf->batch))))
+	    || !(xdf->buff = malloc(sample_size * xdf->ns_per_rec))
+	    || !(xdf->backbuff = malloc(sample_size * xdf->ns_per_rec))
+	    || !(xdf->tmpbuff[0] = malloc(xdf->ns_per_rec * 8))
 	    || !(xdf->tmpbuff[1] = malloc(xdf->ns_per_rec * 8)) ) {
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -470,27 +485,41 @@ static void free_transfer_objects(struct xdf* xdf)
 	xdf->batch = NULL;
 	xdf->buff = xdf->backbuff = NULL;
 	xdf->tmpbuff[0] = xdf->tmpbuff[1] = NULL;
+
+	xdf->nbatch = 0;
 }
 
 
-/* \param xdf	pointer of a valid xdf file
+/* \param nch   number of channels
+ * \param sample_size   size in byte the a sample in a transfer buffer
+ * \param mode  XDF_READ or XDF_WRITE
+ * \param map   array of channel array mapping (length: nch)
+ * \param convdata_array  array of convertion_data to initialize
  *
  * Setup the parameters of convertion of each channels in the xDF file.
  */
-static void setup_convdata(struct xdf* xdf)
+static
+void setup_convdata(int nch, size_t sample_size, int mode,
+                    const struct ch_array_map* map,
+                    struct convertion_data* convdata_array)
 {
-	unsigned int i, in_str, out_str;
+	int i, idx, in_str, out_str;
 	enum xdftype in_tp, out_tp;
 	const double *in_mm, *out_mm;
-	struct xdfch* ch = xdf->channels;
-	int swaptype = 0;
+	int swaptype;
+	const struct xdfch* ch;
+	struct convertion_data* convdata;
 
-	for (i=0; i<xdf->numch; i++) {
-		if (xdf->mode == XDF_WRITE) {
+	for (i = 0; i < nch; i++) {
+		idx = map[i].index;
+		ch = map[i].ch;
+		convdata = &convdata_array[idx];
+
+		if (mode == XDF_WRITE) {
 			// In write mode, convertion in 
 			// from mem/physical to file/digital
 			in_tp = ch->inmemtype;
-			in_str = xdf->sample_size;
+			in_str = sample_size;
 			in_mm = ch->physical_mm;
 			out_tp = ch->infiletype;
 			out_str = xdf_get_datasize(out_tp);
@@ -503,7 +532,7 @@ static void setup_convdata(struct xdf* xdf)
 			in_str = xdf_get_datasize(in_tp);
 			in_mm = ch->digital_mm;
 			out_tp = ch->inmemtype;
-			out_str = xdf->sample_size;
+			out_str = sample_size;
 			out_mm = ch->physical_mm;
 			swaptype = SWAP_IN;
 		}
@@ -512,14 +541,65 @@ static void setup_convdata(struct xdf* xdf)
 		if (ch->digital_inmem)
 			in_mm = out_mm = NULL;
 		
-		xdf->convdata[i].skip = (ch->iarray < 0) ? 1 : 0;
-		xdf->convdata[i].filetypesize = xdf_get_datasize(ch->infiletype);
-		xdf->convdata[i].memtypesize = xdf_get_datasize(ch->inmemtype);
-		xdf_setup_transform(&(xdf->convdata[i].prm), swaptype,
+		*convdata = (struct convertion_data) {
+			.skip = (ch->iarray < 0),
+			.buff_offset = map[i].batch.foff,
+			.filetypesize = xdf_get_datasize(ch->infiletype),
+			.memtypesize = xdf_get_datasize(ch->inmemtype),
+		};
+		xdf_setup_transform(&convdata->prm, swaptype,
 		                in_str, in_tp, in_mm,
 		                out_str, out_tp, out_mm);
+	}
+}
+
+
+/* \param xdf	pointer of a valid xdf file
+ *
+ * Compute and return the size in byte of a record in the file
+ */
+static
+size_t compute_filerec_size(struct xdf* xdf)
+{
+	size_t filerec_size_per_sample;
+	const struct xdfch* ch;
+
+	filerec_size_per_sample = 0;
+	ch = xdf->channels;
+	while (ch) {
+		filerec_size_per_sample += xdf_get_datasize(ch->infiletype);
 		ch = ch->next;
 	}
+
+	return filerec_size_per_sample * xdf->ns_per_rec;
+}
+
+
+static
+int setup_transfer_objects(struct xdf* xdf)
+{
+	int nch = xdf->numch;
+	struct ch_array_map mapping[nch];
+	struct convertion_data convdata[nch];
+	size_t sample_size;
+	int i, nbatch;
+
+	sample_size = init_ch_array_mapping(xdf, mapping);
+	setup_convdata(nch, sample_size, xdf->mode, mapping, convdata);
+	nbatch = link_batches(nch, mapping);
+
+	// Alloc of entities needed for convertion
+	if (alloc_transfer_objects(xdf, nbatch, sample_size))
+		return -1;
+
+	for (i = 0; i < nbatch; i++)
+		xdf->batch[i] = mapping[i].batch;
+
+	for (i = 0; i < nch; i++)
+		xdf->convdata[i] = convdata[i];
+
+	xdf->filerec_size = compute_filerec_size(xdf);
+	return 0;
 }
 
 
@@ -662,6 +742,7 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
 	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
 	char* restrict buff = xdf->buff + samsize * xdf->ns_buff;
 	struct data_batch* batch = xdf->batch;
+	const void* arr_ptr;
 
 	for (i=0; i<ns; i++) {
 		// Write the content of the buffer if full
@@ -675,11 +756,13 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
 		// Transfer the sample to the buffer by chunk
 		for (k=0; k<nbatch; k++) {
 			ia = batch[k].iarray;
-			memcpy(buff+batch[k].foff, in[ia], batch[k].len);
-			in[ia] += batch[k].mskip;
+			arr_ptr = in[ia] + batch[k].moff;
+			memcpy(buff+batch[k].foff, arr_ptr, batch[k].len);
 		}
 		buff += samsize;
 		xdf->ns_buff++;
+		for (ia = 0; ia < xdf->narrays; ia++)
+			in[ia] += xdf->array_stride[ia];
 	}
 
 	return (ssize_t)ns;
@@ -702,6 +785,7 @@ static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 	char* restrict buff = xdf->buff + samsize * (xdf->ns_per_rec-xdf->ns_buff);
 	struct data_batch* batch = xdf->batch;
 	int ret;
+	void* arr_ptr;
 
 	for (i=0; i<ns; i++) {
 		// Trigger a disk read when the content of buffer is empty
@@ -716,11 +800,13 @@ static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 		// Transfer the sample to the buffer by chunk
 		for (k=0; k < nbatch; k++) {
 			ia = batch[k].iarray;
-			memcpy(out[ia], buff+batch[k].foff, batch[k].len);
-			out[ia] += batch[k].mskip;
+			arr_ptr = out[ia] + batch[k].moff;
+			memcpy(arr_ptr, buff+batch[k].foff, batch[k].len);
 		}
 		buff += samsize;
 		xdf->ns_buff--;
+		for (ia = 0; ia < xdf->narrays; ia++)
+			out[ia] += xdf->array_stride[ia];
 	}
 
 	return ns;
@@ -833,23 +919,11 @@ API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, cons
  */
 API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf)
 {
-	int nbatch;
-
 	if (xdf->ready)
 		return -1;
 
-	// Just compute the number of batch (no mem allocated for them yet)
-	if ( (nbatch = compute_batches(xdf, 0)) < 0 )
+	if (setup_transfer_objects(xdf))
 		goto error;
-	xdf->nbatch = nbatch;
-
-	// Alloc of temporary entities needed for convertion
-	if (alloc_transfer_objects(xdf))
-		goto error;
-
-	// Setup batches, convertion parameters
-	compute_batches(xdf, 1); // assign batches: memory is now allocated
-	setup_convdata(xdf);
 
 	if (xdf->mode == XDF_WRITE) {
 		if (init_file_content(xdf))
@@ -869,7 +943,6 @@ API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf)
 
 error:
 	free_transfer_objects(xdf);
-	xdf->nbatch = 0;
 	return -1;
 }
 

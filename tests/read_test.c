@@ -194,6 +194,12 @@ struct {
 		.order = {0, 1, 13, 14, 2, 9, 6, 7, 8, 15, END},
 		.nch_in_array = 16,
 	}, {
+		.order = {1, 0, END},
+		.nch_in_array = 16,
+	}, {
+		.order = {15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, END},
+		.nch_in_array = 16,
+	}, {
 		.order = {0, END},
 		.nch_in_array = 1,
 	}, {
