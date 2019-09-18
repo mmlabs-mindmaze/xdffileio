@@ -26,7 +26,3 @@ gdf_repair_LDADD = libxdffileio.la ../lib/libgnu.la
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdffileio.pc
 
-if HAVE_LD_OUTPUT_DEF
-libxdffileio_la_LDFLAGS += -Wl,--output-def,libxdffileio-0.def
-defexec_DATA += libxdffileio-0.def
-endif
