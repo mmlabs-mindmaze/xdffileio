@@ -24,11 +24,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <errno.h>
 #include <time.h>
 #include <math.h>
+#include <mmsysio.h>
 
 #include "xdfio.h"
 #include "xdffile.h"
@@ -617,7 +616,7 @@ static int gdf2_write_header(struct xdf* xdf)
 {
 	int retval = 0;
 	struct gdf2_file* gdf2 = get_gdf2(xdf);
-	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
+	FILE* file = fdopen(mm_dup(xdf->fd), "wb");
 	if (!file)
 		return -1;
 
@@ -629,7 +628,7 @@ static int gdf2_write_header(struct xdf* xdf)
 	if (fflush(file) || fclose(file))
 		retval = -1;
 
-	lseek(xdf->fd, xdf->hdr_offset, SEEK_SET);
+	mm_seek(xdf->fd, xdf->hdr_offset, SEEK_SET);
 
 	return retval;
 }
@@ -994,7 +993,7 @@ static int gdf2_read_header(struct xdf* xdf)
 	unsigned int i;
 	struct xdfch** curr = &(xdf->channels);
 	struct gdf2_file* gdf2 = get_gdf2(xdf);
-	FILE* file = fdopen(dup_cloexec(xdf->fd), "rb");
+	FILE* file = fdopen(mm_dup(xdf->fd), "rb");
 	if (!file)
 		return -1;
 
@@ -1015,7 +1014,7 @@ static int gdf2_read_header(struct xdf* xdf)
 	retval = 0;
 exit:
 	fclose(file);
-	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
+	mm_seek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
 	return retval;
 }
 
@@ -1029,7 +1028,7 @@ static int gdf2_complete_file(struct xdf* xdf)
 {
 	int retval = 0;
 	int64_t numrec = xdf->nrecord;
-	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
+	FILE* file = fdopen(mm_dup(xdf->fd), "wb");
 	long evt_sect = xdf->hdr_offset + xdf->nrecord*xdf->filerec_size;
 
 	// Write the event block and the number of records in the header

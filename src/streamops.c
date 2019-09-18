@@ -23,25 +23,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <byteswap.h>
+#include <mmsysio.h>
 
 #include "streamops.h"
-
-
-
-LOCAL_FN
-int dup_cloexec(int fd)
-{
-	int newfd = dup(fd);
-#if HAVE_DECL_FD_CLOEXEC
-	int flags = fcntl(newfd, F_GETFD);
-	fcntl(newfd, F_SETFD, flags|FD_CLOEXEC);
-#endif
-	return newfd;
-}
-
+#include "common.h"
 
 LOCAL_FN int read16bval(FILE* file, unsigned int num, void* value)
 {

@@ -23,8 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <xdfio.h>
+#include <mmsysio.h>
 
 #include "refsignal.h"
 
@@ -72,9 +72,9 @@ void gen_test_gdf2(const char * filename)
 
 int main(void)
 {
-	unlink("broken.gdf");
-	unlink("broken.gdf.code");
-	unlink("broken.gdf.event");
+	mm_unlink("broken.gdf");
+	mm_unlink("broken.gdf.code");
+	mm_unlink("broken.gdf.event");
 	gen_test_gdf2("broken.gdf");
 
 	return EXIT_SUCCESS;

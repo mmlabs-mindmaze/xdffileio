@@ -23,12 +23,13 @@
 #define XDFFILE_H
 
 
-#include <pthread.h>
+
 #include <stdbool.h>
 #include <time.h>
-#include <sys/types.h>
 
 #include "xdfio.h"
+#include <mmthread.h>
+#include <mmsysio.h>
 
 #define TYPE_INT		0
 #define TYPE_UINT		1
@@ -81,7 +82,7 @@ struct xdf {
 	char * filename;
 	int tmp_event_fd;
 	int tmp_code_fd;
-	off_t hdr_offset;
+	mm_off_t hdr_offset;
 	unsigned int ready, mode;			
 	long pointer;			
 	double rec_duration;
@@ -106,9 +107,9 @@ struct xdf {
 	const struct format_operations* ops;
 	
 	/* Background thread synchronization object */
-	pthread_t thid;
-	pthread_mutex_t mtx;
-	pthread_cond_t cond;
+	mmthread_t thid;
+	mmthr_mtx_t mtx;
+	mmthr_cond_t cond;
 	int order;
 
 	int closefd_ondestroy;

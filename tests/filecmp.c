@@ -17,15 +17,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdio.h>
-#include <sys/types.h>
+#include <mmsysio.h>
 #include "filecmp.h"
 
 int cmp_files(const char* testfilename, const char* reffilename,
-              int nskip, const off_t* skip, off_t* where)
+              int nskip, const mm_off_t* skip, mm_off_t* where)
 {
 	int retcode = 0;
 	int n1, n2;
-	off_t pointer = 0;
+	mm_off_t pointer = 0;
 	unsigned char chunktest, chunkref;
 	FILE *reffile, *testfile;
 

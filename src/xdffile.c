@@ -29,12 +29,10 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <mmthread.h>
+#include <mmsysio.h>
 
 #include "xdfio.h"
 #include "xdftypes.h"
@@ -45,7 +43,7 @@
  *                Local declarations               *
  ***************************************************/
 
-#if HAVE_PTHREAD_SIGMASK
+#if !defined(_WIN32)
 static void block_signals(sigset_t *oldmask)
 {
 	sigset_t mask;
@@ -60,6 +58,10 @@ static void unblock_signals(sigset_t *oldmask)
 }
 
 #else
+#ifndef sigset_t
+#define sigset_t long
+#endif /* sigset_t */
+
 static void block_signals(sigset_t *oldmask)
 {
 	(void)oldmask;
@@ -68,7 +70,8 @@ static void unblock_signals(sigset_t *oldmask)
 {
 	(void)oldmask;
 }
-#endif /* HAVE_PTHREAD_SIGMASK */
+
+#endif /* _WIN32 */
 
 
 // Orders definitions for transfer
@@ -146,7 +149,7 @@ static int write_diskrec(struct xdf* xdf)
 		reqsize = xdf->ns_per_rec * ch->filetypesize;
 		fbuff = dst;
 		do {
-			wsize = write(xdf->fd, fbuff, reqsize);
+			wsize = mm_write(xdf->fd, fbuff, reqsize);
 			if (wsize == -1) { 
 				xdf->reportval = -errno;
 				return -1;
@@ -157,7 +160,7 @@ static int write_diskrec(struct xdf* xdf)
 	}
 
 	// Make sure that the whole record has been sent to hardware
-	if (fsync(xdf->fd)) {
+	if (mm_fsync(xdf->fd)) {
 		xdf->reportval = -errno;
 		return -1;
 	}
@@ -196,7 +199,7 @@ static int read_diskrec(struct xdf* xdf)
 		reqsize = xdf->ns_per_rec * ch->filetypesize;
 		fbuff = src;
 		do {
-			rsize = read(xdf->fd, fbuff, reqsize);
+			rsize = mm_read(xdf->fd, fbuff, reqsize);
 			if ((rsize == 0) || (rsize == -1)) {
 				xdf->reportval = (rsize == 0) ? 1 : -errno;
 				return -1;
@@ -238,16 +241,16 @@ static void* transfer_thread_fn(void* ptr)
 	
  	// While a transfer is performed, this routine holds the mutex
 	// preventing from any early buffer swap
- 	pthread_mutex_lock(&(xdf->mtx));
+ 	mmthr_mtx_lock(&(xdf->mtx));
 	while (1) {
 		// The transfer ready to be performed
 		// => clear the previous order and notify the main thread
 		xdf->order = 0;
-		pthread_cond_signal(&(xdf->cond));
+		mmthr_cond_signal(&(xdf->cond));
 
 		// Wait for an order of transfer
 		while (!xdf->order)
-			pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
+			mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
 	
 		// break the transfer loop if the quit order has been sent
 		if (xdf->order == ORDER_QUIT)
@@ -260,7 +263,7 @@ static void* transfer_thread_fn(void* ptr)
 			read_diskrec(xdf);
 
 	}
-	pthread_mutex_unlock(&(xdf->mtx));
+	mmthr_mtx_unlock(&(xdf->mtx));
 	return NULL;
 }
 
@@ -283,11 +286,11 @@ static int disk_transfer(struct xdf* xdf)
 
 	// If the mutex is hold by someone else, it means that the transfer
 	// routine has still not in a ready state
-	pthread_mutex_lock(&(xdf->mtx));
+	mmthr_mtx_lock(&(xdf->mtx));
 
 	// Wait for the previous operation to be finished
 	while (xdf->order && !xdf->reportval)
-		pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
+		mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
 
 	if (xdf->reportval) {
 		if (xdf->reportval < 0) {
@@ -303,11 +306,11 @@ static int disk_transfer(struct xdf* xdf)
 
 		// Signal for data transfer
 		xdf->order = ORDER_TRANSFER;
-		pthread_cond_signal(&(xdf->cond));
+		mmthr_cond_signal(&(xdf->cond));
 	}
 
 	// We are safe now, the transfer can start from now
-	pthread_mutex_unlock(&(xdf->mtx));
+	mmthr_mtx_unlock(&(xdf->mtx));
 
 	return retval;
 }
@@ -612,26 +615,26 @@ static int init_transfer_thread(struct xdf* xdf)
 	int ret;
 	int done = 0;
 
-	if ((ret = pthread_mutex_init(&(xdf->mtx), NULL)))
+	if ((ret = mmthr_mtx_init(&(xdf->mtx), 0)))
 		goto error;
 	done++;
 
-	if ((ret = pthread_cond_init(&(xdf->cond), NULL)))
+	if ((ret = mmthr_cond_init(&(xdf->cond), 0)))
 		goto error;
 	done++;
 
 	xdf->reportval = 0;
 	xdf->order = ORDER_INIT;
-	if ((ret = pthread_create(&(xdf->thid), NULL, transfer_thread_fn, xdf)))
+	if ((ret = mmthr_create(&(xdf->thid), transfer_thread_fn, xdf)))
 		goto error;
 
 	return 0;
 
 error:
 	if (done-- > 0)
-		pthread_cond_destroy(&(xdf->cond));
+		mmthr_cond_deinit(&(xdf->cond));
 	if (done-- > 0)
-		pthread_mutex_destroy(&(xdf->mtx));
+		mmthr_mtx_deinit(&(xdf->mtx));
 	errno = ret;
 	return -1;
 }
@@ -647,19 +650,19 @@ static int finish_transfer_thread(struct xdf* xdf)
 
 	// Wait for the previous operation to be finished
 	// and stop the transfer thread
-	pthread_mutex_lock(&(xdf->mtx));
+	mmthr_mtx_lock(&(xdf->mtx));
 	while (xdf->order && !xdf->reportval)
-		pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
+		mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
 	xdf->order = ORDER_QUIT;
-	pthread_cond_signal(&(xdf->cond));
-	pthread_mutex_unlock(&(xdf->mtx));
+	mmthr_cond_signal(&(xdf->cond));
+	mmthr_mtx_unlock(&(xdf->mtx));
 
 	// Wait for the transfer thread to complete
-	pthread_join(xdf->thid, NULL);
+	mmthr_join(xdf->thid, NULL);
 
 	// Destroy synchronization primitives
-	pthread_mutex_destroy(&(xdf->mtx));
-	pthread_cond_destroy(&(xdf->cond));
+	mmthr_mtx_deinit(&(xdf->mtx));
+	mmthr_cond_deinit(&(xdf->cond));
 
 	return 0;
 }
@@ -696,9 +699,9 @@ static int init_file_content(struct xdf* xdf)
 {
 	int retval = 0;
 	sigset_t oldmask;
-
+	
 	block_signals(&oldmask);
-	if (xdf->ops->write_header(xdf) || fsync(xdf->fd))
+	if (xdf->ops->write_header(xdf) || mm_fsync(xdf->fd))
 		retval = -1;
 	else
 		xdf->nrecord = 0;
@@ -718,8 +721,9 @@ static int complete_file_content(struct xdf* xdf)
 	sigset_t oldmask;
 
 	block_signals(&oldmask);
-	if (xdf->ops->complete_file(xdf) || fsync(xdf->fd))
+	if (xdf->ops->complete_file(xdf) || mm_fsync(xdf->fd))
 		retval = -1;
+
 	unblock_signals(&oldmask);
 
 	return retval;
@@ -825,12 +829,12 @@ void remove_tmp_event_files(struct xdf* xdf)
 
 	/* room for the suffix has been ensured during opening */
 	strcat(xdf->filename, ".event");
-	close(xdf->tmp_event_fd);
+	mm_close(xdf->tmp_event_fd);
 	remove(xdf->filename);
 
 	xdf->filename[len] = '\0';
 	strcat(xdf->filename, ".code");
-	close(xdf->tmp_code_fd);
+	mm_close(xdf->tmp_code_fd);
 	remove(xdf->filename);
 }
 
@@ -863,7 +867,7 @@ API_EXPORTED int xdf_close(struct xdf* xdf)
 			retval = -1;
 	}
 
-	if ((xdf->fd >= 0) && xdf->closefd_ondestroy && close(xdf->fd))
+	if ((xdf->fd >= 0) && xdf->closefd_ondestroy && mm_close(xdf->fd))
 		retval = -1;
 
 	// Free channels and file
@@ -955,7 +959,7 @@ error:
  */
 API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 {
-	off_t pos;
+	mm_off_t pos;
 
 	if (xdf == NULL) {
 		errno = EINVAL;
@@ -969,7 +973,7 @@ API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 	xdf->nbatch = 0;
 	xdf->ready = 0;
 
-	pos = lseek(xdf->fd, xdf->hdr_offset, SEEK_SET);
+	pos = mm_seek(xdf->fd, xdf->hdr_offset, SEEK_SET);
 	return (pos < 0) ? -1 : 0;
 }
 
@@ -1121,21 +1125,21 @@ API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 	if (irec != xdf->nrecread) {
 		if (irec != xdf->nrecread + 1) {
 
- 			pthread_mutex_lock(&(xdf->mtx));
+ 			mmthr_mtx_lock(&(xdf->mtx));
 			// Wait for the previous operation to be finished
 			while (xdf->order && !xdf->reportval)
-				pthread_cond_wait(&(xdf->cond), &(xdf->mtx));
+				mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
 			
 			// Ignore pending end of file report
 			if (xdf->reportval == 1)
 				xdf->reportval = 0;
 
 			fileoff = irec*xdf->filerec_size + xdf->hdr_offset;
-			if ( (lseek(xdf->fd, fileoff, SEEK_SET) < 0)
+			if ( (mm_seek(xdf->fd, fileoff, SEEK_SET) < 0)
 			     || (read_diskrec(xdf)) )
 				errnum = errno;
 
- 			pthread_mutex_unlock(&(xdf->mtx));
+ 			mmthr_mtx_unlock(&(xdf->mtx));
 			
 			if (errnum)
 				return xdf_set_error(errnum);

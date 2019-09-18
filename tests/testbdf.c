@@ -17,14 +17,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 //#include <sys/time.h>
+#include <mmargparse.h>
+#include <mmsysio.h>
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <xdfio.h>
-#include <unistd.h>
 #include <errno.h>
+
 #include "filecmp.h"
 #include "copy_xdf.h"
 #include "validation.h"
@@ -54,7 +56,7 @@ typedef int32_t		tri2_t;
 #define TRI2_TYPE	XDFINT32
 #define TRI2_MIN	-8388608.0
 #define TRI2_MAX        8388607.0 
-off_t offskip[2] = {168, 184};
+mm_off_t offskip[2] = {168, 184};
 
 #define PMIN (-262144.0)
 #define PMAX (262143.0)
@@ -237,29 +239,25 @@ exit:
 }
 
 
-
 int main(int argc, char *argv[])
 {
-	int retcode = 0, keep_file = 0, opt, testcopy = 1;
+	int retcode = 0, keep_file = 0, testcopy = 1;
 	char genfilename[] = "essaiw.bdf";
 	char reffilename[128];
+	
+	struct mmarg_opt cmdline_optv[] = {
+		{.name = "k", MMOPT_INT, "0", {.iptr = &keep_file}},
+		{.name = "c", MMOPT_INT, "1", {.iptr = &testcopy}},
+	};
 
-	while ((opt = getopt(argc, argv, "kc:")) != -1) {
-		switch (opt) {
-		case 'k':
-			keep_file = 1;
-			break;
-		case 'c':
-			testcopy = atoi(optarg);
-			break;
-
-		default:	/* '?' */
-			fprintf(stderr, "Usage: %s [-k]\n",
-				argv[0]);
-			exit(EXIT_FAILURE);
-		}
-	}
-
+	struct mmarg_parser parser = {
+		.optv = cmdline_optv,
+		.num_opt = MM_NELEM(cmdline_optv),
+		.execname = argv[0],
+	};
+	
+	if (mmarg_parse(&parser, argc, argv) == MMARGPARSE_ERROR)
+		exit(EXIT_FAILURE);
 
 	fprintf(stderr, "\tVersion : %s\n", xdf_get_string());
 
@@ -270,9 +268,9 @@ int main(int argc, char *argv[])
 
 	
 	// Test generation of a file
-	unlink(genfilename);
-	unlink("essaiw.bdf.event");
-	unlink("essaiw.bdf.code");
+	mm_unlink(genfilename);
+	mm_unlink("essaiw.bdf.event");
+	mm_unlink("essaiw.bdf.code");
 
 	retcode = generate_xdffile(genfilename);
 	if (!retcode)
@@ -280,7 +278,7 @@ int main(int argc, char *argv[])
 
 	// Test copy a file (implied reading)
 	if (!retcode && testcopy) {
-		unlink(genfilename);
+		mm_unlink(genfilename);
 		retcode = copy_xdf(genfilename, reffilename, XDF_BDF);
 		if (!retcode)
 			retcode = cmp_files(genfilename, reffilename, 0, NULL, NULL);
@@ -294,7 +292,7 @@ int main(int argc, char *argv[])
 		retcode = test_seek(XDF_BDF);
 
 	if (!keep_file)
-		unlink(genfilename);
+		mm_unlink(genfilename);
 
 
 	return retcode ? EXIT_FAILURE : EXIT_SUCCESS;

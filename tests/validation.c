@@ -19,8 +19,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
+#include <mmsysio.h>
 #include <xdfio.h>
+
 #include "validation.h"
 
 int test_closest_type(struct xdf* xdf, unsigned int ntype,
@@ -87,6 +88,6 @@ int test_validation_param(enum xdffiletype ftype, unsigned int ntype,
 
 	xdf_close(xdf);
 	
-	unlink("datafile");
+	mm_unlink("datafile");
 	return retcode;
 }

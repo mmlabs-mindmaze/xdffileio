@@ -11,4 +11,4 @@ general:
       It thus performs all the expensive operation (scaling, data convertion
       and file operation) in a separated thread.
     build-depends:
-      - gnulib
+      - mmlib-devel

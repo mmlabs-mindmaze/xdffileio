@@ -15,13 +15,14 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <xdfio.h>
-#include <stdio.h>
 #include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <mmsysio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <xdfio.h>
+
 #include "checkseek.h"
 
 #define NS_PER_REC	64
@@ -179,7 +180,7 @@ int test_seek(int type)
 
 	if ( (fd = open_tmpfd(path)) == -1
 	  || genfile(fd, type)
-	  || lseek(fd, 0, SEEK_SET) == -1
+	  || mm_seek(fd, 0, SEEK_SET) == -1
 	  || !(xdf = setup_read(fd)) )
 	  	goto exit;
 	
@@ -193,8 +194,8 @@ int test_seek(int type)
 
 exit:
 	if (fd >= 0) {
-		close(fd);
-		unlink(path);
+		mm_close(fd);
+		mm_unlink(path);
 	}
 	if (ret)
 		perror("Failed in testseek: ");

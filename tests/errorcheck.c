@@ -17,23 +17,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 //#include <sys/time.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
+#include <errno.h>
+#include <mmsysio.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <xdfio.h>
-#include <unistd.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/time.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/resource.h>
+#include <sys/time.h>
+#include <time.h>
+#include <xdfio.h>
+
 #include "filecmp.h"
 
 #define MAXFSIZE 59999
 #define NSAMPLE 17
 
-static off_t offskip[] = {168, 184, 236, 244};
+static mm_off_t offskip[] = {168, 184, 236, 244};
 static int nskip = sizeof(offskip)/(2*sizeof(offskip[0]));
 static int recns;
 
@@ -134,7 +135,7 @@ exit:
 int main(int argc, char *argv[])
 {
 	int retcode = 0, keep_file = 0, opt;
-	off_t pos = 0;
+	mm_off_t pos = 0;
 	char genfilename[] = "essaiw.bdf";
 	char basename[] = "ref128-13-97-50-11-7-1.bdf";
 	char reffilename[128];
@@ -171,9 +172,9 @@ int main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 	}
 
-	unlink(genfilename);
-	unlink("essaiw.bdf.event");
-	unlink("essaiw.bdf.code");
+	mm_unlink(genfilename);
+	mm_unlink("essaiw.bdf.event");
+	mm_unlink("essaiw.bdf.code");
 
 	retcode = trycopy_xdffile(genfilename, reffilename, MAXFSIZE);
 	if (!retcode) {
@@ -183,7 +184,7 @@ int main(int argc, char *argv[])
 	}
 
 	if (!keep_file)
-		unlink(genfilename);
+		mm_unlink(genfilename);
 
 	return retcode;
 }

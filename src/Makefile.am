@@ -13,15 +13,15 @@ libxdffileio_la_SOURCES = xdffile.h xdffile.c xdfconfig.c	\
 			  streamops.h streamops.c		\
 			  ebdffile.c ebdf.h			\
 			  gdf1.c gdf1.h				\
-			  gdf2.c gdf2.h
+			  gdf2.c gdf2.h				\
+			  common.h
 
-AM_CPPFLAGS=-I../lib -I$(top_srcdir)/lib
 libxdffileio_la_LDFLAGS = $(AM_LDFLAGS) -no-undefined \
 			  -version-info $(CURRENT):$(REVISION):$(AGE) 
-libxdffileio_la_LIBADD = ../lib/libgnu.la
+libxdffileio_la_LIBADD = $(MMLIB_LIB)
 
 gdf_repair_SOURCES = gdf-repair.c
-gdf_repair_LDADD = libxdffileio.la ../lib/libgnu.la
+gdf_repair_LDADD = libxdffileio.la $(MMLIB_LIB)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdffileio.pc

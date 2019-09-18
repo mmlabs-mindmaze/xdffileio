@@ -28,17 +28,14 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <binary-io.h>
+#include <mmsysio.h>
 
 #include "streamops.h"
 #include "xdfio.h"
 #include "xdftypes.h"
 #include "xdffile.h"
 #include "xdfevent.h"
+#include "common.h"
 
 /******************************************************
  *             options table definitions              *
@@ -242,8 +239,8 @@ struct xdf* create_read_xdf(enum xdffiletype type, int fd)
 	int errnum = 0;
 
 	// Guess file type
-	if ( (read(fd, magickey, sizeof(magickey)) == -1)
-	    || (lseek(fd, 0, SEEK_SET) == -1) )
+	if ( (mm_read(fd, magickey, sizeof(magickey)) == -1)
+	    || (mm_seek(fd, 0, SEEK_SET) == -1) )
 		return NULL;
 
 	gtype = xdf_guess_filetype(magickey);
@@ -280,7 +277,7 @@ int create_tmp_writefile_with_suffix(struct xdf* xdf, char const * suffix,
 	filename_len = strlen(xdf->filename);
 	strcat(xdf->filename, suffix);
 
-	fd = open(xdf->filename, oflag, perm);
+	fd = mm_open(xdf->filename, oflag, perm);
 
 	xdf->filename[filename_len] = '\0';
 	return fd;
@@ -352,8 +349,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 	// Create the file
 	oflag = (mode & XDF_READ) ? O_RDONLY : (O_WRONLY|O_CREAT);
 	oflag |= (mode & XDF_TRUNC) ? O_TRUNC : O_EXCL;
-	oflag |= O_BINARY | O_CLOEXEC;
-	fd = open(filename, oflag, perm);
+	fd = mm_open(filename, oflag, perm);
 	if (fd == -1)
 		return NULL;
 
@@ -365,7 +361,7 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 		xdf = create_write_xdf(type, fd, filename, oflag);
 
 	if (xdf == NULL)
-		close(fd);
+		mm_close(fd);
 	else
 		xdf->closefd_ondestroy = 1;
 
@@ -385,7 +381,7 @@ API_EXPORTED
 struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 {
 	struct xdf* xdf = NULL;
-	int oflags, invalmode, closefd;
+	int closefd;
 
 	closefd = mode & XDF_CLOSEFD;
 	mode &= ~XDF_CLOSEFD;
@@ -396,7 +392,16 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 		return NULL;
 	}
 
-#ifdef F_GETFL
+
+#if !defined(_WIN32)
+
+/* TODO: Transform the fcntl function that needs the fcntl.h API which is not
+ standard. Therefore the fcntl function is not supported in windows.
+ To transform the fcntl function, we need to create a function 'f' that gives
+ access to the flags of a file descriptor. The function 'f' should be
+ implemented in the mmLib. */
+	int oflags, invalmode;
+
 	// validation of the file descriptor
 	oflags = fcntl(fd, F_GETFL);
 	invalmode = (mode == XDF_READ) ? O_WRONLY : O_RDONLY;
@@ -1022,7 +1027,7 @@ int write_event(struct xdf* xdf, struct xdfevent* evt)
 	evt = &be_evt;
 #endif
 
-	return (write(xdf->tmp_event_fd, evt, sizeof(*evt)) == -1);
+	return (mm_write(xdf->tmp_event_fd, evt, sizeof(*evt)) == -1);
 }
 
 static
@@ -1036,10 +1041,10 @@ int write_code(struct xdf* xdf, int code, const char* desc, int evttype)
 	code = bswap_32(code);
 	desc_len = bswap_32(desc_len);
 #endif
-	return (write(xdf->tmp_code_fd, &evttype, sizeof(evttype)) == -1
-	        || write(xdf->tmp_code_fd, &code, sizeof(code)) == -1
-	        || write(xdf->tmp_code_fd, &desc_len, sizeof(desc_len)) == 1
-	        || write(xdf->tmp_code_fd, desc, host_desc_len) == -1);
+	return (mm_write(xdf->tmp_code_fd, &evttype, sizeof(evttype)) == -1
+	        || mm_write(xdf->tmp_code_fd, &code, sizeof(code)) == -1
+	        || mm_write(xdf->tmp_code_fd, &desc_len, sizeof(desc_len)) == 1
+	        || mm_write(xdf->tmp_code_fd, desc, host_desc_len) == -1);
 }
 
 

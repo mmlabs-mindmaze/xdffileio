@@ -25,8 +25,9 @@
 #include <float.h>
 #include <limits.h>
 #include <assert.h>
-#include <byteswap.h>
+
 #include "xdftypes.h"
+#include "common.h"
 
 union ui24 {
 	int32_t i32;

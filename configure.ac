@@ -14,7 +14,6 @@ m4_define([lib_age],0)
 # Setup autoconf
 AC_INIT(xdffileio,[lib_current.lib_revision],[nicolas.bourdaud@gmail.com])
 AC_CONFIG_SRCDIR([src/xdffile.c])
-AC_CONFIG_LIBOBJ_DIR([lib])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config/config.h])
@@ -37,12 +36,10 @@ MM_PYTHON_MODULE([numpy], required)
 
 
 AC_PROG_CC_C99
-gl_EARLY
 AM_PROG_CC_C_O
 
 LT_INIT([win32-dll disable-static])
 AC_SUBST(LIBTOOL_DEPS)
-gl_INIT
 
 AC_SET_HOSTSYSTEM
 AC_DEF_API_EXPORT_ATTRS
@@ -67,6 +64,7 @@ AC_SUBST([AGE],[lib_age])
 PKG_CHECK_MODULES_EXT(CHECK, [check >= 0.9.12],
                       [has_check=yes; tap_in_check=yes],
                       [PKG_CHECK_MODULES_EXT(CHECK, [check], [has_check=yes], [has_check=no])])
+MM_CHECK_LIB([mmthr_create], [mmlib], MMLIB, [], [AC_MSG_ERROR([mmlib library required])])
 AC_ARG_WITH([check], AC_HELP_STRING([--with-check], [Build and run check based tests. @<:@default=detect@:>@]),
             [], [with_check=detect])
 AS_CASE([$with_check],
@@ -82,7 +80,7 @@ AM_CONDITIONAL(BUILD_CHECK_TESTS, [test "$build_check_tests" = yes])
 AM_CONDITIONAL(TAP_SUPPORT_IN_CHECK, [test "x$tap_in_check" = xyes])
 
 
-AC_CONFIG_FILES([Makefile lib/Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile pyxdf/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile pyxdf/Makefile])
 AC_OUTPUT
 
 if test "$HAVE_IEEE_FLOAT_ROUND" = -1 

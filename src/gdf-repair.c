@@ -20,16 +20,12 @@
 # include <config.h>
 #endif
 
-#include <binary-io.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <mmsysio.h>
 
 #include "streamops.h"
 #include "xdfevent.h"
@@ -37,6 +33,7 @@
 #include "xdffile.h"
 #include "xdfio.h"
 #include "xdftypes.h"
+#include "common.h"
 
 int setup_read_xdf(struct xdf* xdf, int fd);
 
@@ -226,7 +223,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "%s only works with gdf files\n", argv[0]);
 		goto exit;
 	}
-	dst_fd = open(argv[2], O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR);
+	dst_fd = mm_open(argv[2], O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
 	if (dst_fd < 0) {
 		fprintf(stderr, "%s failed to open %s for writing\n", argv[0], argv[2]);
 		goto exit;

@@ -32,9 +32,6 @@ build-aux/*
 .libs/
 config/config.h.in~
 
-# gnulibtool generated file
-.gnulib-tool-cmd.cache
-
 # unit-test generated files
 *.log
 *.trs

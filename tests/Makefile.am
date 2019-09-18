@@ -22,33 +22,33 @@ endif
 
 testbdf_SOURCES = testbdf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
 		  validation.c validation.h checkseek.h checkseek.c
-testbdf_LDADD = $(top_builddir)/src/libxdffileio.la
+testbdf_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 testedf_SOURCES = testedf.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
 		  validation.c validation.h checkseek.h checkseek.c
-testedf_LDADD = $(top_builddir)/src/libxdffileio.la
+testedf_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 testgdf1_SOURCES = testgdf1.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
 		  validation.c validation.h checkseek.h checkseek.c
-testgdf1_LDADD = $(top_builddir)/src/libxdffileio.la
+testgdf1_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 testgdf2_SOURCES = testgdf2.c filecmp.c filecmp.h copy_xdf.c copy_xdf.h\
 		  validation.c validation.h checkseek.h checkseek.c
-testgdf2_LDADD = $(top_builddir)/src/libxdffileio.la
+testgdf2_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 errorcheck_SOURCES = errorcheck.c filecmp.c filecmp.h
-errorcheck_LDADD = $(top_builddir)/src/libxdffileio.la
+errorcheck_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 readcheck_SOURCES = readcheck.c
-readcheck_LDADD = $(top_builddir)/src/libxdffileio.la
+readcheck_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 gen_broken_gdf_SOURCES = gen-broken-gdf.c
 gen_broken_gdf_LDFLAGS = -lm
-gen_broken_gdf_LDADD = $(top_builddir)/src/libxdffileio.la
+gen_broken_gdf_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 check_fixed_gdf_SOURCES = check-fixed-gdf.c
 check_fixed_gdf_LDFLAGS = -lm
-check_fixed_gdf_LDADD = $(top_builddir)/src/libxdffileio.la
+check_fixed_gdf_LDADD = $(top_builddir)/src/libxdffileio.la $(MMLIB_LIB)
 
 # alias "test" and "check" targets targets
 .PHONY: test
@@ -76,14 +76,15 @@ unittests_tap_SOURCES = \
 	read_test.c \
 	unittests.c \
 	xdf_prepare_end_transfer_test.c \
-    $(eol)
+	$(eol)
 
 unittests_tap_CFLAGS = \
-    $(AM_CFLAGS) \
-    $(CHECK_CFLAGS) \
-    $(eol)
+	$(AM_CFLAGS) \
+	$(CHECK_CFLAGS) \
+	$(eol)
 
 unittests_tap_LDADD = \
-    $(CHECK_LIBS) \
-    $(top_builddir)/src/libxdffileio.la \
-    $(eol)
+	$(CHECK_LIBS) \
+	$(top_builddir)/src/libxdffileio.la \
+	$(MMLIB_LIB) \
+	$(eol)

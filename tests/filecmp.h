@@ -19,9 +19,9 @@
 #ifndef FILECMP_H
 #define FILECMP_H
 
-#include <sys/types.h>
+#include <mmsysio.h>
 
 int cmp_files(const char* testfilename, const char* reffilename,
-              int nskip, const off_t* skip, off_t* where);
+              int nskip, const mm_off_t* skip, mm_off_t* where);
 
 #endif

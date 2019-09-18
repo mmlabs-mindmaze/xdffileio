@@ -21,7 +21,7 @@
 
 #include <check.h>
 #include <errno.h>
-#include <unistd.h>
+#include <mmsysio.h>
 #include <xdfio.h>
 
 
@@ -33,9 +33,9 @@ static struct xdf * xdf = NULL;
 static
 void setup(void)
 {
-	unlink(FILENAME);
-	unlink(FILENAME".code");
-	unlink(FILENAME".event");
+	mm_unlink(FILENAME);
+	mm_unlink(FILENAME".code");
+	mm_unlink(FILENAME".event");
 }
 
 

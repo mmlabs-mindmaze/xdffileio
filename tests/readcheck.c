@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <mmsysio.h>
 
 #define CHUNK_NS	8
 #define FILENAME	"ref128-13-97-50-11-7-1.bdf"
@@ -100,7 +101,7 @@ error:
 }
 
 
-int move_to_offset(off_t offset)
+int move_to_offset(mm_off_t offset)
 {
 	ssize_t ns;
 	size_t reqns, nstot = 0;
@@ -145,7 +146,7 @@ static int diffdata(int nchskip, unsigned int nchr,
 	return 0;
 }
 
-int test_seek_skip(const char* filename, off_t offset, int nchskip)
+int test_seek_skip(const char* filename, mm_off_t offset, int nchskip)
 {
 	int nchr, ncht, retcode = -1;
 	ssize_t nsr, nst;

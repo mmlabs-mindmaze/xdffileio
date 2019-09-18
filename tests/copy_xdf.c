@@ -19,13 +19,13 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <xdfio.h>
+#include <errno.h>
+#include <mmsysio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <xdfio.h>
+
 #include "copy_xdf.h"
 
 // O_BINARY only exists on Win32
@@ -48,7 +48,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 	double onset, duration;
 	const char* desc;
 
-	fdref = open(reffilename, O_RDONLY|O_BINARY);
+	fdref = mm_open(reffilename, O_RDONLY, S_IRUSR|S_IWUSR);
 	src = xdf_fdopen(fdref, XDF_READ | XDF_CLOSEFD, fformat);
 	if (!src) {
 		fprintf(stderr, 
@@ -57,7 +57,7 @@ int copy_xdf(const char* genfilename, const char* reffilename, int fformat)
 		goto exit;
 	}
 
-	fdgen = open(genfilename, O_WRONLY|O_CREAT|O_BINARY, S_IRUSR|S_IWUSR);
+	fdgen = mm_open(genfilename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
 	dst = xdf_fdopen(fdgen, XDF_WRITE | XDF_CLOSEFD, fformat);
 	if (!dst) {
 		fprintf(stderr,

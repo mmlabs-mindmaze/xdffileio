@@ -19,7 +19,6 @@
 #ifndef STREAMOPS_H
 #define STREAMOPS_H
 
-LOCAL_FN int dup_cloexec(int fd);
 #define read8bval(file, num, value) \
    (fread((value), (num), 1, (file)) < 1 ? -1 : 0)
 #define write8bval(file, num, value) \

@@ -24,17 +24,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #include <errno.h>
 #include <time.h>
-#include <unistd.h>
+#include <mmsysio.h>
 
-#include "xdfio.h"
-#include "xdffile.h"
-#include "xdftypes.h"
 #include "ebdf.h"
+#include "common.h"
 #include "streamops.h"
-
+#include "xdffile.h"
+#include "xdfio.h"
+#include "xdftypes.h"
 /******************************************************
  *               EDF/BDF specific declaration             *
  ******************************************************/
@@ -461,7 +460,7 @@ static int ebdf_write_header(struct xdf* xdf)
 {
 	int retval = 0;
 	struct ebdf_file* bdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup_cloexec(xdf->fd), "wb");
+	FILE* file = fdopen(mm_dup(xdf->fd), "wb");
 	if (!file)
 		return -1;
 
@@ -473,7 +472,7 @@ static int ebdf_write_header(struct xdf* xdf)
 	if (fflush(file) || fclose(file))
 		retval = -1;
 
-	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
+	mm_seek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
 
 	return retval;
 }
@@ -594,7 +593,7 @@ static int ebdf_read_header(struct xdf* xdf)
 	int retval = -1;
 	unsigned int i;
 	struct ebdf_file* ebdf = get_ebdf(xdf);
-	FILE* file = fdopen(dup_cloexec(xdf->fd), "rb");
+	FILE* file = fdopen(mm_dup(xdf->fd), "rb");
 	if (!file)
 		return -1;
 
@@ -614,7 +613,7 @@ static int ebdf_read_header(struct xdf* xdf)
 	retval = 0;
 exit:
 	fclose(file);
-	lseek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
+	mm_seek(xdf->fd, (xdf->numch+1)*256, SEEK_SET);
 	return retval;
 }
 
@@ -631,8 +630,8 @@ static int ebdf_complete_file(struct xdf* xdf)
 
 	// Write the number of records in the header
 	snprintf(numrecstr, 9, "%-8i", xdf->nrecord);
-	if ( (lseek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
-	    || (write(xdf->fd, numrecstr, 8) < 0) )
+	if ( (mm_seek(xdf->fd, NUMREC_FIELD_LOC, SEEK_SET) < 0)
+	    || (mm_write(xdf->fd, numrecstr, 8) < 0) )
 		retval = -1;
 
 	return retval;
