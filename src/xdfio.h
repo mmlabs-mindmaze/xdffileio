@@ -22,7 +22,7 @@
 #ifndef XDFIO_H
 #define XDFIO_H
 
-#include <sys/types.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,11 +151,11 @@ int xdf_define_arrays(struct xdf* xdf, unsigned int narrays,
 int xdf_prepare_transfer(struct xdf* xdf);
 int xdf_end_transfer(struct xdf* xdf);
 
-ssize_t xdf_write(struct xdf* xdf, size_t ns, ...);
-ssize_t xdf_read(struct xdf* xdf, size_t ns, ...);
-ssize_t xdf_writev(struct xdf* xdf, size_t ns, void** vbuff);
-ssize_t xdf_readv(struct xdf* xdf, size_t ns, void** vbuff);
-off_t xdf_seek(struct xdf* xdf, off_t offset, int whence);
+int xdf_write(struct xdf* xdf, size_t ns, ...);
+int xdf_read(struct xdf* xdf, size_t ns, ...);
+int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff);
+int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff);
+int xdf_seek(struct xdf* xdf, int offset, int whence);
 
 int xdf_closest_type(const struct xdf* xdf, enum xdftype type);
 const char* xdf_get_string(void);

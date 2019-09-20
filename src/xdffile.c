@@ -735,7 +735,7 @@ static int complete_file_content(struct xdf* xdf)
  * on the specification of the channels.
  * Returns the number of samples written, -1 in case of error
  */
-static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
+static int writev_buffers(struct xdf* xdf, size_t ns,
                               const char* restrict *in)
 {
 	unsigned int i, k, ia, nsrec = xdf->ns_per_rec;
@@ -748,7 +748,7 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
 		// Write the content of the buffer if full
 		if (xdf->ns_buff == nsrec) {
 			if (disk_transfer(xdf)) 
-				return (i==0) ? -1 : (ssize_t)i;
+				return (i==0) ? -1 : (int)i;
 			buff = xdf->buff;
 			xdf->ns_buff = 0;
 		}
@@ -765,7 +765,7 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
 			in[ia] += xdf->array_stride[ia];
 	}
 
-	return (ssize_t)ns;
+	return (int)ns;
 }
 
 
@@ -778,7 +778,7 @@ static ssize_t writev_buffers(struct xdf* xdf, size_t ns,
  * on the specification of the channels.
  * Returns the number of samples read, -1 in case of error
  */
-static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
+static int readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 {
 	unsigned int i, k, ia;
 	unsigned int nbatch = xdf->nbatch, samsize = xdf->sample_size;
@@ -791,7 +791,7 @@ static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 		// Trigger a disk read when the content of buffer is empty
 		if (!xdf->ns_buff) {
 			if ((ret = disk_transfer(xdf))) 
-				return ((ret<0)&&(i==0)) ? -1 : (ssize_t)i;
+				return ((ret<0)&&(i==0)) ? -1 : (int)i;
 			buff = xdf->buff;
 			xdf->ns_buff = xdf->ns_per_rec;
 			xdf->nrecread++;
@@ -809,7 +809,7 @@ static ssize_t readv_buffers(struct xdf* xdf, size_t ns, char* restrict* out)
 			out[ia] += xdf->array_stride[ia];
 	}
 
-	return ns;
+	return (int) ns;
 }
 
 
@@ -983,7 +983,7 @@ API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
  * on the specification of the channels.
  * Returns the number of samples written, -1 in case of error
  */
-API_EXPORTED ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
+API_EXPORTED int xdf_write(struct xdf* xdf, size_t ns, ...)
 {
 	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_READ)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
@@ -1014,7 +1014,7 @@ API_EXPORTED ssize_t xdf_write(struct xdf* xdf, size_t ns, ...)
  * on the specification of the channels.
  * Returns the number of samples written, -1 in case of error
  */
-API_EXPORTED ssize_t xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
+API_EXPORTED int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
 {
 	const char* restrict * in = (const char* restrict *)vbuff;
 
@@ -1037,7 +1037,7 @@ API_EXPORTED ssize_t xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
  * on the specification of the channels.
  * Returns the number of samples read, -1 in case of error
  */
-API_EXPORTED ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
+API_EXPORTED int xdf_read(struct xdf* xdf, size_t ns, ...)
 {
 	if ((xdf == NULL) || !xdf->ready || (xdf->mode == XDF_WRITE)) {
 		errno = (xdf == NULL) ? EINVAL : EPERM;
@@ -1068,7 +1068,7 @@ API_EXPORTED ssize_t xdf_read(struct xdf* xdf, size_t ns, ...)
  * on the specification of the channels.
  * Returns the number of samples read, -1 in case of error
  */
-API_EXPORTED ssize_t xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
+API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
 {
 	char* restrict * out = (char* restrict *)vbuff;
 
@@ -1092,9 +1092,9 @@ API_EXPORTED ssize_t xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
  * measured in number of samples for the begining of the recording.
  * Otherwise -1 is returned and errno is set to indicate the error
  */
-API_EXPORTED off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
+API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 {
-	off_t curpoint, reqpoint, fileoff;
+	long curpoint, reqpoint, fileoff;
 	int irec, errnum = 0;
 	unsigned int nsprec = xdf->ns_per_rec;
 
@@ -1114,7 +1114,7 @@ API_EXPORTED off_t xdf_seek(struct xdf* xdf, off_t offset, int whence)
 	else
 		return xdf_set_error(EINVAL);
 	
-	if (reqpoint < 0 || (reqpoint >= (off_t)(xdf->nrecord * nsprec)))
+	if (reqpoint < 0 || (reqpoint >= (int)(xdf->nrecord * nsprec)))
 		return xdf_set_error(ERANGE);
 	
 	irec = reqpoint / nsprec;
