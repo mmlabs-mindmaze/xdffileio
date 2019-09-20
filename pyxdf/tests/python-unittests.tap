@@ -9,7 +9,7 @@ rm -rf $TESTDIR
 mkdir -p $TESTDIR/xdf
 cp -uvf $srcdir/__init__.py $TESTDIR/xdf
 # linux || windows (with rename)
-cp -uvf $builddirlibs/_pyxdf.so $TESTDIR/xdf/ || cp -uvf $builddirlibs/_pyxdf.pyd $TESTDIR/xdf/
+cp -uvf $builddirlibs/_pyxdf*.so $TESTDIR/xdf/ || cp -uvf $builddirlibs/_pyxdf.pyd $TESTDIR/xdf/
 
 # update the PATH for windows (it's used as library path)
 export PATH="$srcdirlibs:$PATH"

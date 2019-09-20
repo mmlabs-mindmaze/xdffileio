@@ -12,3 +12,4 @@ general:
       and file operation) in a separated thread.
     build-depends:
       - mmlib-devel
+    build-system : meson

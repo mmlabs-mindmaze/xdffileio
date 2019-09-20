@@ -1,0 +1,4 @@
+option('tests', type: 'boolean', value: true,
+    description: 'build unit tests')
+option('tests-python', type: 'boolean', value: true,
+    description: 'build unit tests for the python module')
