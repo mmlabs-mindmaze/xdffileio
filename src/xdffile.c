@@ -44,6 +44,7 @@
  ***************************************************/
 
 #if !defined(_WIN32)
+#include <pthread.h>
 static void block_signals(sigset_t *oldmask)
 {
 	sigset_t mask;
