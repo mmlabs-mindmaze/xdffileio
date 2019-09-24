@@ -21,8 +21,7 @@ xdfdir = $(pythondir)/xdf
 xdf_PYTHON = __init__.py
 
 # test targets
-
-TESTS_ENVIRONMENT = builddir=$(builddir) srcdir=$(srcdir)
+TESTS_ENVIRONMENT = builddir=$(builddir) srcdir=$(srcdir) builddirlibs=$(builddir)/.libs srcdirlibs=../src/.libs/
 noinst_PYTHON = tests/pytests.py
 TESTS = tests/python-unittests.tap
 dist_check_SCRIPTS = tests/python-unittests.tap

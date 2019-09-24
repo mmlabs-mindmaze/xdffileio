@@ -66,7 +66,7 @@ else
 TAP_LOG_DRIVER = $(LOG_DRIVER)
 endif  # TAP_SUPPORT_IN_CHECK
 
-TESTS_ENVIRONMENT = BUILDDIR=$(top_builddir) SRCDIR=$(srcdir)
+TESTS_ENVIRONMENT = EXECUTABLETEST=$(top_builddir)/tests EXECUTABLESRC=$(top_builddir)/src
 TESTS += unittests.tap
 check_PROGRAMS += unittests.tap
 
