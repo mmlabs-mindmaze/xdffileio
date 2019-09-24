@@ -44,12 +44,7 @@ const char filename[] = "signal.bdf";
 #define FS		512
 #define DURATION	10
 #define TOTAL_NS	(FS*DURATION)
-
-/* Buffers holding the data to be written on the file */
 #define NARRAYS		3
-float eeg[NS*NEEG];
-double sens[NS*NSENS];
-int32_t trigger[NS];
 
 const char eeglabels[64][8] = {
 	"Fp1", "AF7", "AF3", "F1", "F3", "F5", "F7", "FT7",
@@ -96,7 +91,7 @@ static int generate_signal(unsigned int neeg, float *eeg,
 	return ns;
 }
 
-
+static
 int configure_channels(struct xdf* xdf, unsigned int neeg, unsigned int nsens)
 {
 	unsigned int i;
@@ -158,6 +153,11 @@ int main(int argc, char *argv[])
 {
 	(void) argc;
 	(void) argv;
+
+	/* Buffers holding the data to be written on the file */
+	float eeg[NS*NEEG];
+	double sens[NS*NSENS];
+	int32_t trigger[NS];
 
 	struct xdf *xdf = NULL;
 	int step, retval = EXIT_FAILURE;

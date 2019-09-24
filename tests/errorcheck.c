@@ -38,6 +38,7 @@ static mm_off_t offskip[] = {168, 184, 236, 244};
 static int nskip = sizeof(offskip)/(2*sizeof(offskip[0]));
 static int recns;
 
+static
 int trycopy_xdffile(const char* genfilename, const char* reffilename, unsigned int fsize)
 {
 	unsigned int samwarn = 0, currns = 0;

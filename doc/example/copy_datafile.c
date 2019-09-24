@@ -44,6 +44,7 @@ const char filetype_args[XDF_NUM_FILE_TYPES][8] = {
 };
 
 
+static
 int copy_configuration(struct xdf* dst, struct xdf* src)
 {
 	struct xdfch *dstch, *srcch;
@@ -71,6 +72,7 @@ int copy_configuration(struct xdf* dst, struct xdf* src)
 }
 
 
+static
 int copy_datastream(struct xdf* dst, struct xdf* src)
 {
 	void* buffer = NULL;
@@ -106,6 +108,7 @@ int copy_datastream(struct xdf* dst, struct xdf* src)
 }
 
 
+static
 int copy_eventtable(struct xdf* dst, struct xdf* src)
 {
 	int nevent, i;
@@ -124,6 +127,7 @@ int copy_eventtable(struct xdf* dst, struct xdf* src)
 }
 
 
+static
 int copy_xdf(const char* genfilename, const char* reffilename, int dstfmt)
 {
 	struct xdf *dst = NULL, *src = NULL;
@@ -164,6 +168,7 @@ exit:
 }
 
 
+static
 int interpret_type(const char* req)
 {
 	int i;
@@ -178,6 +183,7 @@ int interpret_type(const char* req)
 }
 
 
+static
 void print_usage(FILE* f, const char* execname)
 {
 	fprintf(f, 

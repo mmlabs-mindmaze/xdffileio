@@ -101,6 +101,7 @@ error:
 }
 
 
+static
 int move_to_offset(mm_off_t offset)
 {
 	ssize_t ns;
@@ -146,6 +147,7 @@ static int diffdata(int nchskip, unsigned int nchr,
 	return 0;
 }
 
+static
 int test_seek_skip(const char* filename, mm_off_t offset, int nchskip)
 {
 	int nchr, ncht, retcode = -1;

@@ -24,6 +24,7 @@
 
 #include "validation.h"
 
+static
 int test_closest_type(struct xdf* xdf, unsigned int ntype,
 		 enum xdftype *allowed_type)
 {

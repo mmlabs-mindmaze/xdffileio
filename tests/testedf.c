@@ -65,6 +65,7 @@ mm_off_t offskip[2] = {168, 184};
 enum xdftype supported_type[] = {XDFINT16};
 int numtype = sizeof(supported_type) / sizeof(supported_type[0]);
 
+static
 void set_signal_values(eeg_t* eeg, sens_t* exg, tri1_t* tri1, tri2_t* tri2)
 {
 	int i,j, is, ir;
@@ -139,6 +140,7 @@ static int set_default_trigger(struct xdf* xdf, int arrindex,
 }
 
 
+static
 int generate_xdffile(const char* filename)
 {
 	eeg_t* eegdata;
