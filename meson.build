@@ -213,19 +213,21 @@ if get_option('tests')
         )
         test('testgdf2', testgdf2, is_parallel : false)
 
-        errorcheck_sources = files(
-                'tests/errorcheck.c',
-                'tests/filecmp.c',
-                'tests/filecmp.h',
-        )
-        errorcheck = executable('errorcheck',
-                errorcheck_sources,
-                c_args : unittest_args,
-                include_directories : include_directories('src', 'tests'),
-                link_with : xdffileio,
-                dependencies : mmlib,
-        )
-        test('errorcheck', errorcheck, is_parallel : false)
+        if cc.has_header_symbol('sys/resource.h', 'getrlimit')
+                errorcheck_sources = files(
+                        'tests/errorcheck.c',
+                        'tests/filecmp.c',
+                        'tests/filecmp.h',
+                )
+                errorcheck = executable('errorcheck',
+                        errorcheck_sources,
+                        c_args : unittest_args,
+                        include_directories : include_directories('src', 'tests'),
+                        link_with : xdffileio,
+                        dependencies : mmlib,
+                )
+                test('errorcheck', errorcheck, is_parallel : false)
+        endif  # has getrlimit()
 
         readcheck_sources = files(
                 'tests/readcheck.c',
