@@ -339,3 +339,14 @@ install_subdir('doc/example',
 install_data(files('AUTHORS', 'COPYING', 'NEWS', 'README'),
         install_dir : get_option('datadir') / 'doc' / 'xdffileio')
 
+#
+# DEVTOOLS
+#
+
+# test public headers for most warnings and C++ compatibility
+api_compat_test = run_target('api-compat-test',
+        command : [
+            files('devtools/api-compat-test.sh'),
+            headers,
+        ]
+)

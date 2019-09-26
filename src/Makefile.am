@@ -26,3 +26,6 @@ gdf_repair_LDADD = libxdffileio.la $(MMLIB_LIB)
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdffileio.pc
 
+.PHONY: api-compat-test
+api-compat-test: ../devtools/api-compat-test.sh $(include_HEADERS)
+	$^

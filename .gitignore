@@ -44,6 +44,7 @@ config/config.h.in~
 *.so
 *.la
 *.lo
+a.out
 
 # nfs tmp files
 *.nfs*

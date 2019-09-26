@@ -3,3 +3,6 @@ SUBDIRS = src doc tests pyxdf
 
 EXTRA_DIST=autogen.sh
 doc_DATA = AUTHORS NEWS README COPYING
+
+api-compat-test:
+	$(MAKE) -C src $@
