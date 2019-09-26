@@ -291,32 +291,31 @@ endif
 # DOC
 #
 
-install_man(
-        files(
-                'doc/gdf-repair.1',
-                'doc/xdf_add_channel.3',
-                'doc/xdf_add_event.3',
-                'doc/xdf_add_evttype.3',
-                'doc/xdf_close.3',
-                'doc/xdf_closest_type.3',
-                'doc/xdf_copy_chconf.3',
-                'doc/xdf_copy_conf.3',
-                'doc/xdf_define_arrays.3',
-                'doc/xdf_fdopen.3',
-                'doc/xdf_get_channel.3',
-                'doc/xdf_get_chconf.3',
-                'doc/xdf_get_conf.3',
-                'doc/xdf_get_event.3',
-                'doc/xdf_get_evttype.3',
-                'doc/xdf_open.3',
-                'doc/xdf_prepare_transfer.3',
-                'doc/xdf_read.3',
-                'doc/xdf_seek.3',
-                'doc/xdf_set_chconf.3',
-                'doc/xdf_set_conf.3',
-                'doc/xdf_write.3',
-        )
+man_files = files(
+        'doc/gdf-repair.1',
+        'doc/xdf_add_channel.3',
+        'doc/xdf_add_event.3',
+        'doc/xdf_add_evttype.3',
+        'doc/xdf_close.3',
+        'doc/xdf_closest_type.3',
+        'doc/xdf_copy_chconf.3',
+        'doc/xdf_copy_conf.3',
+        'doc/xdf_define_arrays.3',
+        'doc/xdf_fdopen.3',
+        'doc/xdf_get_channel.3',
+        'doc/xdf_get_chconf.3',
+        'doc/xdf_get_conf.3',
+        'doc/xdf_get_event.3',
+        'doc/xdf_get_evttype.3',
+        'doc/xdf_open.3',
+        'doc/xdf_prepare_transfer.3',
+        'doc/xdf_read.3',
+        'doc/xdf_seek.3',
+        'doc/xdf_set_chconf.3',
+        'doc/xdf_set_conf.3',
+        'doc/xdf_write.3',
 )
+install_man(man_files)
 
 # compile example as a test, only install the sources
 example = executable('create-bdf-example',
@@ -350,3 +349,16 @@ api_compat_test = run_target('api-compat-test',
             headers,
         ]
 )
+
+
+codespell = find_program('codespell', required : false)
+if codespell.found()
+    # check for typo in all possible sources
+    run_target('spelling',
+        command : [
+            codespell,
+            '--ignore-words', files('devtools/codespell.ignore'),
+            sources + man_files,
+        ],
+    )
+endif # codespell
