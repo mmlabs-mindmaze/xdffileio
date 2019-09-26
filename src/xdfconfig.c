@@ -644,7 +644,7 @@ API_EXPORTED int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
  * Get channel configuration handling function. First run the default
  * handler, then call the file format method.
  * Returns 1 if the type is not handled in that function, -1 if an error
- * occured, 0 otherwise
+ * occurred, 0 otherwise
  * 
  */
 static int proceed_get_chconf(const struct xdfch* ch, enum xdffield
@@ -877,7 +877,7 @@ int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
  * Get general configuration handling function. First run the default
  * handler, then call the file format method.
  * Returns 1 if the type is not handled in that function, -1 if an error
- * occured, 0 otherwise
+ * occurred, 0 otherwise
  */
 static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union optval *val)
 {

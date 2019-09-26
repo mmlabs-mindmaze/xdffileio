@@ -223,7 +223,7 @@ static int read_diskrec(struct xdf* xdf)
 
 /* \param ptr	pointer to a valid xdffile structure
  *
- * This is the function implementing the background thread transfering data
+ * This is the function implementing the background thread transferring data
  * from/to the underlying file. 
  * This performs the transfer of the back buffer whenever the condition is
  * signaled and order is ORDER_TRANSFER. The end of the transfer is notified
@@ -277,7 +277,7 @@ static void* transfer_thread_fn(void* ptr)
  *
  * It inspects also the information reported by the transfer thread
  *
- * In addition to usual error reporting (0 if succes, -1 if error), it
+ * In addition to usual error reporting (0 if success, -1 if error), it
  * returns 1 if the transfer thread has reported end of file.
  */
 static int disk_transfer(struct xdf* xdf)
@@ -500,7 +500,7 @@ static void free_transfer_objects(struct xdf* xdf)
  * \param map   array of channel array mapping (length: nch)
  * \param convdata_array  array of convertion_data to initialize
  *
- * Setup the parameters of convertion of each channels in the xDF file.
+ * Setup the parameters of conversion of each channels in the xDF file.
  */
 static
 void setup_convdata(int nch, size_t sample_size, int mode,
@@ -520,7 +520,7 @@ void setup_convdata(int nch, size_t sample_size, int mode,
 		convdata = &convdata_array[idx];
 
 		if (mode == XDF_WRITE) {
-			// In write mode, convertion in 
+			// In write mode, conversion in
 			// from mem/physical to file/digital
 			in_tp = ch->inmemtype;
 			in_str = sample_size;
@@ -530,7 +530,7 @@ void setup_convdata(int nch, size_t sample_size, int mode,
 			out_mm = ch->digital_mm;
 			swaptype = SWAP_OUT;
 		} else {
-			// In read mode, convertion in 
+			// In read mode, conversion in
 			// from file/digital to mem/physical
 			in_tp = ch->infiletype;
 			in_str = xdf_get_datasize(in_tp);
@@ -592,7 +592,7 @@ int setup_transfer_objects(struct xdf* xdf)
 	setup_convdata(nch, sample_size, xdf->mode, mapping, convdata);
 	nbatch = link_batches(nch, mapping);
 
-	// Alloc of entities needed for convertion
+	// Alloc of entities needed for conversion
 	if (alloc_transfer_objects(xdf, nbatch, sample_size))
 		return -1;
 
@@ -1094,7 +1094,7 @@ API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
  * Reposition the current sample pointer according to the couple 
  * (offset, whence). whence can be SEEK_SET, SEEK_CUR or SEEK_END
  * Upon successful completion, it returns the resulting offset location as
- * measured in number of samples for the begining of the recording.
+ * measured in number of samples for the beginning of the recording.
  * Otherwise -1 is returned and errno is set to indicate the error
  */
 API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)

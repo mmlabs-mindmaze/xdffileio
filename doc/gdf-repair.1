@@ -14,7 +14,7 @@ file. This means that all those metadata need to be saved right up until the
 end, and appended after the eeg data just before closing the file.
 .sp
 Should something go wrong (ie. crash), the file will not be closed correctly!
-Instead of loosing all that data that can only be written when closing,
+Instead of losing all that data that can only be written when closing,
 xdffileio save it in two temporary files respectively called *.event and *.code
 .sp
 \fBgdf\-repair\fP makes use of those two temporary files and recreate a full

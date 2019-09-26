@@ -44,18 +44,18 @@ field is supported only in those formats (no list means that all formats
 support the field):
 .TP
 \fBXDF_CF_ARRINDEX\fP (int) [0]
-Specify the array from/to which the channel value should be transfered. If
+Specify the array from/to which the channel value should be transferred. If
 the mode of the file is \fBXDF_READ\fP and the value is negative, the
 channel will not be read. If the mode is \fBXDF_WRITE\fP and the value is
 negative, the function will fail.
 .TP
 \fBXDF_CF_ARROFFSET\fP (int) [0 for channel 0, packed channels for the rest]
 Specify the offset in the array from/to which the channel value should be
-transfered.
+transferred.
 .TP
 \fBXDF_CF_ARRDIGITAL\fP (int) [0 if writing, 1 if reading]
 Indicate that the data in the array from/to which the channel value should
-be transfered is provided in digital unit. This means in practice that no
+be transferred is provided in digital unit. This means in practice that no
 scaling is performed during the transfer from/to the disk (non zero indicate
 no scaling).
 .TP

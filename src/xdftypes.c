@@ -377,7 +377,7 @@ static const swapproc swaptable[8] = {
 #endif
 
 
-/* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data useable by user */
+/* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data usable by user */
 LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
 {
 	void* in = src;
@@ -418,7 +418,7 @@ int xdf_setup_transform(struct convprm* prm, int swaptype,
 	enum xdftype ti;
 	double sc, off;
 
-	// Initialize convertion structure
+	// Initialize conversion structure
 	memset(prm, 0, sizeof(*prm));
 	prm->stride1 = in_str;
 	prm->stride3 = out_str;
@@ -435,7 +435,7 @@ int xdf_setup_transform(struct convprm* prm, int swaptype,
 		ti = data_info[in_tp].is_signed ? XDFINT64 : XDFUINT64;
 	prm->stride2 = data_info[ti].size;
 	
-	// Setup the convertion functions if needed
+	// Setup the conversion functions if needed
 	if ((in_tp != ti) || (data_info[in_tp].size != in_str)) {
 		prm->cvfn1 = convtable[in_tp][ti];
 		assert(prm->cvfn1 != NULL);
@@ -501,7 +501,7 @@ LOCAL_FN const struct data_information* xdf_datinfo(enum xdftype type)
 				// size bigger or equal to the target
 
 /* \param[out] match	pointer the the possible type match
- * \param tinfo		pointer to the data informatation of the target
+ * \param tinfo		pointer to the data information of the target
  * \param tp		pointer to an size-ordered array of possible types
  * \param ntypes	number of element in the tp array
  * \param criterions	bitmask of the criterons

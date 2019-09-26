@@ -34,7 +34,7 @@ appropriately.
 \fIxdf\fP is NULL
 .TP
 .B EPERM
-No successfull call to \fBxdf_prepare_transfer\fP(3) have been done on
+No successful call to \fBxdf_prepare_transfer\fP(3) have been done on
 \fIxdf\fP or it has been opened using the mode \fBXDF_READ\fP.
 .TP
 .B EFBIG
@@ -62,7 +62,7 @@ file, for the same number of samples to be passed, a call \fBxdf_write\fP
 will almost take always the same time to complete. This time increases
 linearly with the number of samples. This insurance is particularly useful
 for realtime processing of data, since storing the data will impact the main
-loop in a predictible way.
+loop in a predictable way.
 .LP
 This is achieved by double buffering the data for writing. A front and a
 back buffer are available: the front buffer is filled with the incoming
