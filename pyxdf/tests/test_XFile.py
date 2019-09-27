@@ -16,6 +16,7 @@
 import numpy
 import os
 import unittest
+import sys
 
 # additional imports to test for memory leaks
 import gc
@@ -283,3 +284,113 @@ class TestXFileClass(unittest.TestCase):
         # same data
         self.assertTrue((data_01[:,0] == data_10[:,1]).all())
         self.assertTrue((data_01[:,1] == data_10[:,0]).all())
+
+    def test_read_channels_chunk(self):
+        '''
+        test that when filtering on a required laps of time,
+        the returned chunk of time is the requested one.
+        '''
+        filename = test_file('gdf2', 'read')
+        f = XFile(filename, 'r', 'gdf2')
+        g = XFile(filename, 'r', 'gdf2')
+
+        start = 16
+        end = 624
+
+        data = f.read(chunk = (start, end))
+        fulldata = g.read() # assumption: the function read without
+                            # argument is correct
+
+        # test that each channel read contains end - start samples
+        self.assertEqual(data.shape[0], end - start + 1)
+        self.assertEqual(data.shape[1], len(f.channels))
+
+        # test that the data read in the chunk correspond to the
+        # required data
+        for i in range(start, end + 1):
+                for chan in range(len(f.channels)):
+                        self.assertEqual(data[i - start][chan], fulldata[i][chan])
+
+    def test_read_channels_index_chunk(self):
+        '''
+        test that when filtering on channels and a certain laps of time,
+        the returned channel order and chunk of time are the requested one.
+        '''
+        filename = test_file('gdf2', 'read')
+        f = XFile(filename, 'r', 'gdf2')
+        g = XFile(filename, 'r', 'gdf2')
+        h = XFile(filename, 'r', 'gdf2')
+        l = XFile(filename, 'r', 'gdf2')
+
+        self.assertGreater(len(f.channels), 2)
+        ch0 = f.channels[0]
+        ch1 = f.channels[1]
+
+        start = 18
+        end = 128
+
+        data_01 = f.read([ch0['name'], ch1['name']], (start, end))
+        data_10 = g.read([ch1['name'], ch0['name']], (start, end))
+        fulldata_01 = h.read([ch0['name'], ch1['name']]) # assumption: the function read with
+                                                         # channels argument is correct
+        fulldata_10 = l.read([ch1['name'], ch0['name']]) # assumption: the function read with
+                                                         # channels argument is correct
+
+        # test that each channel read contains end - start samples
+        self.assertEqual(data_01.shape[0], end - start + 1)
+        self.assertEqual(data_10.shape[0], end - start + 1)
+        self.assertEqual(data_01.shape[1], 2)
+        self.assertEqual(data_10.shape[1], 2)
+
+        # test that data_01 and data_10 are the same data
+        # with swapped channels between the chunck of time
+
+        # same dimensions
+        self.assertEqual(len(data_01.shape), 2)
+        self.assertEqual(len(data_10.shape), 2)
+        self.assertEqual(data_01.shape, data_10.shape)
+
+        # same data
+        self.assertTrue((data_01[:,0] == data_10[:,1]).all())
+        self.assertTrue((data_01[:,1] == data_10[:,0]).all())
+
+        # test that the data read in the chunk correspond to the
+        # required data
+        for chan in range(2):
+                for i in range(start, end + 1):
+                        self.assertEqual(data_01[i - start][chan], fulldata_01[i][chan])
+                        self.assertEqual(data_10[i - start][chan], fulldata_10[i][chan])
+
+    def test_read_channels_invalid_chunk(self):
+        '''
+        test that when the chunk is invalid (the endding time is smaller
+        than the starting time), the filtering is done on the required
+        channels for the whole laps of time of the recording.
+        '''
+        filename = test_file('gdf2', 'read')
+        f = XFile(filename, 'r', 'gdf2')
+
+        start = 124
+        end = 16
+
+        with self.assertRaises(IndexError):
+                f.read(chunk = (start, end))
+
+    def test_read_channels_index_invalid_chunk(self):
+        '''
+        test that when the chunk is invalid (the endding time is smaller
+        than the starting time), the filtering is done on the required
+        channels for the whole laps of time of the recording.
+        '''
+        filename = test_file('gdf2', 'read')
+        f = XFile(filename, 'r', 'gdf2')
+
+        self.assertGreater(len(f.channels), 2)
+        ch0 = f.channels[0]
+        ch1 = f.channels[1]
+
+        start = 36
+        end = 18
+
+        with self.assertRaises(IndexError):
+                f.read([ch0['name'], ch1['name']], (start, end))

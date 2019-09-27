@@ -30,7 +30,7 @@ class XFile(_XFile):
         Args:
             filename: name of the file to open
             mode: "read"/"r" or "write"/"w"
-                  write can be flagged exclusive to preven overwriting
+                  write can be flagged exclusive to prevent overwriting
                   like with fopen: "wx"
             type: (optional when reading) any of the following:
                   'edf', 'edfp', 'bdf', 'gdf1', 'gdf2'
@@ -43,18 +43,26 @@ class XFile(_XFile):
         '''
         super().__init__(filename, mode, type)
 
-    def read(self, channels : List[str] = None):
+    def read(self, channels: List[str] = None, chunk: tuple = None):
         '''Read samples from the open xdf file.
 
         Args:
             channels: (optional) filter on given channels. Read all channels
                       if none specified.
                       The channels will be returned in the requested order.
+            chunk: (optional) filter on a given laps of time (represented by
+                      two numbers of samples written in chunk). Read the
+                      whole recording if none specified. If the start value
+                      is negative or greater than the total number of samples,
+                      or if the end value is negative or greater than the
+                      total number of samples, or in case the end value is
+                      smaller than the start value an exception is thrown.
 
-        Return: a 2D numpy array of the read samples.
+        Return: a 2D numpy array of the read samples between the two samples
+                indicated by chunk.
 
         Eg.
-        >>> data = f.read(channels=['eeg:1', 'eeg:2'])
+        >>> data = f.read(channels=['eeg:1', 'eeg:2'], chunk=(start, end))
 
         Raises:
             IOError: low-level I/O error occurred while reading
@@ -63,7 +71,18 @@ class XFile(_XFile):
             EnvironmentError: on stale file handle. This an occur for NFS
             PermissionError: on permission errors
         '''
-        return self._read(channels)
+        if chunk is None:
+            return self._read(channels, (0, self.len - 1))
+
+        start, end = chunk
+        if (start < 0
+                or end < start
+                or end >= self.len):
+            errmsg = 'chunk {} not within limits {}' \
+                         .format(chunk, (0, self.len - 1))
+            raise IndexError(errmsg)
+
+        return self._read(channels, chunk)
 
     def write(self, data):
         ''' Write given numpy array into the xdf file

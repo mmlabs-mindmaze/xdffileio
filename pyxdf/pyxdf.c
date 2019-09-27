@@ -463,15 +463,16 @@ int filter_channels(struct pyxdf *self, PyObject * channels)
 static PyObject*
 _xdf_read(struct pyxdf *self, PyObject *args, PyObject *kwargs)
 {
-	int rv, nb_nch;
+	int rv, nb_nch, ns;
 	size_t stride[1];
 	double * buffer;
 	PyArrayObject * vecout;
+	long start, end;
 	PyObject * channels = Py_None;
 
-	char * kwlist[] = {"channels", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:read", kwlist,
-	                                 &channels))
+	char * kwlist[] = {"channels", "chunk", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O(ll):read", kwlist,
+	                                 &channels, &start, &end))
 		return NULL;
 
 	if (self->xdf == NULL) {
@@ -499,15 +500,22 @@ _xdf_read(struct pyxdf *self, PyObject *args, PyObject *kwargs)
 	if (xdf_prepare_transfer(self->xdf))
 		goto error;
 
+	ns = end - start + 1;
+
 	/* build & return a ns * nch numpy array */
-	npy_intp dimensions[2] = {self->len, nb_nch};
+	npy_intp dimensions[2] = {ns, nb_nch};
 	vecout = (PyArrayObject*) PyArray_SimpleNew(2, dimensions, NPY_DOUBLE);
 	if (vecout == NULL)
 		goto error;
 
 	buffer = PyArray_DATA(vecout);
 
-	rv = xdf_read(self->xdf, self->len, buffer);
+	/* case where only a chunk should be read */
+	if (start != 0)
+		if (xdf_seek(self->xdf, start, SEEK_SET) == -1)
+			goto error;
+
+	rv = xdf_read(self->xdf, ns, buffer);
 	if (rv == -1)
 		goto error;
 
