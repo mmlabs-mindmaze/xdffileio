@@ -103,7 +103,7 @@ static struct PyModuleDef xdf_module =
 static PyMemberDef pyxdf_members[] = {
 	/* read-only members */
 	{"len", T_LONG, offsetof(struct pyxdf, len), READONLY,
-	 "Number of records"},
+	 "Number of samples"},
 	{"filename", T_STRING, offsetof(struct pyxdf, filename), READONLY,
 	 "Name of the opened xdf file"},
 	{"filetype", T_STRING, offsetof(struct pyxdf, filetype), READONLY,
