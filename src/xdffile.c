@@ -941,6 +941,7 @@ API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf)
 	if (xdf->mode == XDF_READ) {
 		disk_transfer(xdf);
 		xdf->nrecread = -1;
+		xdf->ns_buff = 0;
 	}
 
 	xdf->ready = 1;
