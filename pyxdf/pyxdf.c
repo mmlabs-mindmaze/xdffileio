@@ -487,10 +487,6 @@ _xdf_read(struct pyxdf *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	/* end all previous transfer */
-	if (xdf_end_transfer(self->xdf) != 0)
-		goto error;
-
 	nb_nch = filter_channels(self, channels);
 	if (nb_nch <= 0)
 		goto error;
@@ -519,11 +515,15 @@ _xdf_read(struct pyxdf *self, PyObject *args, PyObject *kwargs)
 	if (rv == -1)
 		goto error;
 
+	if (xdf_end_transfer(self->xdf) != 0)
+		goto error;
+
 	return PyArray_Return(vecout);
 
 error:
 	/* xdffileio handles errors using errno.
 	 * Convert it to an exception and return */
+	xdf_end_transfer(self->xdf);
 	PyErr_SetFromErrno(PyExc_IOError);
 	return NULL;
 }
