@@ -151,7 +151,7 @@ if get_option('tests')
                 link_with : xdffileio,
                 dependencies : mmlib,
         )
-        test('testbdf', testbdf, is_parallel : false)
+        test('testbdf', testbdf, is_parallel : false, suite : 'core')
 
         testedf_sources = files(
                 'tests/checkseek.c',
@@ -171,7 +171,7 @@ if get_option('tests')
                 link_with : xdffileio,
                 dependencies : mmlib,
         )
-        test('testedf', testedf, is_parallel : false)
+        test('testedf', testedf, is_parallel : false, suite : 'core')
 
         testgdf1_sources = files(
                 'tests/checkseek.c',
@@ -191,7 +191,7 @@ if get_option('tests')
                 link_with : xdffileio,
                 dependencies : mmlib,
         )
-        test('testgdf1', testgdf1, is_parallel : false)
+        test('testgdf1', testgdf1, is_parallel : false, suite : 'core')
 
         testgdf2_sources = files(
                 'tests/checkseek.c',
@@ -211,7 +211,7 @@ if get_option('tests')
                 link_with : xdffileio,
                 dependencies : mmlib,
         )
-        test('testgdf2', testgdf2, is_parallel : false)
+        test('testgdf2', testgdf2, is_parallel : false, suite : 'core')
 
         if cc.has_header_symbol('sys/resource.h', 'getrlimit')
                 errorcheck_sources = files(
@@ -226,7 +226,10 @@ if get_option('tests')
                         link_with : xdffileio,
                         dependencies : mmlib,
                 )
-                test('errorcheck', errorcheck, is_parallel : false)
+                test('errorcheck', errorcheck,
+                     is_parallel : false,
+                     suite : 'core'
+                )
         endif  # has getrlimit()
 
         readcheck_sources = files(
@@ -239,7 +242,7 @@ if get_option('tests')
                 link_with : xdffileio,
                 dependencies : mmlib,
         )
-        test('readcheck', readcheck, is_parallel : false)
+        test('readcheck', readcheck, is_parallel : false, suite : 'core')
 
         gen_broken_gdf_sources = files(
                 'tests/gen-broken-gdf.c',
@@ -267,7 +270,8 @@ if get_option('tests')
                 files ('tests/recompose-gdf.sh'),
                 env : ['EXECUTABLETEST=' + meson.current_build_dir(),
                        'EXECUTABLESRC=' + meson.current_build_dir(),],
-                is_parallel : false
+                is_parallel : false,
+                suite : 'core',
         )
 endif
 
@@ -283,6 +287,7 @@ if get_option('tests-python')
                        'srcdir=' + meson.source_root() + '/pyxdf',
                        'srcdirlibs=' + meson.current_build_dir(),
                 ],
+                suite : 'python',
         )
 endif
 
