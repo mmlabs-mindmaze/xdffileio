@@ -292,13 +292,12 @@ class TestXFileClass(unittest.TestCase):
         '''
         filename = test_file('gdf2', 'read')
         f = XFile(filename, 'r', 'gdf2')
-        g = XFile(filename, 'r', 'gdf2')
 
         start = 16
         end = 624
 
         data = f.read(chunk = (start, end))
-        fulldata = g.read() # assumption: the function read without
+        fulldata = f.read() # assumption: the function read without
                             # argument is correct
 
         # test that each channel read contains end - start samples
@@ -318,9 +317,6 @@ class TestXFileClass(unittest.TestCase):
         '''
         filename = test_file('gdf2', 'read')
         f = XFile(filename, 'r', 'gdf2')
-        g = XFile(filename, 'r', 'gdf2')
-        h = XFile(filename, 'r', 'gdf2')
-        l = XFile(filename, 'r', 'gdf2')
 
         self.assertGreater(len(f.channels), 2)
         ch0 = f.channels[0]
@@ -330,10 +326,10 @@ class TestXFileClass(unittest.TestCase):
         end = 128
 
         data_01 = f.read([ch0['name'], ch1['name']], (start, end))
-        data_10 = g.read([ch1['name'], ch0['name']], (start, end))
-        fulldata_01 = h.read([ch0['name'], ch1['name']]) # assumption: the function read with
+        data_10 = f.read([ch1['name'], ch0['name']], (start, end))
+        fulldata_01 = f.read([ch0['name'], ch1['name']]) # assumption: the function read with
                                                          # channels argument is correct
-        fulldata_10 = l.read([ch1['name'], ch0['name']]) # assumption: the function read with
+        fulldata_10 = f.read([ch1['name'], ch0['name']]) # assumption: the function read with
                                                          # channels argument is correct
 
         # test that each channel read contains end - start samples
