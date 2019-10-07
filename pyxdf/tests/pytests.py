@@ -78,13 +78,9 @@ class TapTestRunner(unittest.TextTestRunner):
 
         result = TapTestResult(self.stream)
         unittest.registerResult(result)
-        try:
-            rv = test(result)
-            return len(rv.errors)
-        except:
-            return -1
-        finally:
-            unittest.removeResult(result)
+        test(result)
+        unittest.removeResult(result)
+        return result
 
 
 if __name__ == '__main__':
@@ -103,4 +99,7 @@ if __name__ == '__main__':
     sys.path = path_backup
 
     runner = TapTestRunner()
-    exit(runner.run(tests))
+    rv = runner.run(tests)
+    if (len(rv.errors) + len(rv.failures) + len(rv.unexpectedSuccesses)) != 0:
+        exit(-1)
+    exit(0)
