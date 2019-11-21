@@ -350,6 +350,7 @@ install_data(files('AUTHORS', 'COPYING', 'NEWS', 'README'),
 # test public headers for most warnings and C++ compatibility
 api_compat_test = run_target('api-compat-test',
         command : [
+            'bash',
             files('devtools/api-compat-test.sh'),
             headers,
         ]
