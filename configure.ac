@@ -21,7 +21,7 @@ AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 # Setup automake
 AM_INIT_AUTOMAKE([subdir-objects no-dist-gzip dist-xz
-                  color-tests parallel-tests])
+                  color-tests parallel-tests foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 

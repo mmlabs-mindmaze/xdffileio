@@ -1,6 +1,4 @@
 
-                                XDFFILEIO
-
 Presentation
 ============
 
@@ -25,9 +23,39 @@ been only tested on the following platform: GNU/Linux x86, GNU/Linux x86-64,
 Windows x86.
 
 
+Dependencies
+============
+
+It depends on [mmlib](https://github.com/mmlabs-mindmaze/mmlib).
+
+The Python package can be built if the python development files are installed
+
+
 Compilation
 ===========
+xdffileio supports meson and autotools build systems:
 
-This library is organized as a GNU package and can be compiled and
-installed in the same way (see INSTALL file for further information).
+``` bash
+# meson
+meson build --prefix=<install-dir>
+cd build
+ninja
+ninja test # optional
+ninja install
+```
 
+``` bash
+# autotools
+mkdir build && cd build
+../autogen.sh
+../configure --prefix=<install-dir>
+make
+make check # optional
+make install
+```
+
+
+License
+=======
+
+xdffileio is licensed in LGPL-3 or any later version

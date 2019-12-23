@@ -340,7 +340,7 @@ example2 = executable('create-copy-datafile-example',
 install_subdir('doc/example',
         install_dir :  get_option('datadir') / 'doc' / 'xdffileio')
 
-install_data(files('AUTHORS', 'COPYING', 'NEWS', 'README'),
+install_data(files('AUTHORS', 'COPYING', 'NEWS', 'README.md'),
         install_dir : get_option('datadir') / 'doc' / 'xdffileio')
 
 #
