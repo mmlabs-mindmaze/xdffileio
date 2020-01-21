@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4a48ed83_b251ffa9",
+        "filename": "mmpack/specs",
+        "patchSetId": 2
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-01-21T07:40:31Z",
+      "side": 1,
+      "message": "Copyright (C) 2010-2012 EPFL (Ecole Polytechnique Fédérale de Lausanne)\nCopyright (C) 2013,2015,2016,2018,2019 MindMaze Holdings SA",
+      "range": {
+        "startLine": 8,
+        "startChar": 6,
+        "endLine": 9,
+        "endChar": 50
+      },
+      "revId": "4d65efe7fcc1344c2116813a203b86fefb582510",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
