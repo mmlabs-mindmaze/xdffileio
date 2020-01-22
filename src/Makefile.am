@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libxdffileio.la
 include_HEADERS = xdfio.h 
-bin_PROGRAMS = gdf-repair
+bin_PROGRAMS = gdf-repair xdf-head
 
 defexecdir = $(bindir)
 defexec_DATA =
@@ -22,6 +22,9 @@ libxdffileio_la_LIBADD = $(MMLIB_LIB)
 
 gdf_repair_SOURCES = gdf-repair.c
 gdf_repair_LDADD = libxdffileio.la $(MMLIB_LIB)
+
+xdf_head_SOURCES = xdf-head.c
+xdf_head_LDADD = libxdffileio.la
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = xdffileio.pc
