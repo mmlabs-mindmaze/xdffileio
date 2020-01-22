@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9fd8e320_d42151a3",
+        "filename": "src/xdf-head.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-01-22T17:02:16Z",
+      "side": 1,
+      "message": "Please use tab for indent",
+      "range": {
+        "startLine": 49,
+        "startChar": 0,
+        "endLine": 70,
+        "endChar": 5
+      },
+      "revId": "e28a4075d880f59986d45c4ebb96a9eb7e7a46f5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6008ed9b_f7863b39",
+        "filename": "src/xdf-head.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-01-22T17:02:16Z",
+      "side": 1,
+      "message": "Using a table of string indexed by xdfftype value would be IMO way simpler...\n\nstatic const char* type_names[] \u003d {\n      [XDFINT8] \u003d \"int8\",\n      [XDFUINT8] \u003d \"uint8\",\n      [XDFINT16] \u003d \"int16\",\n...\n}\n\n Same could be said get_xdf_filetype_str()",
+      "range": {
+        "startLine": 84,
+        "startChar": 0,
+        "endLine": 122,
+        "endChar": 13
+      },
+      "revId": "e28a4075d880f59986d45c4ebb96a9eb7e7a46f5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e4a456eb_21afbd72",
+        "filename": "src/xdf-head.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-01-22T17:02:16Z",
+      "side": 1,
+      "message": "space align",
+      "range": {
+        "startLine": 239,
+        "startChar": 2,
+        "endLine": 239,
+        "endChar": 4
+      },
+      "revId": "e28a4075d880f59986d45c4ebb96a9eb7e7a46f5",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
