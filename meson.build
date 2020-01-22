@@ -101,6 +101,12 @@ gdf_repair = executable('gdf-repair',
         dependencies : mmlib,
 )
 
+executable('xdf-head',
+        'src/xdf-head.c',
+        install : true,
+        include_directories : include_directories('.', 'src'),
+        link_with : [xdffileio],
+)
 
 #
 # LIBRARY PYTHON
