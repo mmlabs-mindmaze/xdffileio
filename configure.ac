@@ -7,12 +7,12 @@
 # - If any interfaces have been removed since the last public release, then
 # set age to 0.
 
-m4_define([lib_current],0)
-m4_define([lib_revision],3)
+m4_define([lib_current],1)
+m4_define([lib_revision],0)
 m4_define([lib_age],0)
 
 # Setup autoconf
-AC_INIT(xdffileio,[lib_current.lib_revision],[nicolas.bourdaud@gmail.com])
+AC_INIT(xdffileio,[1.0],[nicolas.bourdaud@gmail.com])
 AC_CONFIG_SRCDIR([src/xdffile.c])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
