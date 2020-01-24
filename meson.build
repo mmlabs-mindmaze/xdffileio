@@ -1,5 +1,5 @@
 project('xdffileio', 'c',
-        version : '0.3',
+        version : '1.0',
         default_options : [
             'warning_level=1',
         ],
@@ -12,8 +12,8 @@ project('xdffileio', 'c',
 # * MINOR version when you add functionality in a backwards-compatible manner
 # * PATCH version when you make backwards-compatible bug fixes.
 major = '0'
-minor = '0'
-patch = '3'
+minor = '1'
+patch = '0'
 version = major + '.' + minor + '.' + patch
 
 cc = meson.get_compiler('c')
