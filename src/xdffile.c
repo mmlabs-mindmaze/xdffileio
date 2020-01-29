@@ -242,16 +242,16 @@ static void* transfer_thread_fn(void* ptr)
 	
  	// While a transfer is performed, this routine holds the mutex
 	// preventing from any early buffer swap
- 	mmthr_mtx_lock(&(xdf->mtx));
+ 	mm_thr_mutex_lock(&(xdf->mtx));
 	while (1) {
 		// The transfer ready to be performed
 		// => clear the previous order and notify the main thread
 		xdf->order = 0;
-		mmthr_cond_signal(&(xdf->cond));
+		mm_thr_cond_signal(&(xdf->cond));
 
 		// Wait for an order of transfer
 		while (!xdf->order)
-			mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
+			mm_thr_cond_wait(&(xdf->cond), &(xdf->mtx));
 	
 		// break the transfer loop if the quit order has been sent
 		if (xdf->order == ORDER_QUIT)
@@ -264,7 +264,7 @@ static void* transfer_thread_fn(void* ptr)
 			read_diskrec(xdf);
 
 	}
-	mmthr_mtx_unlock(&(xdf->mtx));
+	mm_thr_mutex_unlock(&(xdf->mtx));
 	return NULL;
 }
 
@@ -287,11 +287,11 @@ static int disk_transfer(struct xdf* xdf)
 
 	// If the mutex is hold by someone else, it means that the transfer
 	// routine has still not in a ready state
-	mmthr_mtx_lock(&(xdf->mtx));
+	mm_thr_mutex_lock(&(xdf->mtx));
 
 	// Wait for the previous operation to be finished
 	while (xdf->order && !xdf->reportval)
-		mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
+		mm_thr_cond_wait(&(xdf->cond), &(xdf->mtx));
 
 	if (xdf->reportval) {
 		if (xdf->reportval < 0) {
@@ -307,11 +307,11 @@ static int disk_transfer(struct xdf* xdf)
 
 		// Signal for data transfer
 		xdf->order = ORDER_TRANSFER;
-		mmthr_cond_signal(&(xdf->cond));
+		mm_thr_cond_signal(&(xdf->cond));
 	}
 
 	// We are safe now, the transfer can start from now
-	mmthr_mtx_unlock(&(xdf->mtx));
+	mm_thr_mutex_unlock(&(xdf->mtx));
 
 	return retval;
 }
@@ -616,26 +616,26 @@ static int init_transfer_thread(struct xdf* xdf)
 	int ret;
 	int done = 0;
 
-	if ((ret = mmthr_mtx_init(&(xdf->mtx), 0)))
+	if ((ret = mm_thr_mutex_init(&(xdf->mtx), 0)))
 		goto error;
 	done++;
 
-	if ((ret = mmthr_cond_init(&(xdf->cond), 0)))
+	if ((ret = mm_thr_cond_init(&(xdf->cond), 0)))
 		goto error;
 	done++;
 
 	xdf->reportval = 0;
 	xdf->order = ORDER_INIT;
-	if ((ret = mmthr_create(&(xdf->thid), transfer_thread_fn, xdf)))
+	if ((ret = mm_thr_create(&(xdf->thid), transfer_thread_fn, xdf)))
 		goto error;
 
 	return 0;
 
 error:
 	if (done-- > 0)
-		mmthr_cond_deinit(&(xdf->cond));
+		mm_thr_cond_deinit(&(xdf->cond));
 	if (done-- > 0)
-		mmthr_mtx_deinit(&(xdf->mtx));
+		mm_thr_mutex_deinit(&(xdf->mtx));
 	errno = ret;
 	return -1;
 }
@@ -651,19 +651,19 @@ static int finish_transfer_thread(struct xdf* xdf)
 
 	// Wait for the previous operation to be finished
 	// and stop the transfer thread
-	mmthr_mtx_lock(&(xdf->mtx));
+	mm_thr_mutex_lock(&(xdf->mtx));
 	while (xdf->order && !xdf->reportval)
-		mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
+		mm_thr_cond_wait(&(xdf->cond), &(xdf->mtx));
 	xdf->order = ORDER_QUIT;
-	mmthr_cond_signal(&(xdf->cond));
-	mmthr_mtx_unlock(&(xdf->mtx));
+	mm_thr_cond_signal(&(xdf->cond));
+	mm_thr_mutex_unlock(&(xdf->mtx));
 
 	// Wait for the transfer thread to complete
-	mmthr_join(xdf->thid, NULL);
+	mm_thr_join(xdf->thid, NULL);
 
 	// Destroy synchronization primitives
-	mmthr_mtx_deinit(&(xdf->mtx));
-	mmthr_cond_deinit(&(xdf->cond));
+	mm_thr_mutex_deinit(&(xdf->mtx));
+	mm_thr_cond_deinit(&(xdf->cond));
 
 	return 0;
 }
@@ -1127,10 +1127,10 @@ API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 	if (irec != xdf->nrecread) {
 		if (irec != xdf->nrecread + 1) {
 
- 			mmthr_mtx_lock(&(xdf->mtx));
+ 			mm_thr_mutex_lock(&(xdf->mtx));
 			// Wait for the previous operation to be finished
 			while (xdf->order && !xdf->reportval)
-				mmthr_cond_wait(&(xdf->cond), &(xdf->mtx));
+				mm_thr_cond_wait(&(xdf->cond), &(xdf->mtx));
 			
 			// Ignore pending end of file report
 			if (xdf->reportval == 1)
@@ -1141,7 +1141,7 @@ API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 			     || (read_diskrec(xdf)) )
 				errnum = errno;
 
- 			mmthr_mtx_unlock(&(xdf->mtx));
+ 			mm_thr_mutex_unlock(&(xdf->mtx));
 			
 			if (errnum)
 				return xdf_set_error(errnum);
