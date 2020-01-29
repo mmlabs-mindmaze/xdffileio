@@ -107,9 +107,9 @@ struct xdf {
 	const struct format_operations* ops;
 	
 	/* Background thread synchronization object */
-	mmthread_t thid;
-	mmthr_mtx_t mtx;
-	mmthr_cond_t cond;
+	mm_thread_t thid;
+	mm_thr_mutex_t mtx;
+	mm_thr_cond_t cond;
 	int order;
 
 	int closefd_ondestroy;

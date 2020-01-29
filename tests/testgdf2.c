@@ -273,18 +273,18 @@ int main(int argc, char *argv[])
 	char genfilename[] = "essaiw.gdf2";
 	char reffilename[128];
 
-	struct mmarg_opt cmdline_optv[] = {
-		{.name = "k", MMOPT_INT, "0", {.iptr = &keep_file}},
-		{.name = "c", MMOPT_INT, "1", {.iptr = &testcopy}},
+	struct mm_arg_opt cmdline_optv[] = {
+		{.name = "k", MM_OPT_INT, "0", {.iptr = &keep_file}},
+		{.name = "c", MM_OPT_INT, "1", {.iptr = &testcopy}},
 	};
 
-	struct mmarg_parser parser = {
+	struct mm_arg_parser parser = {
 		.optv = cmdline_optv,
 		.num_opt = MM_NELEM(cmdline_optv),
 		.execname = argv[0],
 	};
 	
-	if (mmarg_parse(&parser, argc, argv) == MMARGPARSE_ERROR)
+	if (mm_arg_parse(&parser, argc, argv) == MM_ARGPARSE_ERROR)
 		exit(EXIT_FAILURE);
 
 
