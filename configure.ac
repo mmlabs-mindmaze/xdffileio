@@ -64,7 +64,7 @@ AC_SUBST([AGE],[lib_age])
 PKG_CHECK_MODULES_EXT(CHECK, [check >= 0.9.12],
                       [has_check=yes; tap_in_check=yes],
                       [PKG_CHECK_MODULES_EXT(CHECK, [check], [has_check=yes], [has_check=no])])
-MM_CHECK_LIB([mmthr_create], [mmlib], MMLIB, [], [AC_MSG_ERROR([mmlib library required])])
+MM_CHECK_LIB([mm_thr_create], [mmlib], MMLIB, [], [AC_MSG_ERROR([mmlib library required])])
 AC_ARG_WITH([check], AC_HELP_STRING([--with-check], [Build and run check based tests. @<:@default=detect@:>@]),
             [], [with_check=detect])
 AS_CASE([$with_check],
