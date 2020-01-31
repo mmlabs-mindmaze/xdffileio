@@ -13,12 +13,17 @@ cp -uvf $builddirlibs/_pyxdf*.so $TESTDIR/xdf/ \
 	|| cp -uvf $builddirlibs/_pyxdf*.dll $TESTDIR/xdf/ \
 	|| cp -uvf $builddirlibs/_pyxdf.pyd $TESTDIR/xdf/
 
-# update the PATH for windows (it's used as library path)
-export PATH="$srcdirlibs:$PATH"
-export LD_LIBRARY_PATH="$srcdirlibs:$LD_LIBRARY_PATH"
 
 # do not leave potential trailing ':' char for cygpath ...
-export PYTHONPATH="$TESTDIR${PYTHONPATH:+:$PYTHONPATH}"
+if [ -n "$(which cygpath)" ] ; then
+	PATHSEP=";"
+else
+	PATHSEP=":"
+fi
+export PYTHONPATH="$TESTDIR${PYTHONPATH:+$PATHSEP$PYTHONPATH}"
+# update the PATH for windows (it's used as library path)
+export PATH="$srcdirlibs$PATHSEP$PATH"
+export LD_LIBRARY_PATH="$srcdirlibs$PATHSEP$LD_LIBRARY_PATH"
 
 python3 $srcdir/tests/pytests.py
 
