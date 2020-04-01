@@ -109,23 +109,27 @@ executable('xdf-head',
 )
 
 #
-# LIBRARY PYTHON
+# PYTHON BINDINGS
 #
 
+python_bindings_state = 'disabled'
 pymod = import('python')
-py3 = pymod.find_installation('python3', required : true)
-py_dep = dependency('python3')
+py3 = pymod.find_installation('python3', required : get_option('python-bindings'))
+py_dep = dependency('python3',  required : get_option('python-bindings'))
+if py3.found() and py_dep.found()
+    python_bindings_state = 'enabled'
 
-py3.extension_module('_pyxdf',
-        'pyxdf/pyxdf.c',
-        install : true,
-        subdir : 'xdf',
-        link_with : xdffileio,
-        include_directories : configuration_inc,
-        dependencies : py_dep,
-)
+    py3.extension_module('_pyxdf',
+            'pyxdf/pyxdf.c',
+            install : true,
+            subdir : 'xdf',
+            link_with : xdffileio,
+            include_directories : configuration_inc,
+            dependencies : py_dep,
+    )
 
-py3.install_sources('pyxdf/__init__.py', subdir : 'xdf')
+    py3.install_sources('pyxdf/__init__.py', subdir : 'xdf')
+endif
 
 
 #
@@ -285,7 +289,7 @@ endif
 #
 # TESTS PYTHON
 
-if get_option('tests-python')
+if python_bindings_state == 'enabled' and get_option('tests-python')
         test('pytests',
                 files ('pyxdf/tests/python-unittests.tap'),
                 env : ['builddirlibs=' + meson.current_build_dir(),
