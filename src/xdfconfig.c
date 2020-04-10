@@ -325,13 +325,14 @@ error:
 }
 
 
-/* \param filename	path of the file to be written
- * \param mode		read or write
- * \param type		expected/requested type
+/**
+ * xdf_open() - creates a xdf structure of a XDF file for writing or
+ *              reading depending on the mode.
+ * @filename:	path of the file to be written
+ * @mode:       read or write
+ * @type:       expected/requested type
  *
- * API FUNCTION
- * Create a xdf structure of a xDF file for writing or reading depending on
- * the mode. See the manpage for details
+ * Return: the created structure in case of success, NULL otherwise
  */
 API_EXPORTED
 struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
@@ -369,13 +370,14 @@ struct xdf* xdf_open(const char* filename, int mode, enum xdffiletype type)
 }
 
 
-/* \param fd		file descriptor of the storage
- * \param mode		read or write
- * \param type		expected/requested type
+/**
+ * xdf_fdopen() - creates a xdf structure of a XDF file for writing or
+ *                reading depending on the mode
+ * @fd:		file descriptor of the storage
+ * @mode:	read or write
+ * @type:	expected/requested type
  *
- * API FUNCTION
- * Create a xdf structure of a xDF file for writing or reading depending on
- * the mode. See the manpage for details
+ * Return: the created structure in case of success, NULL otherwise
  */
 API_EXPORTED
 struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
@@ -426,12 +428,12 @@ struct xdf* xdf_fdopen(int fd, int mode, enum xdffiletype type)
 /******************************************************
  *         Channel configuration functions            *
  ******************************************************/
-/* \param xdf	pointer to a valid xdf structure
+/**
+ * xdf_alloc_channel() - allocates a channel, initializes it with default
+ *                       values and links it to the end of channel list
+ * @xdf:	pointer to a valid xdf structure
  * 
- * Allocate a channel, initialize it with default values and link it to
- * the end of channel list
- *
- * Return the pointer a new channel or NULL in case of failure
+ * Return: the pointer to the new channel in case of success, NULL otherwise
  */
 LOCAL_FN struct xdfch* xdf_alloc_channel(struct xdf* xdf)
 {
@@ -459,12 +461,13 @@ LOCAL_FN struct xdfch* xdf_alloc_channel(struct xdf* xdf)
 	return ch;
 }
 
-/* \param xdf	pointer to a valid xdf structure
- * \param index	index of the requested channel
+/**
+ * xdf_get_channel() - gets the asked channel
+ * @xdf:	pointer to a valid xdf structure
+ * @index:	index of the requested channel
  *
- * API FUNCTION
- * Returns a pointer to the index-th channel of the xdf file.
- * Returns NULL in case of failure.
+ * Return: a pointer to the index-th channel of the xdf file in case of
+ *         success, NULL otherwise
  */
 API_EXPORTED struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int index)
 {
@@ -485,13 +488,15 @@ API_EXPORTED struct xdfch* xdf_get_channel(const struct xdf* xdf, unsigned int i
 }
 
 
-/* \param xdf	pointer to a valid xdf structure opened for writing
- * \param label	string holding the label of the channel (can be NULL)
+/**
+ * xdf_add_channel() - adds a channel to a given xdf file
+ * @xdf:	pointer to a valid xdf structure opened for writing
+ * @label:	string holding the label of the channel (can be NULL)
  *
- * API FUNCTION
- * Add a channel to xdf file. It is initialized with the last added channel
+ * The xdf file is initialized with the last added channel
  * but its offset will correspond to neighbour of the last channel
- * Returns NULL in case of failure.
+ * 
+ * Return: the added channel in case of success,  NULL otherwise
  */
 API_EXPORTED struct xdfch* xdf_add_channel(struct xdf* xdf, const char* label)
 {
@@ -588,19 +593,19 @@ static int proceed_set_chconf(struct xdfch* ch, enum xdffield field,
 	return retval;
 }
 
-/* \param ch	pointer to a channel of a xdf file
- * \param field	identifier of the field to be set
- * \param other	list of couple (field val) terminated by XDF_NOF
- *
- * API FUNCTION
- * Set the configuration of a channel according to a list of couple of
- * (enum xdffield, value pointer) that should be terminated by
- * XDF_NOF.
+/**
+ * xdf_set_chconf() - sets the configuration of a channel according
+ *                    to a list of couple of (enum xdffield, value pointer) 
+ * @ch: 	pointer to a channel of a xdf file
+ * @field:	identifier of the field to be set
+ * @other:	list of couple (field val) terminated by XDF_NOF
  *
  * Example:
  *    xdf_set_chconf(ch, XDF_CF_DMIN, min,
  *                       XDF_CF_DMAX, max,
  *                       XDF_NOF);
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
  */
 API_EXPORTED int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 {
@@ -685,19 +690,19 @@ field, union optval* val)
 }
 
 
-/* \param ch	pointer to a channel of a xdf file
- * \param field	identifier of the field to be get
- * \param other	list of couple (field val) terminated by XDF_NOF
- *
- * API FUNCTION
- * Get the configuration of a channel according to a list of couple of
- * (enum xdffield, value pointer) that should be terminated by
- * XDF_NOF.
+/**
+ * xdf_get_chconf() - gets the configuration of a channel according to a list
+ *                    of couple of (enum xdffield, value pointer) 
+ * @ch:	pointer to a channel of a xdf file
+ * @field:	identifier of the field to be get
+ * @other:	list of couple (field val) terminated by XDF_NOF
  *
  * Example:
  *    xdf_get_chconf(ch, XDF_CF_DMIN, &min,
  *                       XDF_CF_DMAX, &max,
  *                       XDF_NOF);
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
  */
 API_EXPORTED
 int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
@@ -733,11 +738,13 @@ int xdf_get_chconf(const struct xdfch* ch, enum xdffield field, ...)
 }
 
 
-/* \param dst	pointer to the destination xdf channel 
- * \param src	pointer to the source xdf channel
+/**
+ * xdf_copy_chconf() - copies the configuration of a channel
+ * @dst:	pointer to the destination xdf channel 
+ * @src:	pointer to the source xdf channel
  *
- * API FUNCTION
- * Copy the configuration of a channel
+ * Return: 0 in case of success and in case of failure. errno is set in
+ *         case of failure.
  */
 API_EXPORTED
 int xdf_copy_chconf(struct xdfch* dst, const struct xdfch* src)
@@ -820,19 +827,19 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
 }
 
 
-/* \param xdf	pointer to a xdf file
- * \param field	identifier of the field to be set
- * \param other	list of couple (field val) terminated by XDF_NOF
- *
- * API_FUNCTION
- * set the configuration of a xDF file according to a list of couple of
- * (enum xdffield, value pointer) that should be terminated by
- * XDF_NOF.
+/**
+ * xdf_set_conf() - sets the configuration of a XDF file according to a
+ *                  list of couple of (enum xdffield, value pointer)
+ * @xdf:	pointer to a xdf file
+ * @field:	identifier of the field to be set
+ * @other:	list of couple (field val) terminated by XDF_NOF
  *
  * Example:
  *    xdf_set_conf(xdf, XDF_F_REC_NSAMPLE, ns,
  *                      XDF_F_REC_DURATION, time,
  *                      XDF_NOF);
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
  */
 API_EXPORTED
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
@@ -914,19 +921,19 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
 }
 
 
-/* \param xdf	pointer to a xdf file
- * \param field	identifier of the field to be get
- * \param other	list of couple (field val) terminated by XDF_NOF
- *
- * API_FUNCTION
- * Get the configuration of a xDF file according to a list of couple of
- * (enum xdffield, value pointer) that should be terminated by
- * XDF_NOF.
+/**
+ * xdf_get_conf() - gets the configuration of a xDF file according to a
+ *                  list of couple of (enum xdffield, value pointer)
+ * @xdf:	pointer to a xdf file
+ * @field:	identifier of the field to be get
+ * @other:	list of couple (field val) terminated by XDF_NOF
  *
  * Example:
  *    xdf_get_conf(xdf, XDF_F_REC_NSAMPLE, &ns,
  *                      XDF_F_REC_DURATION, &time,
  *                      XDF_NOF);
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
  */
 API_EXPORTED
 int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
@@ -965,11 +972,12 @@ int xdf_get_conf(const struct xdf* xdf, enum xdffield field, ...)
 }
 
 
-/* \param dst	pointer to the destination xdf file 
- * \param src	pointer to the source xdf file
+/**
+ * xdf_copy_conf() - copies the configuration of a xDF file
+ * @dst:	pointer to the destination xdf file 
+ * @src:	pointer to the source xdf file
  *
- * API FUNCTION
- * Copy the configuration of a xDF file
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
  */
 API_EXPORTED
 int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
@@ -998,11 +1006,14 @@ int xdf_copy_conf(struct xdf* dst, const struct xdf* src)
 }
 
 
-/* \param xdf	pointer to a xdf structure
- * \param type	target data type
+/**
+ * xdf_closest_type() - gives the data type supported by xdf the closest to
+ *                      the given type
+ * @xdf:	pointer to a xdf structure
+ * @type:	target data type
  *
- * API function
- * Returns the data type supported by xdf the closest to type or -1 
+ * Return: the data type supported by xdf the closest to type in case of
+ *         success, -1 otherwise
  */
 API_EXPORTED
 int xdf_closest_type(const struct xdf* xdf, enum xdftype type)
@@ -1048,6 +1059,14 @@ int write_code(struct xdf* xdf, int code, const char* desc, int evttype)
 }
 
 
+/**
+ * xdf_add_evttype() - add an event in the XDF file
+ * @xdf:	pointer to a xdf structure
+ * @code:       code of the event
+ * @desc:       label of the event
+ *
+ * Return: a positive or null number in case of success, -1 otherwise
+ */
 API_EXPORTED 
 int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
 {
@@ -1069,6 +1088,15 @@ int xdf_add_evttype(struct xdf* xdf, int code, const char* desc)
 }
 
 
+/**
+ * xdf_get_evttype() - gets a given event of a xdf file
+ * @xdf: pointer to a xdf structure
+ * @evttype: index of the event to retrieve (event type)
+ * @code: integer filled with the code of the event
+ * @desc: string filled with the label of the event
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 API_EXPORTED 
 int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
                     int *code, const char** desc)
@@ -1093,6 +1121,15 @@ int xdf_get_evttype(struct xdf* xdf, unsigned int evttype,
 }
 
 
+/**
+ * xdf_add_event() - adds an event to a xdf file
+ * @xdf: pointer to a xdf structure
+ * @evttype: event type
+ * @onset: start of the event
+ * @duration: duration of the event
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set with the error
+ */ 
 API_EXPORTED 
 int xdf_add_event(struct xdf* xdf, int evttype,
                           double onset, double duration)
@@ -1120,6 +1157,16 @@ int xdf_add_event(struct xdf* xdf, int evttype,
 }
 
 
+/**
+ * xdf_get_event() - gets, from a xdf file, an event at a given index
+ * @xdf: pointer to a xdf structure
+ * @index: index of the event to retrieve
+ * @evttype: integer filled with the event type
+ * @start: integer filled with the start of the event
+ * @dur: integer filled with the duration of the event
+ *
+ * Return: 0 in case of success, -1 otherwise and errno is set to the error
+ */ 
 API_EXPORTED 
 int xdf_get_event(struct xdf* xdf, unsigned int index, 
                          unsigned int *evttype, double* start, double* dur)
