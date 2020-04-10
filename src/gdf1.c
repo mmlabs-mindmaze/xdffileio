@@ -170,7 +170,10 @@ static const struct gdf1_channel gdf1ch_def = {
  *            GDF1 file support implementation         *
  ******************************************************/
 
-/* Allocate a GDF1 file
+/**
+ * xdf_alloc_gdf1file() - allocates a GDF1 file
+ *
+ * Return: the allocated structure representing a GDF1 file
  */
 LOCAL_FN struct xdf* xdf_alloc_gdf1file(void)
 {
@@ -201,7 +204,10 @@ LOCAL_FN struct xdf* xdf_alloc_gdf1file(void)
 }
 
 
-/* \param magickey	pointer to key identifying a type of file
+/**
+ * xdf_is_gdf1file() - indicates whether a pointer to a type of file corresponds
+ *                     to a GDF1 file or not.
+ * @magickey: pointer to key identifying a type of file
  *
  * Returns 1 if the supplied magickey corresponds to a GDF1 file
  */
