@@ -377,7 +377,16 @@ static const swapproc swaptable[8] = {
 #endif
 
 
-/* Extract data from packed channel (as in the GDF file) and convert the data in the file into the data usable by user */
+/**
+ * xdf_transconv_data() - extracts data from packed channel (as in the GDF
+ *                        file) and converts the data in the file into the data
+ *                        usable by user
+ * @ns: number of samples
+ * @dst: the destination buffer
+ * @src: the source buffer
+ * @prm: pointer to a structure containing the parameters for the conversion
+ * @tmpbuff: a temporary buffer
+ * */
 LOCAL_FN void xdf_transconv_data(unsigned int ns, void* restrict dst, void* restrict src, const struct convprm* prm, void* restrict tmpbuff)
 {
 	void* in = src;
@@ -481,12 +490,26 @@ int xdf_setup_transform(struct convprm* prm, int swaptype,
 }
 
 
+/**
+ * xdf_get_datasize() - gets the size of a given type
+ * @type: type from which the size is requested
+ *
+ * Return: the size of the type given in parameter if it is a known type,
+ *         NULL otherwise
+ */
 LOCAL_FN int xdf_get_datasize(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? (int)(data_info[type].size):-1;
 }
 
 
+/**
+ * xdf_datinfo() - gets the information about a given type
+ * @type: type about which information are requested
+ *
+ * Return: a pointer to the information on the type given in parameter if it
+ *         is a known type, NULL otherwise
+ */
 LOCAL_FN const struct data_information* xdf_datinfo(enum xdftype type)
 {
 	return (type < XDF_NUM_DATA_TYPES) ? &(data_info[type]) : NULL;
@@ -550,11 +573,14 @@ static bool find_match(enum xdftype* match,
 }
 
 
-/* \param target		data type desired
- * \param supported_type	array of XDF_NUM_DATA_TYPES bool values
+/**
+ * get_closest_type() - gets the closest supported data type to the target
+ * @target:		data type desired
+ * @supported_type:	array of XDF_NUM_DATA_TYPES bool values
  *				indicating whether a type is supported
- * 
- * Returns the supported data type that is the closest to the target.
+ *
+ * Return: the supported data type that is the closest to the target in
+ *         case of success, 0 otherwise.
  */
 LOCAL_FN enum xdftype get_closest_type(enum xdftype target, 
 					const bool *supported_type)
