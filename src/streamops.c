@@ -28,6 +28,14 @@
 #include "streamops.h"
 #include "common.h"
 
+/**
+ * read16bval() - read a given number of 16 bits integers from a file
+ * @file: file from which the integers are read
+ * @num: number of 16 bits integer to read
+ * @value: buffer in which the reading is stored
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int read16bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint16_t), num, file)==0)
@@ -43,6 +51,14 @@ LOCAL_FN int read16bval(FILE* file, unsigned int num, void* value)
 }
 
 
+/**
+ * write16bval() - write a given number of 16 bits integers in a file
+ * @file: file in which the integers are written
+ * @num: number of 16 bits integers to write
+ * @value: buffer from which the integers are read
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int write16bval(FILE* file, unsigned int num, const void* value)
 {
 #if WORDS_BIGENDIAN
@@ -61,6 +77,14 @@ LOCAL_FN int write16bval(FILE* file, unsigned int num, const void* value)
 }
 
 
+/**
+ * read24bval() - read a given number of 24 bits integers from a file
+ * @file: file from which the integers are read
+ * @num: number of 24 bits integer to read
+ * @value: buffer in which the reading is stored
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int read24bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, 3, num, file)==0)
@@ -80,6 +104,14 @@ LOCAL_FN int read24bval(FILE* file, unsigned int num, void* value)
 }
 
 
+/**
+ * write24bval() - write a given number of 24 bits integers in a file
+ * @file: file in which the integers are written
+ * @num: number of 24 bits integers to write
+ * @value: buffer from which the integers are read
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int write24bval(FILE* file, unsigned int num, const void* value)
 {
 #if WORDS_BIGENDIAN
@@ -101,6 +133,14 @@ LOCAL_FN int write24bval(FILE* file, unsigned int num, const void* value)
 }
 
 
+/**
+ * read32bval() - read a given number of 32 bits integers from a file
+ * @file: file from which the integers are read
+ * @num: number of 32 bits integer to read
+ * @value: buffer in which the reading is stored
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int read32bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint32_t), num, file)==0)
@@ -116,6 +156,14 @@ LOCAL_FN int read32bval(FILE* file, unsigned int num, void* value)
 }
 
 
+/**
+ * write32bval() - write a given number of 32 bits integers in a file
+ * @file: file in which the integers are written
+ * @num: number of 32 bits integers to write
+ * @value: buffer from which the integers are read
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int write32bval(FILE* file, unsigned int num, const void* value)
 {
 #if WORDS_BIGENDIAN
@@ -134,6 +182,14 @@ LOCAL_FN int write32bval(FILE* file, unsigned int num, const void* value)
 }
 
 
+/**
+ * read64bval() - read a given number of 64 bits integers from a file
+ * @file: file from which the integers are read
+ * @num: number of 64 bits integer to read
+ * @value: buffer in which the reading is stored
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int read64bval(FILE* file, unsigned int num, void* value)
 {
 	if (fread(value, sizeof(uint64_t), num, file)==0)
@@ -149,6 +205,14 @@ LOCAL_FN int read64bval(FILE* file, unsigned int num, void* value)
 }
 
 
+/**
+ * write64bval() - write a given number of 64 bits integers in a file
+ * @file: file in which the integers are written
+ * @num: number of 64 bits integers to write
+ * @value: buffer from which the integers are read
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN int write64bval(FILE* file, unsigned int num, const void* value)
 {
 #if WORDS_BIGENDIAN
@@ -166,8 +230,16 @@ LOCAL_FN int write64bval(FILE* file, unsigned int num, const void* value)
 	return 0;
 }
 
-/* Parse the file (field of nch characters) and assign to the integer val.
- * Advance the file pointer of exactly nch byte.
+
+/**
+ * read_int_field() - read a given number of character in a file.
+ * @file: file in which the integers are read
+ * @val: pointer fill with the value read
+ * @nch: number of characters read from the file
+ *
+ * The value read corresponds to an integer.
+ *
+ * Return: 0 in case of success, -1 otherwise
  */
 LOCAL_FN int read_int_field(FILE* file, int* val, unsigned int nch)
 {
@@ -183,9 +255,15 @@ LOCAL_FN int read_int_field(FILE* file, int* val, unsigned int nch)
 }
 
 
-/* Parse the file (field of nch characters) and assign to the string val.
- * Advance the file pointer of exactly nch byte.
- * It also removes trailing space characters from the string
+/**
+ * read_int_field() - read a given number of character in a file.
+ * @file: file in which the integers are read
+ * @val: pointer fill with the value read
+ * @nch: number of characters read from the file
+ *
+ * The value read corresponds to a string and does not contain trailing space.
+ *
+ * Return: 0 in case of success, -1 otherwise
  */
 LOCAL_FN int read_string_field(FILE* file, char* val, unsigned int nch)
 {
