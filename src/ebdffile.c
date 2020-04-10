@@ -185,7 +185,10 @@ static struct xdf* alloc_ebdffile(const struct format_operations* ops,
 	return &(ebdf->xdf);
 }
 
-/* Allocate a BDF file
+/**
+ * xdf_alloc_bdffile() - allocates a BDF file
+ *
+ * Return: the allocated structure representing a BDF file
  */
  struct xdf* xdf_alloc_bdffile(void)
  {
@@ -193,9 +196,12 @@ static struct xdf* alloc_ebdffile(const struct format_operations* ops,
  }
 
 
-/* \param magickey	pointer to key identifying a type of file
+/**
+ * xdf_is_bdffile() - indicates whether a pointer to a type of file corresponds
+ *                    to a BDF file or not.
+ * @magickey:	pointer to key identifying a type of file
  *
- * Returns 1 if the supplied magickey corresponds to a BDF file
+ * Return: 1 if the supplied magickey corresponds to a BDF file
  */
 int xdf_is_bdffile(const unsigned char* magickey)
 {
@@ -205,7 +211,10 @@ int xdf_is_bdffile(const unsigned char* magickey)
 }
 
 
-/* Allocate a EDF file
+/**
+ * xdf_alloc_edffile() - allocates a EDF file
+ *
+ * Return: the allocated structure representing an EDF file
  */
 struct xdf* xdf_alloc_edffile(void)
 {
@@ -213,9 +222,12 @@ struct xdf* xdf_alloc_edffile(void)
 }
 
 
-/* \param magickey	pointer to key identifying a type of file
+/**
+ * xdf_is_edffile() - indicates whether a pointer to a type of file corresponds
+ *                    to a EDF file or not.
+ * @magickey:	pointer to key identifying a type of file
  *
- * Returns 1 if the supplied magickey corresponds to a BDF file
+ * Return: 1 if the supplied magickey corresponds to a EDF file
  */
 int xdf_is_edffile(const unsigned char* magickey)
 {
