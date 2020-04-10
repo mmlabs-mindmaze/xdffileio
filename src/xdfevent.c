@@ -42,6 +42,15 @@ int find_entry(struct eventtable* table, int code, const char* s)
 }
 
 
+/**
+ * add_event_entry() - add an event entry in the table of events
+ * @table: table of events
+ * @code: code of the event
+ * @label: label of the event
+ *
+ * Return: the index of the table in which the event entry is added in case of
+ *         success, -1 otherwise
+ */
 LOCAL_FN
 int add_event_entry(struct eventtable* table, 
                           int code, const char* label)
@@ -78,6 +87,16 @@ int add_event_entry(struct eventtable* table,
 	return evttype;
 }
 
+/**
+ * get_event_entry() - gets the event entry at a given index of the table of
+ *                     events
+ * @table: table of events
+ * @ind: index of the table at which the event entry is retrieved
+ * @code: integer filled whith the code of the event
+ * @label: string filled with the label of the event
+ *
+ * Return: 0
+ */
 LOCAL_FN
 int get_event_entry(struct eventtable* table, unsigned int ind,
                               int *code, const char** label)
@@ -88,6 +107,13 @@ int get_event_entry(struct eventtable* table, unsigned int ind,
 }
 
 
+/**
+ * add_event() - add an event in the table of events
+ * @table: table of events
+ * @evt: pointer to an event
+ *
+ * Return: 0 in case of success, -1 otherwise
+ */
 LOCAL_FN
 int add_event(struct eventtable* table, struct xdfevent* evt)
 {
@@ -115,6 +141,11 @@ int add_event(struct eventtable* table, struct xdfevent* evt)
 }
 
 
+/**
+ * create_event_table() - creates a table of events
+ * 
+ * Return: the allocated table in case of success, NULL otherwise
+ */ 
 LOCAL_FN
 struct eventtable* create_event_table(void)
 {
@@ -133,6 +164,10 @@ struct eventtable* create_event_table(void)
 }
 
 
+/**
+ * destroy_event_table() - destroys a table of events
+ * @table: table of events to destroy
+ */ 
 LOCAL_FN 
 void destroy_event_table(struct eventtable* table)
 {
@@ -157,6 +192,13 @@ void destroy_event_table(struct eventtable* table)
 }
 
 
+/**
+ * get_event() - gets the event at a given index of the table of events 
+ * @table: table of events
+ * @index:  index of the table at which the event is retrieved
+ *
+ * Return: the event at the index @index of the table of events 
+ */ 
 LOCAL_FN
 struct xdfevent* get_event(struct eventtable* table, unsigned int index)
 {

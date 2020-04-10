@@ -105,6 +105,12 @@ struct ch_array_map {
  *                 misc functions                 *
  **************************************************/
 
+/**
+ * xdf_set_error() - sets errno
+ * @error: error to which errno is set
+ *
+ * Return: 0 if no error is set, -1 if an error is set
+ */ 
 LOCAL_FN int xdf_set_error(int error)
 {
 	if (error) {
@@ -844,10 +850,11 @@ void remove_tmp_event_files(struct xdf* xdf)
  *                   API functions                 *
  ***************************************************/
 
-/* \param xdf		pointer to a valid xdf file
+/**
+ * xdf_close() - closes the xDF file and free the resources allocated
+ * @xdf:	pointer to a valid xdf file
  *
- * API FUNCTION
- * Closes the xDF file and free the resources allocated
+ * Return: 0 in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_close(struct xdf* xdf)
 {
@@ -893,13 +900,14 @@ API_EXPORTED int xdf_close(struct xdf* xdf)
 }
 
 
-/* \param xdf		pointer to a valid xdf file
- * \param numarrays	number of arrays that will be used
- * \param strides	strides for each arrays
+/**
+ * xdf_define_arrays() - specifies the number of arrays used (used in xdf_read and
+ *                       xdf_write) and specifies the strides for each array
+ * @xdf:	pointer to a valid xdf file
+ * @numarrays:	number of arrays that will be used
+ * @strides:	strides for each arrays
  *
- * API FUNCTION
- * Specify the number of arrays used (used in xdf_read and xdf_write) and 
- * specify the strides for each array.
+ * Return: 0 in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, const size_t* strides)
 {
@@ -916,11 +924,12 @@ API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, cons
 }
 
 
-/* \param xdf	pointer to a valid xdf file
+/**
+ * xdf_prepare_transfer() - computes the batches, allocates the necessary data
+ *                        for the transfer and initializes the transfer thread
+ * @xdf:	pointer to a valid xdf file
  *
- * API FUNCTION
- * Compute the batches, allocate the necessary data for the transfer and
- * Initialize the transfer thread
+ * Return: 0 in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf)
 {
@@ -952,12 +961,14 @@ error:
 	return -1;
 }
 
-/* \param xdf	pointer to a valid xdf file
+/**
+ * xdf_end_transfer() - ends transfer.
+ * @xdf:	pointer to a valid xdf file
+ * 
+ * This function is the opposite of xdf_prepare_transfer(), it resets the xdf
+ * file to a state where it can be reconfigured for reading.
  *
- * API FUNCTION
- * End transfer.
- * This is the opposite of xdf_prepare_transfer(), it reset the xdf file
- * to a state where it can be reconfigured for reading.
+ * Return: 0 in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 {
@@ -979,15 +990,17 @@ API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 	return (pos < 0) ? -1 : 0;
 }
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE 
- * \param ns	number of samples to be added
- * \param other pointer to the arrays holding the input samples
+/**
+ * xdf_write() - adds, in a xdf file, samples coming from one or several input
+ *               arrays containing the samples. 
+ * @xdf: 	pointer to a valid xdffile with mode XDF_WRITE 
+ * @ns:	        number of samples to be added
+ * @...:        other pointer to the arrays holding the input samples
  *
- * API FUNCTION
- * Add samples coming from one or several input arrays containing the
- * samples. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples written, -1 in case of error
+ *
+ * Return: the number of samples written in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_write(struct xdf* xdf, size_t ns, ...)
 {
@@ -1010,15 +1023,17 @@ API_EXPORTED int xdf_write(struct xdf* xdf, size_t ns, ...)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE
- * \param ns	number of samples to be added
- * \param vbuff array of pointer to the array to write
+/**
+ * xdf_write() - adds, in a xdf file, samples coming from one or several input
+ *               arrays containing the samples. 
+ * @xdf: 	pointer to a valid xdffile with mode XDF_WRITE
+ * @ns: 	number of samples to be added
+ * @vbuff:      array of pointer to the array to write
  *
- * API FUNCTION
- * Add samples coming from one or several input arrays containing the
- * samples. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples written, -1 in case of error
+ *
+ * Return: the number of samples written in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
 {
@@ -1033,15 +1048,17 @@ API_EXPORTED int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_READ 
- * \param ns	number of samples to be read
- * \param other pointer to the arrays holding the output samples
+/**
+ * xdf_read() - reads samples in a xdf file and transfers them to one or
+ *              several output arrays.
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ 
+ * @ns: 	number of samples to be read
+ * @...:        other pointer to the arrays holding the output samples
  *
- * API FUNCTION
- * Read samples in the buffer and transfer them to one or several output
- * arrays. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples read, -1 in case of error
+ *
+ * Return: the number of samples read in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_read(struct xdf* xdf, size_t ns, ...)
 {
@@ -1064,15 +1081,17 @@ API_EXPORTED int xdf_read(struct xdf* xdf, size_t ns, ...)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_READ
- * \param ns	number of samples to be read
- * \param vbuff array of pointer to the array to write
+/**
+ * xdf_readv() - reads samples in a xdf file and transfers them to one or
+ *               several output arrays.
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ
+ * @ns: 	number of samples to be read
+ * @vbuff:      array of pointer to the arrays to write
  *
- * API FUNCTION
- * Read samples in the buffer and transfer them to one or several output
- * arrays. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples read, -1 in case of error
+ *
+ * Return: the number of samples read in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
 {
@@ -1087,16 +1106,18 @@ API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
 }
 
 
-/* \param xdf 		pointer to a valid xdffile with mode XDF_READ 
- * \param offset	offset where the current sample pointer must move
- * \param whence	reference of the offset
+/**
+ * xdf_seek() - repositions the current sample pointer according to the couple
+ *              (offset, whence).
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ 
+ * @offset:	offset where the current sample pointer must move
+ * @whence:	reference of the offset
  *
- * API FUNCTION
- * Reposition the current sample pointer according to the couple 
- * (offset, whence). whence can be SEEK_SET, SEEK_CUR or SEEK_END
- * Upon successful completion, it returns the resulting offset location as
- * measured in number of samples for the beginning of the recording.
- * Otherwise -1 is returned and errno is set to indicate the error
+ * The field @whence can be SEEK_SET, SEEK_CUR or SEEK_END.
+ *
+ * Return: the resulting offset location measured in number of samples from the
+ *         beginning of the recording in case of success, -1 otherwise and
+ *         errno is set to the error
  */
 API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 {
@@ -1160,8 +1181,10 @@ API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 
 static const char xdffileio_string[] = PACKAGE_STRING;
 
-/* API FUNCTION
- * Returns the string describing the library with its version number
+/**
+ * xdf_get_string() - gets a string describing the library
+ * 
+ * Return: the string describing the library with its version number
  */
 API_EXPORTED const char* xdf_get_string(void)
 {
