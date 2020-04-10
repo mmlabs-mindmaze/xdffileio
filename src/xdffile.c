@@ -105,6 +105,12 @@ struct ch_array_map {
  *                 misc functions                 *
  **************************************************/
 
+/**
+ * xdf_set_error() - sets errno
+ * @error: error to which errno is set
+ *
+ * Return: 0 if no error is set, -1 if an error is set
+ */
 LOCAL_FN int xdf_set_error(int error)
 {
 	if (error) {
@@ -844,10 +850,25 @@ void remove_tmp_event_files(struct xdf* xdf)
  *                   API functions                 *
  ***************************************************/
 
-/* \param xdf		pointer to a valid xdf file
+/**
+ * xdf_close() - closes a xDF file
+ * @xdf:	pointer to a valid xdf file
  *
- * API FUNCTION
- * Closes the xDF file and free the resources allocated
+ * xdf_close() closes the xDF file referenced by the handle @xdf. When
+ * the file is closed, if a record is not full, it will be completed by zeros.
+ * After a call to xdf_close(), @xdf should not be used anymore even
+ * if the call fails since all resources associated will be freed anyways.
+ * 
+ * Return: 0 in case of success. Otherwise, -1 is returned and errno is set
+ *         accordingly (EINVAL if @xdf is NULL, EFBIG if an attempt was made
+ *         to write a file that exceeds the implementation-defined maximum
+ *         file size or the process's file size limit, or to write at a
+ *         position past the maximum allowed offset, EINTR if the call was
+ *         interrupted by a signal before any data was written, EIO if a
+ *         low-level I/O error occurred while modifying the inode, ENOSPC
+ *         if the device containing the xDF file has no room for the data,
+ *         or ESTALE if stale file handle, this error can occur for NFS and
+ *         for other file systems).
  */
 API_EXPORTED int xdf_close(struct xdf* xdf)
 {
@@ -893,13 +914,31 @@ API_EXPORTED int xdf_close(struct xdf* xdf)
 }
 
 
-/* \param xdf		pointer to a valid xdf file
- * \param numarrays	number of arrays that will be used
- * \param strides	strides for each arrays
+/**
+ * xdf_define_arrays() - specifies the number of input/output arrays
+ * @xdf:	pointer to a valid xdf file
+ * @numarrays:	number of arrays that will be used
+ * @strides:	strides for each arrays
  *
- * API FUNCTION
- * Specify the number of arrays used (used in xdf_read and xdf_write) and 
- * specify the strides for each array.
+ * xdf_define_arrays() specifies the number of arrays and its strides for
+ * upcoming calls to xdf_write() and xdf_read() using @xdf.
+ * This function is used to configure the upcoming transfer. As such, it must
+ * be called before xdf_prepare_transfer() (calling it after will
+ * produce an error). However the function may be called several times but
+ * only the last call is meaningful for the transfer.
+ *
+ * @numarrays specifies the number of arrays that will be provided in the
+ * argument list of xdf_write() or xdf_read().
+ *
+ * @strides argument should point to an array of @numarrays unsigned
+ * int corresponding respectively to the stride of each arrays that will be
+ * supplied to the upcoming call to xdf_write() or xdf_read().
+ * The stride corresponds to the length in byte between two consecutive
+ * samples of the same channel in the array.
+ *
+ * Return: 0 in case of success, otherwise -1 and errno is set 
+ *         appropriately (ENOMEM if the system is unable to allocate
+ *         resources).
  */
 API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, const size_t* strides)
 {
@@ -916,11 +955,36 @@ API_EXPORTED int xdf_define_arrays(struct xdf* xdf, unsigned int numarrays, cons
 }
 
 
-/* \param xdf	pointer to a valid xdf file
+/**
+ * xdf_prepare_transfer() - sets up the internals of the XDF file to be ready
+ *                          to receive or send data.
+ * @xdf:	pointer to a valid xdf file
  *
- * API FUNCTION
- * Compute the batches, allocate the necessary data for the transfer and
- * Initialize the transfer thread
+ * xdf_prepare_transfer() sets up the internal structures of the XDF file
+ * referenced by @xdf to be ready to receive or send data. After a
+ * successful call to it, you can call xdf_write() or xdf_read()
+ * depending of the mode of the XDF file.
+ * 
+ * Since this function prepares the transfer, no call to any function which
+ * configures it will be allowed anymore after xdf_define_arrays()
+ * succeed. In particular, xdf_set_conf(), xdf_setchconf() and
+ * xdf_define_arrays() will fail afterwards.
+ *
+ * In case of failure due to I/O (file to big, connection to file system
+ * lost...), the best procedure is to close the file since the underlying file
+ * will be in a undertermined stated.
+ *
+ * Return: 0 in case of success. Otherwise -1 is returned and errno is set
+ *         appropriately (EINVAL if @xdf is NULL, ENOMEM if the system is
+ *         unable to allocate memory resources, EFBIG if an attempt was made
+ *         to write a file that exceeds the implementation-defined maximum
+ *         file size or the process's file size limit, or to write at a
+ *         position past the maximum allowed offset, EINTR if the call was
+ *         interrupted by a signal before any data was written; see signal(),
+ *         EIO if a low-level I/O error occurred while modifying the inode,
+ *         ENOSPC if the device containing the xDF file has no room for the
+ *         data, or ESTALE if stale file handle, this error can occur for
+ *         NFS and for other file systems).
  */
 API_EXPORTED int xdf_prepare_transfer(struct xdf* xdf)
 {
@@ -952,13 +1016,26 @@ error:
 	return -1;
 }
 
-/* \param xdf	pointer to a valid xdf file
+/**
+ * xdf_end_transfer() - cleans up the internals of the XDF file that was
+ *                      ready to receive or send data.
+ * @xdf:	pointer to a valid xdf file
  *
- * API FUNCTION
- * End transfer.
- * This is the opposite of xdf_prepare_transfer(), it reset the xdf file
- * to a state where it can be reconfigured for reading.
- */
+ * xdf_end_transfer() is the opposite of xdf_prepare_transfer(): it
+ * resets the xdf file to the state where it can be reconfigured for reading.
+ *
+ * Return: 0 in case of success. Otherwise -1 is returned and errno is set
+ *         appropriately (EINVAL if @xdf is NULL, ENOMEM if the system is
+ *         unable to allocate memory resources, EFBIG if an attempt was made
+ *         to write a file that exceeds the implementation-defined maximum
+ *         file size or the process's file size limit, or to write at a
+ *         position past the maximum allowed offset, EINTR if the call was
+ *         interrupted by a signal before any data was written; see signal(),
+ *         EIO if a low-level I/O error occurred while modifying the inode,
+ *         ENOSPC if the device containing the xDF file has no room for the
+ *         data, or ESTALE if stale file handle, this error can occur for
+ *         NFS and for other file systems).
+ * */
 API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 {
 	mm_off_t pos;
@@ -979,15 +1056,96 @@ API_EXPORTED int xdf_end_transfer(struct xdf* xdf)
 	return (pos < 0) ? -1 : 0;
 }
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE 
- * \param ns	number of samples to be added
- * \param other pointer to the arrays holding the input samples
+/**
+ * xdf_write() - writes samples to a XDF file
+ * @xdf: 	pointer to a valid xdffile with mode XDF_WRITE
+ * @ns:	        number of samples to be added
+ * @...:        other pointer to the arrays holding the input samples
  *
- * API FUNCTION
- * Add samples coming from one or several input arrays containing the
- * samples. The number of arrays that must be provided on the call depends
- * on the specification of the channels.
- * Returns the number of samples written, -1 in case of error
+ * xdf_write() writes @ns samples to the XDF file referenced by
+ * @xdf. This file should have been opened with mode XDF_WRITE and
+ * xdf_prepare_transfer() should have been successfully called on it.
+ * xdf_write() will fail otherwise).
+ *
+ * The data to be added should be contained in arrays specified by pointers
+ * provided in the variable list of arguments of the function.  The function
+ * expects the same number of arrays as specified by previous call to
+ * xdf_define_arrays(). The internal organisation of the data in the
+ * arrays should have been specified previously with calls to
+ * xdf_set_chconf().
+ *
+ * In addition, it is important to note that none of the arrays should overlap.
+ *
+ * Performance: By design of the library, a call to xdf_write() is "almost"
+ * ensured to be executed in a linear time, i.e. given a fixed configuration
+ * of an XDF file, for the same number of samples to be passed, a call
+ * xdf_write will almost take always the same time to complete. This time
+ * increases linearly with the number of samples. This insurance is particularly
+ * useful for realtime processing of data, since storing the data will impact
+ * the main loop in a predictable way.
+ * 
+ * This is achieved by double buffering the data for writing. A front and a
+ * back buffer are available: the front buffer is filled with the incoming
+ * data, and swapped with the back buffer when full. This swap signals a
+ * background thread to convert, reorganise, scale and save to the disk the
+ * data contained in the full buffer making it afterwards available for the
+ * next swap.
+ *
+ * This approach ensures a linear calltime of xdf_write() providing that I/O
+ * subsystem is not saturated neither all processing units (cores or
+ * processors), i.e. the application is neither I/O bound nor CPU bound.
+ *
+ * Data safety: The library makes sure that data written to XDF files are
+ * safely stored on stable storage on a regular basis but because of double
+ * buffering, there is a risk to loose data in case of problem. However, the
+ * design of the xdf_write() ensures that if a problem occurs (no more disk
+ * space, power supply cut), at most two records of data plus the size
+ * of the chunks of data supplied to the function will be lost.
+ * 
+ * As an example, assuming you record a XDF file at 256Hz using records of 256
+ * samples and you feed xdf_write() with chunks of 8 samples, you are
+ * ensured to receive notification of failure after at most 520 samples
+ * corresponding to a lose of at most a little more than 2s of data in case of
+ * problems.
+ *
+ * Return: the number of the samples successfully added to the XDF file in
+ *         case of success. Otherwise -1 is returned and errno is set
+ *         appropriately (EINVAL if @xdf is NULL, EPERM if no successful call
+ *         to xdf_prepare_transfer() have been done on @xdf or it has been
+ *         opened using the mode XDF_READ, EFBIG if an attempt was made to
+ *         write a file that exceeds the implementation-defined maximum file
+ *         size or the process's file size limit, or to write at a position
+ *         past the maximum allowed offset, EINTR if the call was interrupted
+ *         by a signal before any data was written, see signal(), EIO if a
+ *         low-level I/O error occurred while modifying the inode, ENOSPC if
+ *         the device containing the xDF file has no room for the data, or
+ *         ESTALE if stale file handle, this error can occur for NFS and for
+ *         other file systems).
+ *
+ * Example:
+ * // Assume xdf references a xDF file opened for writing whose
+ * // channels source their data in 2 arrays of float whose strides
+ * // are the length of respectively 4 and 6 float values,
+ * // i.e. 16 and 24 bytes (in most platforms)
+ * #define NS    3
+ * float array1[NS][4], array2[NS][6];
+ * unsigned int strides = {4*sizeof(float), 6*sizeof(float)};
+ * unsigned int i;
+ *
+ * xdf_define_arrays(xdf, 2, strides);
+ * if (xdf_prepare_transfer(xdf))
+ * 	return 1;
+ *
+ * for (i=0; i<45; i+=NS) {
+ * 	// Update the values contained in array1 and array2
+ *	...
+ *
+ * 	// Write the values to the file
+ *      if (xdf_write(xdf, NS, array1, array2))
+ *		return 1;
+ * }
+ *
+ * xdf_close(xdf);
  */
 API_EXPORTED int xdf_write(struct xdf* xdf, size_t ns, ...)
 {
@@ -1010,15 +1168,17 @@ API_EXPORTED int xdf_write(struct xdf* xdf, size_t ns, ...)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_WRITE
- * \param ns	number of samples to be added
- * \param vbuff array of pointer to the array to write
+/**
+ * xdf_writev() - adds, in a xdf file, samples coming from one or several input
+ *               arrays containing the samples.
+ * @xdf: 	pointer to a valid xdffile with mode XDF_WRITE
+ * @ns: 	number of samples to be added
+ * @vbuff:      array of pointer to the array to write
  *
- * API FUNCTION
- * Add samples coming from one or several input arrays containing the
- * samples. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples written, -1 in case of error
+ *
+ * Return: the number of samples written in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
 {
@@ -1033,15 +1193,64 @@ API_EXPORTED int xdf_writev(struct xdf* xdf, size_t ns, void** vbuff)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_READ 
- * \param ns	number of samples to be read
- * \param other pointer to the arrays holding the output samples
+/**
+ * xdf_read() - reads samples from a XDF file
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ
+ * @ns: 	number of samples to be read
+ * @...:        other pointer to the arrays holding the output samples
  *
- * API FUNCTION
- * Read samples in the buffer and transfer them to one or several output
- * arrays. The number of arrays that must be provided on the call depends
- * on the specification of the channels.
- * Returns the number of samples read, -1 in case of error
+ * xdf_read() reads @ns samples from the xDF file referenced by
+ * @xdf. This file should have been opened with mode XDF_READ and
+ * xdf_prepare_transfer() should have been successfully called on it.
+ * xdf_read() will fail otherwise).
+ *
+ * The data to be read will be transferred into arrays specified by pointers
+ * provided in the variable list of arguments of the function.  The function
+ * expects the same number of arrays as specified by previous call to
+ * xdf_define_arrays(). The internal organisation of the data in the
+ * arrays should have been specified previously with calls to
+ * xdf_set_chconf().
+ * 
+ * In addition, it is important to note that none of the arrays should overlap.
+ *
+ * Return: the number of the samples successfully read from the XDF file in
+ *         case of success. The number of samples read can be smaller than
+ *         the number requested in the end of the file is reached. 
+ *         In case of error, -1 is returned and errno is set appropriately
+ *         (EINVAL if @xdf is NULL, EPERM if no successful call to 
+ *         xdf_prepare_transfer() have been done on @xdf or it has been 
+ *         opened using the mode XDF_WRITE, EINTR if the call was interrupted
+ *         by a signal before any data was written, see signal(), EIO if a
+ *         low-level I/O error occurred while reading from the inode, or
+ *         ESTALE if stale file handle, this error can occur for NFS and for
+ *         other file systems).
+ *
+ * Example:
+ * Assume xdf references a xDF file opened for reading whose
+ * channels source their data in 2 arrays of float whose strides
+ * are the length of respectively 4 and 6 float values,
+ * i.e. 16 and 24 bytes (in most platforms)
+ * 
+ * #define NS    3
+ * float array1[NS][4], array2[NS][6];
+ * unsigned int strides = {4*sizeof(float), 6*sizeof(float)};
+ * unsigned int i;
+ * 
+ * xdf_define_arrays(xdf, 2, strides);
+ * if (xdf_prepare_transfer(xdf))
+ *	return 1;
+ *
+ * for (i=0; i<45; i+=NS) {
+ *	// Write the values to the file
+ *      if (xdf_write(xdf, NS, array1, array2))
+ * 		return 1;
+ *
+ *	// Use the values contained in array1 and array2
+ * 	...
+ * 
+ * }
+ *
+ * xdf_close(xdf);
  */
 API_EXPORTED int xdf_read(struct xdf* xdf, size_t ns, ...)
 {
@@ -1064,15 +1273,17 @@ API_EXPORTED int xdf_read(struct xdf* xdf, size_t ns, ...)
 }
 
 
-/* \param xdf 	pointer to a valid xdffile with mode XDF_READ
- * \param ns	number of samples to be read
- * \param vbuff array of pointer to the array to write
+/**
+ * xdf_readv() - reads samples in a xdf file and transfers them to one or
+ *               several output arrays.
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ
+ * @ns: 	number of samples to be read
+ * @vbuff:      array of pointer to the arrays to write
  *
- * API FUNCTION
- * Read samples in the buffer and transfer them to one or several output
- * arrays. The number of arrays that must be provided on the call depends
+ * The number of arrays that must be provided on the call depends
  * on the specification of the channels.
- * Returns the number of samples read, -1 in case of error
+ *
+ * Return: the number of samples read in case of success, -1 otherwise
  */
 API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
 {
@@ -1087,16 +1298,34 @@ API_EXPORTED int xdf_readv(struct xdf* xdf, size_t ns, void** vbuff)
 }
 
 
-/* \param xdf 		pointer to a valid xdffile with mode XDF_READ 
- * \param offset	offset where the current sample pointer must move
- * \param whence	reference of the offset
+/**
+ * xdf_seek() - moves the sample pointer of a xDF file
+ * @xdf: 	pointer to a valid xdffile with mode XDF_READ
+ * @offset:	offset where the current sample pointer must move
+ * @whence:	reference of the offset
  *
- * API FUNCTION
- * Reposition the current sample pointer according to the couple 
- * (offset, whence). whence can be SEEK_SET, SEEK_CUR or SEEK_END
- * Upon successful completion, it returns the resulting offset location as
- * measured in number of samples for the beginning of the recording.
- * Otherwise -1 is returned and errno is set to indicate the error
+ * xdf_seek() repositions the current sample pointer according to the
+ * couple (@offset, @whence) where @whence can be: SEEK_SET the offset is
+ * set to @offset bytes, SEEK_CUR the offset is set to its current
+ * location plus @offset bytes, SEEK_END the offset is set to the size of
+ * the file plus @offset bytes.
+ *
+ * The file referenced by @xdf should have been opened with mode
+ * XDF_READ and xdf_prepare_transfer() should have been successfully
+ * called on it.
+ *
+ * Return: the resulting offset location as measured in number of samples
+ *         from the beginning of the recording, in case of success.
+ *         Otherwise, a value of -1 is returned and errno is set to
+ *         indicate the error (EINVAL if @xdf is NULL or @whence is none
+ *         of the allowed values, EPERM if no successful call to 
+ *         xdf_prepare_transfer() have been done on @xdf or it has been
+ *         opened using the mode XDF_WRITE, ERANGE if the requested offset
+ *         is out of the range of the recording, EINTR if the call was
+ *         interrupted by a signal before any data was read, see signal(),
+ *         EIO if a low-level I/O error occurred while reading from the
+ *         inode, or ESTALE if stale file handle, this error can occur for
+ *         NFS and for other file systems).
  */
 API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 {
@@ -1160,8 +1389,10 @@ API_EXPORTED int xdf_seek(struct xdf* xdf, int offset, int whence)
 
 static const char xdffileio_string[] = PACKAGE_STRING;
 
-/* API FUNCTION
- * Returns the string describing the library with its version number
+/**
+ * xdf_get_string() - gets a string describing the library
+ *
+ * Return: the string describing the library with its version number
  */
 API_EXPORTED const char* xdf_get_string(void)
 {
