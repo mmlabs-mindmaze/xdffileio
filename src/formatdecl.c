@@ -60,6 +60,12 @@ static unsigned int num_support_datafmt = sizeof(support_datafmt)
 				/ sizeof(support_datafmt[0]);
 
 
+/**
+ * xdf_guess_filetype() - indicates the type of file pointed by the parameter
+ * @magickey:  pointer to key identifying a type of file
+ *
+ * Return: the type of file pointed by the pointer in parameter
+ */
 LOCAL_FN enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
 {
 	unsigned int i;
@@ -74,6 +80,13 @@ LOCAL_FN enum xdffiletype xdf_guess_filetype(const unsigned char* magickey)
 	return type;
 }
 
+/**
+ * xdf_alloc_file() - allocates a file of the given type
+ * @type: the type of the file to allocate
+ *
+ * Return: a structure representing the allocated file of the given type in
+ *         case of success, NULL otherwise.
+ */
 LOCAL_FN struct xdf* xdf_alloc_file(enum xdffiletype type)
 {
 	unsigned int i;
