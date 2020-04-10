@@ -218,7 +218,11 @@ static const struct gdf2_channel gdf2ch_def = {
 /******************************************************
  *            GDF2 file support implementation         *
  ******************************************************/
-/* Allocate a GDF2 file
+
+/**
+ * xdf_alloc_gdf2file() - allocates a GDF2 file
+ *
+ * Return: the allocated structure representing a GDF2 file
  */
 LOCAL_FN struct xdf* xdf_alloc_gdf2file(void)
 {
@@ -249,7 +253,10 @@ LOCAL_FN struct xdf* xdf_alloc_gdf2file(void)
 }
 
 
-/* \param magickey	pointer to key identifying a type of file
+/**
+ * xdf_is_gdf2file() - indicates whether a pointer to a type of file corresponds
+ *                     to a GDF2 file or not.
+ * @magickey: pointer to key identifying a type of file
  *
  * Returns 1 if the supplied magickey corresponds to a GDF2 file
  */
