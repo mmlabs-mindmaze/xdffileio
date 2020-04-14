@@ -4,3 +4,5 @@ option('tests-python', type: 'boolean', value: true,
     description: 'build unit tests for the python module')
 option('python-bindings', type: 'feature', value: 'auto',
     description: 'build python bindings')
+option('docs', type: 'feature', value: 'auto',
+    description: 'build documentation')
