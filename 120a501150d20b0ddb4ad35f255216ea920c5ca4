@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "501d1408_5c4dfcc5",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 939,
+      "author": {
+        "id": 1017136
+      },
+      "writtenOn": "2020-04-16T06:52:44Z",
+      "side": 1,
+      "message": "typo: remove the dot",
+      "range": {
+        "startLine": 939,
+        "startChar": 0,
+        "endLine": 939,
+        "endChar": 1
+      },
+      "revId": "120a501150d20b0ddb4ad35f255216ea920c5ca4",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
