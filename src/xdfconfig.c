@@ -751,10 +751,7 @@ static int proceed_set_chconf(struct xdfch* ch, enum xdffield field,
  * const char label[] = "Channel EEG";
  * 
  * hchxdf ch = xdf_add_channel(xdf);
- * xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray,
- *                       XDF_CF_ARROFFSET, offset,
- *                       XDF_CF_LABEL, label,
- *                       XDF_NOF);
+ * xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray, XDF_CF_LABEL, label, XDF_NOF);
  */
 API_EXPORTED int xdf_set_chconf(struct xdfch* ch, enum xdffield field, ...)
 {
@@ -925,10 +922,7 @@ field, union optval* val)
  * const char label[128];
  *
  * hchxdf ch = xdf_get_channel(xdf, 1);
- * xdf_get_chconf(ch, XDF_CF_ARRINDEX, &iarray,
- *                       XDF_CF_ARROFFSET, &offset,
- *                       XDF_CF_LABEL, &label,
- *                       XDF_NOF);
+ * xdf_get_chconf(ch, XDF_CF_ARRINDEX, &iarray, XDF_CF_LABEL, &label, XDF_NOF);
  *
  * printf("iarray = %u\\n", iarray);
  * printf("offset = %u\\n", offset);
@@ -1064,13 +1058,13 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  * @xdf:	pointer to a xdf file
  * @field:	identifier of the field to be set
  *
- * xdf_set_confP() sets the configuration (usually one of the field file
+ * xdf_set_conf() sets the configuration (usually one of the field file
  * header) of a XDF file referenced by @xdf according to the variable list
  * of arguments. This list is composed of successive couple grouping one
  * variable of type enum xdffield defining the feature to be set and a value
  * whose type depends on the previous field type. The list MUST finish by
  * XDF_NOF.
- *
+ * 
  * This function processes the argument list from left to right. This
  * means that if a particular field request provokes an error, none of the
  * field requests on its right will be processed. The order of processing is
@@ -1088,7 +1082,7 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  *
  * If the file is opened for writing, each field is initialized to sensible or
  * non-informative values in case of optional field or incorrect values in the
- * case of "must be set" field (only XDF_F_REC_NSAMPLE or XDF_F_SAMPLING_FREQ).
+ * case of MUST be set field (only XDF_F_REC_NSAMPLE or XDF_F_SAMPLING_FREQ).
  * The default value are specified in squared bracked in the list.
  *
  * Here is the list of file configuration field value. The type of value
@@ -1168,17 +1162,13 @@ static int proceed_set_conf(struct xdf* xdf, enum xdffield field, union optval v
  * supported with the mode XDF_READ).
  *
  * Example of usage of xdf_set_conf():
- * // Assume xdfr and xdfw reference 2 XDF files opened respectively
+ * // Assume xdfr and xdfw reference two XDF files opened respectively
  * // for reading and for writing
- * const char *subjstr, *sessstr;
+ * const char * subj, * sess;
  *
- * xdf_get_conf(xdfr, XDF_F_SUBJ_DESC, &subjstr,
- *                  XDF_F_SESS_DESC, &sessstr,
- *                  XDF_NOF);
+ * xdf_get_conf(xdfr, XDF_F_SUBJ_DESC, &subj, XDF_F_SESS_DESC, &sess, XDF_NOF);
  *
- * xdf_set_conf(xdfw, XDF_F_SUBJ_DESC, subjstr,
- *                   XDF_F_SESS_DESC, sessstr,
- *                   XDF_NOF);
+ * xdf_set_conf(xdfw, XDF_F_SUBJ_DESC, subj, XDF_F_SESS_DESC, sess, XDF_NOF);
  */
 API_EXPORTED
 int xdf_set_conf(struct xdf* xdf, enum xdffield field, ...)
@@ -1284,7 +1274,7 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
  *
  * If the file is opened for writing, each field is initialized to sensible or
  * non-informative values in case of optional field or incorrect values in the
- * case of "must be set" field (only XDF_F_REC_NSAMPLE or XDF_F_SAMPLING_FREQ).
+ * case of Must be set field (only XDF_F_REC_NSAMPLE or XDF_F_SAMPLING_FREQ).
  * The default value are specified in squared bracked in the list.
  *
  * Here is the list of file configuration field value. The type of the pointer
@@ -1372,11 +1362,9 @@ static int proceed_get_conf(const struct xdf* xdf, enum xdffield field, union op
  *
  * Example of usage of xdf_get_conf():
  * // Assume xdfr references a XDF file opened for reading
- * const char *subjstr, *sessstr;
+ * const char * subj, * sess;
  *
- * xdf_get_conf(xdfr, XDF_F_SUBJ_DESC, &subjstr,
- *                  XDF_F_SESS_DESC, &sessstr,
- *                  XDF_NOF);
+ * xdf_get_conf(xdfr, XDF_F_SUBJ_DESC, &subj, XDF_F_SESS_DESC, &sess, XDF_NOF);
  *
  * printf("subject: %s\\nrecording: %s\\n", subjstr, sessstr);
  */
