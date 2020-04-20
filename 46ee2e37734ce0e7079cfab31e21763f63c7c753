@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2337613e_2d569c8c",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 11
+      },
+      "lineNbr": 1274,
+      "author": {
+        "id": 1017136
+      },
+      "writtenOn": "2020-04-20T09:25:18Z",
+      "side": 1,
+      "message": "I propose to add a comment block here explaining that the variadic arguments must be ended by XDF_NOF.\n\nThe fields are explicitly listed below and it\u0027s quite clear that it\u0027s a (field, value) pair.\n\n(same for the other function)",
+      "revId": "46ee2e37734ce0e7079cfab31e21763f63c7c753",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
