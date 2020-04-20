@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f76b7386_ff6e67a0",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 9
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 1017136
+      },
+      "writtenOn": "2020-04-20T06:26:52Z",
+      "side": 1,
+      "message": "the @other field does not exist, or at least not named like this.\nThis will trigger a warning when generating the documentation.\n\nSame issue with all such function prototypes.",
+      "revId": "8a6b240d040f878ee773fb20b679255cc848fcdd",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
