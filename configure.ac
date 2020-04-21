@@ -79,6 +79,21 @@ AS_CASE([$with_check],
 AM_CONDITIONAL(BUILD_CHECK_TESTS, [test "$build_check_tests" = yes])
 AM_CONDITIONAL(TAP_SUPPORT_IN_CHECK, [test "x$tap_in_check" = xyes])
 
+# Test for sphinx doc with linuxdoc
+AC_ARG_ENABLE([sphinxdoc], AC_HELP_STRING([--enable-sphinxdoc], [Build sphinx documention. @<:@default=detect@:>@]),
+	    [], [enable_sphinxdoc=detect])
+AM_PATH_PYTHON([3])
+MM_PYTHON_MODULE([sphinx])
+MM_PYTHON_MODULE([sphinx_rtd_theme])
+MM_PYTHON_MODULE([linuxdoc])
+
+AC_CHECK_PROG(HAVE_SPHINXBUILD, [sphinx-build], [$HAVE_PYMOD_LINUXDOC], [no])
+AS_CASE([$enable_sphinxdoc],
+        [yes], [AS_IF([test "x$HAVE_SPHINXBUILD" != xyes],
+                      [AC_MSG_ERROR(Cannot find sphinx or its plugin linuxdoc)])],
+        [detect], [AS_IF([test "x$HAVE_SPHINXBUILD" = xyes],
+                         [enable_sphinxdoc=yes], [enable_sphinxdoc=no])])
+AM_CONDITIONAL(BUILD_SPHINXDOC, [test "x$enable_sphinxdoc" = xyes])
 
 AC_CONFIG_FILES([Makefile src/Makefile src/xdffileio.pc doc/Makefile tests/Makefile pyxdf/Makefile])
 AC_OUTPUT
