@@ -1,0 +1,532 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "38ece22e_02f255a5",
+        "filename": "src/gdf1.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "space instead of tab",
+      "range": {
+        "startLine": 210,
+        "startChar": 13,
+        "endLine": 210,
+        "endChar": 14
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "91ca762d_f298a76f",
+        "filename": "src/gdf2.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "align with space",
+      "range": {
+        "startLine": 259,
+        "startChar": 13,
+        "endLine": 259,
+        "endChar": 14
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f33fd665_bc3f592f",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "In general if return section is not one-liner, it is more readable to start the body of this section in a new line. When in doubt, make it start on a new line.\n\nPlease remember to keep error list that were present in a separated section in the previous manpage still in a \"Errors\" section and use list for the different error. (example in comment for xdf_open())\n\nExamples should be in a separated section named \"Example\" and the C code should be indented more (example in comment for xdf_set_chconf())",
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eda934cf_356496ba",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "Please preserve the formatting of the error list. linuxdoc is smart and recognize formatted list and special section Return: and Example:\n\nHence please keep the error list like it was specified in xdf_open.3 before (xdf_fdopen related stuff removed). \nModifying to keep this formatting is an advantage in ant case... It makes the list more readable when we read the doc in the source code and the manpage better formatted.\n\nExample of what should be modified (pay attention to the indentation of description of the labelled list):\n\n * Return:\n * an handle to XDF file opened in case of success.\n * Otherwise, NULL is returned and errno is set appropriately\n *\n * Errors:\n * In addition to the errors related to calls to open() or read(), the\n * following errors can occur when calling xdf_open() :\n *\n * EILSEQ\n *   the file that is being opened does not correspond to a supported file\n *   format or is not of the type specified\n *\n * ENOMEM\n *   the system is unable to allocate resources\n *\n * EINVAL\n *   @mode is neither XDF_READ nor XDF_WRITE, or if @filename is NULL.",
+      "range": {
+        "startLine": 351,
+        "startChar": 1,
+        "endLine": 358,
+        "endChar": 60
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e2024cac_8a087fdf",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 419,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "keep error list in separated section",
+      "range": {
+        "startLine": 413,
+        "startChar": 0,
+        "endLine": 419,
+        "endChar": 14
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fe63a0a1_3b041c13",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 559,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "error list in separated section",
+      "range": {
+        "startLine": 555,
+        "startChar": 3,
+        "endLine": 559,
+        "endChar": 26
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ad2fafde_0f432066",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 738,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "Use labelled list formatting:\n\n * XDF_CF_ARRINDEX (int) [0]\n *   specifies the array from/to which the channel \n *   value should be transferred. If the mode of the file is XDF_READ and\n *   the value is negative, the channel will not be read. If the mode is\n *   XDF_WRITE and the value is negative, the function will fail.\n *\n * XDF_CF_ARROFFSET (int) [0 for channel 0, packed channels for the rest]\n *   specifies the offset in the array from/to which the channel value\n *   should be transferred.\n *\n * XDF_CF_ARRDIGITAL (int) [0 if writing, 1 if reading]\n *   indicates that the data in the array from/to which the channel value\n *   should be transferred is provided in digital unit. This means in\n *   practice that no scaling is performed during the transfer from/to the\n *   disk (non zero indicate no scaling).\n\n...",
+      "range": {
+        "startLine": 682,
+        "startChar": 0,
+        "endLine": 738,
+        "endChar": 47
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99eb83aa_6d0e6de4",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 746,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "Put errors in error section and in a list",
+      "range": {
+        "startLine": 740,
+        "startChar": 0,
+        "endLine": 746,
+        "endChar": 68
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "00f117d4_8d806b4a",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 754,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "* Example:\n *   //Assume xdf referenced an XDF file opened for writing\n *   unsigned int iarray \u003d 2, offset \u003d 0;\n *   const char label[] \u003d \"Channel EEG\";\n * \n *   hchxdf ch \u003d xdf_add_channel(xdf);\n *   xdf_set_chconf(ch, XDF_CF_ARRINDEX, iarray, XDF_CF_LABEL, label, XDF_NOF);",
+      "range": {
+        "startLine": 748,
+        "startChar": 0,
+        "endLine": 754,
+        "endChar": 77
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6128f851_36def510",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 839,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "same comment as xdf_set_chconf()",
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f579d15e_2017f458",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1056,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "same comment as xdf_set_chconf()",
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5be676e5_b2d7226e",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1253,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "same comment as xdf_set_chconf()",
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7d098197_dd4e2927",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1535,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1532,
+        "startChar": 30,
+        "endLine": 1535,
+        "endChar": 40
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a29afc96_7f10b767",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1572,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1571,
+        "startChar": 16,
+        "endLine": 1572,
+        "endChar": 46
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a2c7227e_3b7b93f1",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1616,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1612,
+        "startChar": 59,
+        "endLine": 1616,
+        "endChar": 69
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f2af062a_eb9bf294",
+        "filename": "src/xdfconfig.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1660,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1659,
+        "startChar": 16,
+        "endLine": 1660,
+        "endChar": 68
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fe9362a9_8b9ff9fd",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 871,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 862,
+        "startChar": 1,
+        "endLine": 871,
+        "endChar": 27
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a35c9da5_064c8b51",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 987,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 977,
+        "startChar": 0,
+        "endLine": 987,
+        "endChar": 35
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5f0a2f3d_4af0f0c2",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1037,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1027,
+        "startChar": 0,
+        "endLine": 1037,
+        "endChar": 35
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "23f19272_d85ef4fd",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1122,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1110,
+        "startChar": 0,
+        "endLine": 1122,
+        "endChar": 23
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3d233cca_01721aa8",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1147,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "indent example code",
+      "range": {
+        "startLine": 1125,
+        "startChar": 2,
+        "endLine": 1147,
+        "endChar": 18
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7483be3e_7e7d1ca6",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1230,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "Put in C comment",
+      "range": {
+        "startLine": 1227,
+        "startChar": 3,
+        "endLine": 1230,
+        "endChar": 43
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c2fe9003_d4c64be0",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1251,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "indent example code",
+      "range": {
+        "startLine": 1227,
+        "startChar": 0,
+        "endLine": 1251,
+        "endChar": 18
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f612e631_66d1cdfa",
+        "filename": "src/xdffile.c",
+        "patchSetId": 14
+      },
+      "lineNbr": 1326,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T15:55:02Z",
+      "side": 1,
+      "message": "errors in a list in \"Errors\" section",
+      "range": {
+        "startLine": 1318,
+        "startChar": 22,
+        "endLine": 1326,
+        "endChar": 35
+      },
+      "revId": "f095247ce271855c9ce2a4a2c7565002f06dcb44",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
