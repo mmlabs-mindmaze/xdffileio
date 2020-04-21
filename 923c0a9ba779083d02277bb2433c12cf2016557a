@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ca42000c_5e131bd6",
+        "filename": "doc/conf.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T14:11:08Z",
+      "side": 1,
+      "message": "2010, EPFL",
+      "range": {
+        "startLine": 41,
+        "startChar": 14,
+        "endLine": 41,
+        "endChar": 30
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "32d699f8_e8f90a90",
+        "filename": "doc/conf.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T14:11:08Z",
+      "side": 1,
+      "message": "Nicolas Bourdaud \u003cnicolas.bourdaud@gmail.com\u003e",
+      "range": {
+        "startLine": 42,
+        "startChar": 11,
+        "endLine": 42,
+        "endChar": 39
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5e9087e3_c283e3e6",
+        "filename": "doc/conf.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T14:11:08Z",
+      "side": 1,
+      "message": "1.0",
+      "range": {
+        "startLine": 49,
+        "startChar": 12,
+        "endLine": 49,
+        "endChar": 17
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "98754bf7_27cccc8e",
+        "filename": "doc/conf.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T14:11:08Z",
+      "side": 1,
+      "message": "1.0-next",
+      "range": {
+        "startLine": 51,
+        "startChar": 12,
+        "endLine": 51,
+        "endChar": 22
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cbf449e4_a2ab02f9",
+        "filename": "doc/conf.py",
+        "patchSetId": 5
+      },
+      "lineNbr": 309,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-21T14:11:08Z",
+      "side": 1,
+      "message": "LOCAL_FN",
+      "range": {
+        "startLine": 309,
+        "startChar": 26,
+        "endLine": 309,
+        "endChar": 38
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
