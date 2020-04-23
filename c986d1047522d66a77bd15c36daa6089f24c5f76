@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "9428ee88_5e871dc0",
+        "filename": "doc/xdfio.rst",
+        "patchSetId": 18
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1017136
+      },
+      "writtenOn": "2020-04-23T12:12:07Z",
+      "side": 1,
+      "message": "this should not have been removed",
+      "revId": "c986d1047522d66a77bd15c36daa6089f24c5f76",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "e96dc2ec_5f5aafac",
         "filename": "src/xdfevent.c",
         "patchSetId": 18
