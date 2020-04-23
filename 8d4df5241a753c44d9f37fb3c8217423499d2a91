@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "96fce89b_031815ad",
+        "filename": "doc/conf.py",
+        "patchSetId": 8
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2020-04-23T09:09:04Z",
+      "side": 1,
+      "message": "version is 1.0, not 0.1",
+      "range": {
+        "startLine": 48,
+        "startChar": 0,
+        "endLine": 51,
+        "endChar": 21
+      },
+      "revId": "8d4df5241a753c44d9f37fb3c8217423499d2a91",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": true
+    }
+  ]
+}
