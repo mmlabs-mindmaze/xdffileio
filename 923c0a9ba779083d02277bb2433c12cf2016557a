@@ -310,6 +310,30 @@
       "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7db12929_0f507d21",
+        "filename": "doc/xdfio.rst",
+        "patchSetId": 5
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1017443
+      },
+      "writtenOn": "2020-04-23T12:31:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17749415_94ed16ba",
+      "range": {
+        "startLine": 8,
+        "startChar": 0,
+        "endLine": 12,
+        "endChar": 11
+      },
+      "revId": "923c0a9ba779083d02277bb2433c12cf2016557a",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
