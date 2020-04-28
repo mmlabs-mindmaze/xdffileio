@@ -349,6 +349,7 @@ if docs_state == 'enabled'
 
     doc_sources = files(
         'doc/index.rst',
+        'doc/xdfio.rst',
     )
 
     sphinxbuild_wrapper = files('doc/sphinx-build-wrapper.sh')
