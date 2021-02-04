@@ -135,7 +135,7 @@ class TestXFileClass(unittest.TestCase):
 
             f = XFile(filename, 'w', filetype)
             f.fs = 42
-            f.channels.append(Channel('test_channel', -2., 2., 'dummy'))
+            f.channels.append(Channel('test_channel', -2., 2., 'V'))
             f.write(test_array)
 
             # open back for reading
@@ -147,7 +147,7 @@ class TestXFileClass(unittest.TestCase):
             self.assertEqual(f.channels[0], {'name':'test_channel',
                                              'physical_min': -2.,
                                              'physical_max': 2.,
-                                             'unit':'dummy'})
+                                             'unit':'V'})
 
             # test data
             data = f.read()
@@ -175,7 +175,7 @@ class TestXFileClass(unittest.TestCase):
         f.fs = 500
         for i in range(nch):
             ch_name = 'test_channel_{:d}'.format(i)
-            f.channels.append(Channel(ch_name, -2., 2., 'dummy'))
+            f.channels.append(Channel(ch_name, -2., 2., 'uV'))
         f.write(test_array)
 
         # open back for reading
@@ -189,7 +189,7 @@ class TestXFileClass(unittest.TestCase):
             self.assertEqual(f.channels[i], {'name': ch_name,
                                              'physical_min': -2.,
                                              'physical_max': 2.,
-                                             'unit':'dummy'})
+                                             'unit':'uV'})
 
         # test data
         data = f.read()
@@ -214,7 +214,7 @@ class TestXFileClass(unittest.TestCase):
         f.fs = 500
         for i in range(nch):
             ch_name = 'test_channel_{:d}'.format(i)
-            f.channels.append(Channel(ch_name, -2., 2., 'dummy'))
+            f.channels.append(Channel(ch_name, -2., 2., 'uV'))
         f.write(test_array)
 
         # open back for reading
@@ -228,7 +228,7 @@ class TestXFileClass(unittest.TestCase):
             self.assertEqual(f.channels[i], {'name': ch_name,
                                              'physical_min': -2.,
                                              'physical_max': 2.,
-                                             'unit':'dummy'})
+                                             'unit':'uV'})
 
         # test data
         data = f.read()
