@@ -135,6 +135,42 @@ double gdf2time_to_time(uint64_t gdf2time)
 	return posixtime;
 }
 
+// Values from Table 5 and Table 6 from GDF doc v2.51
+enum physical_dim {
+	DECA = 1,
+	HECTO,
+	KILO,
+	MEGA,
+	GIGA,
+	TERA,
+	PETA,
+	EXA,
+	ZETTA,
+	YOTTA,
+	DECI = 16,
+	CENTI,
+	MILLI,
+	MICRO,
+	NANO,
+	PICO,
+	FEMTO,
+	ATTO,
+	DIMENSIONLESS = 512,
+	PERCENT = 544,
+	DEGREE = 736,
+	RADIAN,
+	HERTZ = 2496,
+	BLOOD_PRESSURE = 3872,
+	VOLTAGE = 4256,
+	OHM = 4288,
+	KELVIN = 4384,
+	CELSIUS = 6048,
+	LITER = 3072,
+	LITER_SQUARE = 2848,
+	HYDRAULIC_IMP = 4128,
+	PULMONARY = 6016,
+};
+
 /******************************************************
  *            GDF2 type definition declaration         *
  ******************************************************/
@@ -294,9 +330,9 @@ static int gdf2_set_channel(struct xdfch* ch, enum xdffield field,
 
 	if (field == XDF_CF_LABEL)
 		strncpy(gdf2ch->label, val.str, sizeof(gdf2ch->label)-1);
-	else if (field == XDF_CF_UNIT)
+	else if (field == XDF_CF_UNIT) {
 		strncpy(gdf2ch->unit, val.str, sizeof(gdf2ch->unit)-1);
-	else if (field == XDF_CF_TRANSDUCTER)
+	} else if (field == XDF_CF_TRANSDUCTER)
 		strncpy(gdf2ch->transducter, val.str, sizeof(gdf2ch->transducter)-1);
 	else if (field == XDF_CF_PREFILTERING)
 		strncpy(gdf2ch->filtering, val.str, sizeof(gdf2ch->filtering)-1);
@@ -535,6 +571,7 @@ static int gdf2_write_file_header(struct gdf2_file* gdf2, FILE* file)
 static int gdf2_write_channels_header(struct gdf2_file* gdf2, FILE* file)
 {
 	struct xdfch* ch;
+	struct gdf2_channel* gdf2ch;
 
 	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next)
 		if (fprintf(file, "%-16.16s", get_gdf2ch(ch)->label) < 0)
@@ -548,9 +585,69 @@ static int gdf2_write_channels_header(struct gdf2_file* gdf2, FILE* file)
 		if (fprintf(file, "%-6.6s", get_gdf2ch(ch)->unit) < 0)
 			return -1;
 
-	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next)
+	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next) {
+		gdf2ch = get_gdf2ch(ch);
+                gdf2ch->dimcode = 0; // unrecognized
+
+		// Convert value to physical unit (Table 5 GDF documentation V2.51)
+		// Dimonsionless
+		if (strncmp(gdf2ch->unit, "-", 1) == 0)
+                        gdf2ch->dimcode = DIMENSIONLESS;
+		// Percentage
+		if (strncmp(gdf2ch->unit, "%", 1) == 0)
+                        gdf2ch->dimcode = PERCENT;
+		// Degree
+		if (strncmp(gdf2ch->unit, "degree", 6) == 0)
+                        gdf2ch->dimcode = DEGREE;
+		// Radians
+		if (strncmp(gdf2ch->unit, "rad", 3) == 0)
+                        gdf2ch->dimcode = RADIAN;
+		// Hertz
+		if (strncmp(gdf2ch->unit, "Hz", 2) == 0)
+                        gdf2ch->dimcode = HERTZ;
+		if (strncmp(gdf2ch->unit, "kHz", 3) == 0) // kilo Hertz
+			gdf2ch->dimcode = HERTZ + KILO;
+		// Blood pressure
+		if (strncmp(gdf2ch->unit, "mmHg", 4) == 0)
+                        gdf2ch->dimcode = BLOOD_PRESSURE;
+		// Voltage
+		if (strncmp(gdf2ch->unit, "V", 1) == 0)
+                        gdf2ch->dimcode = VOLTAGE;
+                if (strncmp(gdf2ch->unit, "mV", 2) == 0) // millivolts
+                        gdf2ch->dimcode = VOLTAGE + MILLI; // 4256 + 18
+                if (strncmp(gdf2ch->unit, "uV", 2) == 0) // microvolts
+                        gdf2ch->dimcode = VOLTAGE + MICRO; // 4256 + 19
+                if (strncmp(gdf2ch->unit, "nV", 2) == 0) // nanovolts
+                        gdf2ch->dimcode = VOLTAGE + NANO; // 4256 + 20
+		// Ohm
+		if (strncmp(gdf2ch->unit, "Ohm", 3) == 0)
+                        gdf2ch->dimcode = OHM;
+		if (strncmp(gdf2ch->unit, "kOhm", 4) == 0)
+                        gdf2ch->dimcode = OHM + KILO;
+		if (strncmp(gdf2ch->unit, "MOhm", 4) == 0)
+                        gdf2ch->dimcode = OHM + MEGA;
+		// Temperature in Kelvin
+		if (strncmp(gdf2ch->unit, "K", 1) == 0)
+                        gdf2ch->dimcode = KELVIN;
+		// Temperature in degree Celsius
+		if (strncmp(gdf2ch->unit, "°C", 2) == 0)
+                        gdf2ch->dimcode = CELSIUS;
+		// Liter per minute
+		if (strncmp(gdf2ch->unit, "l/min", 4) == 0)
+                        gdf2ch->dimcode = LITER;
+		// Liter per minute square meter
+		if (strncmp(gdf2ch->unit, "l(min m^2)", 10) == 0)
+                        gdf2ch->dimcode = LITER_SQUARE;
+		// Hydraulic impedance
+		if (strncmp(gdf2ch->unit, "dyn s / cm^5", 12) == 0)
+                        gdf2ch->dimcode = HYDRAULIC_IMP;
+		// Pulmonary
+		if (strncmp(gdf2ch->unit, "dyn s / m^2 cm^5", 16) == 0)
+                        gdf2ch->dimcode = PULMONARY;
+
 		if (write16bval(file, 1, &(get_gdf2ch(ch)->dimcode)))
 			return -1;
+	}
 
 	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next)
 		if (write64bval(file, 1, &(ch->physical_mm[0])))
@@ -796,6 +893,7 @@ static int gdf2_read_channels_header(struct gdf2_file* gdf2, FILE* file)
 	struct xdfch* ch;
 	int i;
 	unsigned int offset = 0;
+        struct gdf2_channel* gdf2ch;
 
 	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next)
 		if (read_string_field(file, get_gdf2ch(ch)->label, 16))
@@ -809,9 +907,69 @@ static int gdf2_read_channels_header(struct gdf2_file* gdf2, FILE* file)
 		if (read_string_field(file, get_gdf2ch(ch)->unit, 6))
 			return -1;
 
-	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next)
+	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next) {
+                gdf2ch = get_gdf2ch(ch);
+                gdf2ch->dimcode = 0; // unrecognized
+
+		// Convert value to physical unit (Table 5 GDF documentation V2.51)
+		// Dimonsionless
+		if (strncmp(gdf2ch->unit, "-", 1) == 0)
+                        gdf2ch->dimcode = DIMENSIONLESS;
+		// Percentage
+		if (strncmp(gdf2ch->unit, "%", 1) == 0)
+                        gdf2ch->dimcode = PERCENT;
+		// Degree
+		if (strncmp(gdf2ch->unit, "degree", 6) == 0)
+                        gdf2ch->dimcode = DEGREE;
+		// Radians
+		if (strncmp(gdf2ch->unit, "rad", 3) == 0)
+                        gdf2ch->dimcode = RADIAN;
+		// Hertz
+		if (strncmp(gdf2ch->unit, "Hz", 2) == 0)
+                        gdf2ch->dimcode = HERTZ;
+		if (strncmp(gdf2ch->unit, "kHz", 3) == 0) // kilo Hertz
+			gdf2ch->dimcode = HERTZ + KILO;
+		// Blood pressure
+		if (strncmp(gdf2ch->unit, "mmHg", 4) == 0)
+                        gdf2ch->dimcode = BLOOD_PRESSURE;
+		// Voltage
+		if (strncmp(gdf2ch->unit, "V", 1) == 0)
+                        gdf2ch->dimcode = VOLTAGE;
+                if (strncmp(gdf2ch->unit, "mV", 2) == 0) // millivolts
+                        gdf2ch->dimcode = VOLTAGE + MILLI; // 4256 + 18
+                if (strncmp(gdf2ch->unit, "uV", 2) == 0) // microvolts
+                        gdf2ch->dimcode = VOLTAGE + MICRO; // 4256 + 19
+                if (strncmp(gdf2ch->unit, "nV", 2) == 0) // nanovolts
+                        gdf2ch->dimcode = VOLTAGE + NANO; // 4256 + 20
+		// Ohm
+		if (strncmp(gdf2ch->unit, "Ohm", 3) == 0)
+                        gdf2ch->dimcode = OHM;
+		if (strncmp(gdf2ch->unit, "kOhm", 4) == 0)
+                        gdf2ch->dimcode = OHM + KILO;
+		if (strncmp(gdf2ch->unit, "MOhm", 4) == 0)
+                        gdf2ch->dimcode = OHM + MEGA;
+		// Temperature in Kelvin
+		if (strncmp(gdf2ch->unit, "K", 1) == 0)
+                        gdf2ch->dimcode = KELVIN;
+		// Temperature in degree Celsius
+		if (strncmp(gdf2ch->unit, "°C", 2) == 0)
+                        gdf2ch->dimcode = CELSIUS;
+		// Liter per minute
+		if (strncmp(gdf2ch->unit, "l/min", 4) == 0)
+                        gdf2ch->dimcode = LITER;
+		// Liter per minute square meter
+		if (strncmp(gdf2ch->unit, "l(min m^2)", 10) == 0)
+                        gdf2ch->dimcode = LITER_SQUARE;
+		// Hydraulic impedance
+		if (strncmp(gdf2ch->unit, "dyn s / cm^5", 12) == 0)
+                        gdf2ch->dimcode = HYDRAULIC_IMP;
+		// Pulmonary
+		if (strncmp(gdf2ch->unit, "dyn s / m^2 cm^5", 16) == 0)
+                        gdf2ch->dimcode = PULMONARY;
+
 		if (read16bval(file, 1, &(get_gdf2ch(ch)->dimcode)))
 			return -1;
+	}
 
 	for (ch = gdf2->xdf.channels; ch != NULL; ch = ch->next) 
 		if (read64bval(file, 1, &(ch->physical_mm[0])))
