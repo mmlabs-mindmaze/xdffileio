@@ -143,7 +143,7 @@ static int set_default_trigger(struct xdf* xdf, int arrindex,
 		XDF_CF_STOTYPE, XDFINT32,
 		XDF_CF_PMIN, pmin,
 		XDF_CF_PMAX, pmax,
-		XDF_CF_UNIT, "Boolean",
+		XDF_CF_UNIT, "-",
 		XDF_CF_RESERVED, "TRI",
 		XDF_NOF);
 	
