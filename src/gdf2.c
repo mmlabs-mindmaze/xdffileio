@@ -135,6 +135,14 @@ double gdf2time_to_time(uint64_t gdf2time)
 	return posixtime;
 }
 
+// Values from Table 5 and Table 6 from GDF doc v2.51
+enum physical_dim {
+    VOLTAGE = 4256,
+    MILLI = 18,
+    MICRO,
+    NANO,
+};
+
 /******************************************************
  *            GDF2 type definition declaration         *
  ******************************************************/
@@ -294,9 +302,21 @@ static int gdf2_set_channel(struct xdfch* ch, enum xdffield field,
 
 	if (field == XDF_CF_LABEL)
 		strncpy(gdf2ch->label, val.str, sizeof(gdf2ch->label)-1);
-	else if (field == XDF_CF_UNIT)
+	else if (field == XDF_CF_UNIT) {
 		strncpy(gdf2ch->unit, val.str, sizeof(gdf2ch->unit)-1);
-	else if (field == XDF_CF_TRANSDUCTER)
+		// Convert value to physical unit (Table 5 GDF documentation V2.51)
+		if (strncmp(val.str, "V", 1) == 0) // volts
+			gdf2ch->dimcode = VOLTAGE;
+		else if (strncmp(val.str, "mV", 2) == 0) // millivolts
+			gdf2ch->dimcode = VOLTAGE + MILLI; // 4256 + 18
+		else if (strncmp(val.str, "uV", 2) == 0) // microvolts
+			gdf2ch->dimcode = VOLTAGE + MICRO; // 4256 + 19
+		else if (strncmp(val.str, "nV", 2) == 0) // nanovolts
+			gdf2ch->dimcode = VOLTAGE + NANO; // 4256 + 20
+		else
+			gdf2ch->dimcode = 0; // unrecognized
+
+	} else if (field == XDF_CF_TRANSDUCTER)
 		strncpy(gdf2ch->transducter, val.str, sizeof(gdf2ch->transducter)-1);
 	else if (field == XDF_CF_PREFILTERING)
 		strncpy(gdf2ch->filtering, val.str, sizeof(gdf2ch->filtering)-1);
