@@ -16,6 +16,63 @@
       "message": "There is probably a better fix but this might give you an idea of the issue. \n\nThanks,",
       "revId": "d4e6e3d4fbf1e99a53c8dd1383fdf19df5b690ea",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1f60ff9_2cadb842",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-02-17T13:12:16Z",
+      "side": 1,
+      "message": "While the logic is fine for me (setting unit field sets dim code on gdf2), you lack the read part and I would extent to more units",
+      "revId": "d4e6e3d4fbf1e99a53c8dd1383fdf19df5b690ea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5399c3f_5f40abd0",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-02-17T13:12:16Z",
+      "side": 1,
+      "message": "What about implementing the logic for the other units?",
+      "range": {
+        "startLine": 140,
+        "startChar": 3,
+        "endLine": 140,
+        "endChar": 19
+      },
+      "revId": "d4e6e3d4fbf1e99a53c8dd1383fdf19df5b690ea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b0037f01_345029b4",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 308,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-02-17T13:12:16Z",
+      "side": 1,
+      "message": "I would not put the logic of unit -\u003e dimcode here but rather when we write the header, ie in gdf2_write_channel_header() and gdf2_read_channel_header()",
+      "revId": "d4e6e3d4fbf1e99a53c8dd1383fdf19df5b690ea",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }
