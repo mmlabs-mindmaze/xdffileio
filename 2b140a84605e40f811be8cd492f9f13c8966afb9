@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ad76b87a_45a090dc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-02-25T22:00:36Z",
+      "side": 1,
+      "message": "Hi Nicolas,\n\nThis is a new commit with a change-id this time (I did not manage to update the previous commit with the comments and add a change-id.)\n\nBased on your previous comments I implemented the logic for the other units and put the logic of unit -\u003e dimcode in gdf2_write_channel_header() and gdf2_read_channel_header().\nAlso, I fixed the tests but xdffileio-win32-autotools still fails do you know why? \n\nThanks,",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
