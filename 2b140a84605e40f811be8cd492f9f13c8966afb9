@@ -16,6 +16,120 @@
       "message": "Hi Nicolas,\n\nThis is a new commit with a change-id this time (I did not manage to update the previous commit with the comments and add a change-id.)\n\nBased on your previous comments I implemented the logic for the other units and put the logic of unit -\u003e dimcode in gdf2_write_channel_header() and gdf2_read_channel_header().\nAlso, I fixed the tests but xdffileio-win32-autotools still fails do you know why? \n\nThanks,",
       "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7491762a_729dfb36",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "Hi Yann,\n\nThis is going to the right direction. The requested changes to do are not complicated... If done, I don\u0027t see blocker to merge.\n\nThe issue with the build win32 with autotools is likely problem with the doc generation and completely unrelated to the changes you are doing. I have disabled them on this build flavor.\n\nCheers,\n\nNicolas\n\nRECHECK",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b63b7401_907f9bb9",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "call the unit string -\u003e dimcode conversion here, in addition to storing the  unit field.\n\nIndeed dimension code is GDF2 specific and is meant to replace unit field in this format... Or at least unit string field is marked deprecated.\nWhile outside of GDF2, this is the unit string that is meant to be manipulated.",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0329ce85_3d227928",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "If dimcode is not 0, the string should be generated from dimcode",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "adb3bf81_9c36a367",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "It would be better to do the conversion in gdf2_set_channel() when you handle XDF_CF_UNIT.",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "021c9556_5add649b",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "Please move this in a static function:\nuint16_t convert_unit_to_dimcode(const str* unit);\nand call it here.\n\nAll of these \u0027if\u0027 must be replaced by \u0027else if\u0027 excepting of course for the first one",
+      "range": {
+        "startLine": 593,
+        "startChar": 2,
+        "endLine": 646,
+        "endChar": 52
+      },
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88eb8236_b2660fda",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 968,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-13T13:03:47Z",
+      "side": 1,
+      "message": "This conversion is first of all completely useless since it is overwritten in the next read16bval().\n\nSecond, the conversion that must occur is not unitstr -\u003e dimcode, but rather dimcode to unitstr (if dimcode is not 0) and should be called in gdf2_get_channel(). You should create a static function\n  \n  int convert_dimcode_to_unit(char unit[9], uint16_t dimcode);",
+      "range": {
+        "startLine": 911,
+        "startChar": 15,
+        "endLine": 968,
+        "endChar": 52
+      },
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }
