@@ -143,6 +143,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bcbf2c3b_84d06e7b",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T14:03:53Z",
+      "side": 1,
+      "message": "For better interoperability of previous recorded GDF2 file which were not using dimension code, you need to do this!",
+      "parentUuid": "e4bc7fd8_09c67b68",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "875d1469_0708492c",
         "filename": "src/gdf2.c",
         "patchSetId": 4
