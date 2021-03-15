@@ -52,6 +52,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "41121a41_ce242d9e",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T11:14:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b63b7401_907f9bb9",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0329ce85_3d227928",
@@ -69,6 +87,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d1140e3f_5ec645ef",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 370,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T11:14:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "0329ce85_3d227928",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "adb3bf81_9c36a367",
@@ -82,6 +118,24 @@
       "writtenOn": "2021-03-13T13:03:47Z",
       "side": 1,
       "message": "It would be better to do the conversion in gdf2_set_channel() when you handle XDF_CF_UNIT.",
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e13a65b4_1e45b7e2",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 592,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T11:14:01Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "adb3bf81_9c36a367",
       "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -109,6 +163,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5041427d_3fff9af3",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 646,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T11:14:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "021c9556_5add649b",
+      "range": {
+        "startLine": 593,
+        "startChar": 2,
+        "endLine": 646,
+        "endChar": 52
+      },
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "88eb8236_b2660fda",
@@ -122,6 +200,30 @@
       "writtenOn": "2021-03-13T13:03:47Z",
       "side": 1,
       "message": "This conversion is first of all completely useless since it is overwritten in the next read16bval().\n\nSecond, the conversion that must occur is not unitstr -\u003e dimcode, but rather dimcode to unitstr (if dimcode is not 0) and should be called in gdf2_get_channel(). You should create a static function\n  \n  int convert_dimcode_to_unit(char unit[9], uint16_t dimcode);",
+      "range": {
+        "startLine": 911,
+        "startChar": 15,
+        "endLine": 968,
+        "endChar": 52
+      },
+      "revId": "2b140a84605e40f811be8cd492f9f13c8966afb9",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e9600fef_7665e13e",
+        "filename": "src/gdf2.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 968,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T11:14:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "88eb8236_b2660fda",
       "range": {
         "startLine": 911,
         "startChar": 15,
