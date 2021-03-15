@@ -18,6 +18,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "30185087_efea5c4d",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5f69197d_93ae36f8",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "adef272a_c98dc23d",
@@ -31,6 +49,24 @@
       "writtenOn": "2021-03-15T11:56:06Z",
       "side": 1,
       "message": "{ on new line",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "661b8ef4_af923acf",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "adef272a_c98dc23d",
       "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -52,6 +88,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8ddc5321_3dce0d17",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ef8adb8_8ffe5457",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e4ea6492_72da2e4b",
@@ -65,6 +119,24 @@
       "writtenOn": "2021-03-15T11:56:06Z",
       "side": 1,
       "message": "If dimcode is 0, you should leave the string untouched (ie return directly)",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4bc7fd8_09c67b68",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "if dimcode is 0 the string should be set to \"unknown\".",
+      "parentUuid": "e4ea6492_72da2e4b",
       "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
@@ -92,6 +164,30 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "73c75f02_2083da43",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "875d1469_0708492c",
+      "range": {
+        "startLine": 229,
+        "startChar": 1,
+        "endLine": 270,
+        "endChar": 30
+      },
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d04524f7_2f5d84b7",
@@ -105,6 +201,30 @@
       "writtenOn": "2021-03-15T11:56:06Z",
       "side": 1,
       "message": "This conversion is done in gdf2_get_channel()... Why do you need to do it here?",
+      "range": {
+        "startLine": 961,
+        "startChar": 0,
+        "endLine": 962,
+        "endChar": 13
+      },
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd4c8a60_6003d383",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T13:23:22Z",
+      "side": 1,
+      "message": "you are right, not needed.",
+      "parentUuid": "d04524f7_2f5d84b7",
       "range": {
         "startLine": 961,
         "startChar": 0,
