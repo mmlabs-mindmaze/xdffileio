@@ -1,0 +1,118 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f69197d_93ae36f8",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 173,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "Please  insert 2 empty line before  static",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "adef272a_c98dc23d",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "{ on new line",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0ef8adb8_8ffe5457",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "{ on new line",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4ea6492_72da2e4b",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "If dimcode is 0, you should leave the string untouched (ie return directly)",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "875d1469_0708492c",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "strncpy in badly used... all your string are left unterminated.\ndo this instead:\n\nconst char* s \u003d \"Unkown\";\nif (dimcode \u003d\u003d DIMENSIONLESS) // Dimensionless\n    s \u003d \"-\";\nelse if (dimcode \u003d\u003d PERCENT) // Percentage\n    s \u003d \"%\";\nelse if ......\n....\nstrncpy(unit, s, 6);\nunit[6] \u003d \u0027\\0\u0027; // Ensure unit is terminated even in case of truncation",
+      "range": {
+        "startLine": 229,
+        "startChar": 1,
+        "endLine": 270,
+        "endChar": 30
+      },
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d04524f7_2f5d84b7",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 962,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-15T11:56:06Z",
+      "side": 1,
+      "message": "This conversion is done in gdf2_get_channel()... Why do you need to do it here?",
+      "range": {
+        "startLine": 961,
+        "startChar": 0,
+        "endLine": 962,
+        "endChar": 13
+      },
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
