@@ -161,6 +161,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "52a9242c_643f6ba6",
+        "filename": "src/gdf2.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-15T21:00:07Z",
+      "side": 1,
+      "message": "ok, I see!",
+      "parentUuid": "bcbf2c3b_84d06e7b",
+      "revId": "8aaf1f6c09441449fca9cad789e01ba083d67069",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "875d1469_0708492c",
         "filename": "src/gdf2.c",
         "patchSetId": 4
