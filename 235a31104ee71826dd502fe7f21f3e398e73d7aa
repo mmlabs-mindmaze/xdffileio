@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1fd02aee_4b17a7e3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-16T07:47:15Z",
+      "side": 1,
+      "message": "One small changes in gdf2_read_channels_header() (keep it as it was before commit) and we are good",
+      "revId": "235a31104ee71826dd502fe7f21f3e398e73d7aa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "710c4371_f3abcd7e",
+        "filename": "src/gdf2.c",
+        "patchSetId": 7
+      },
+      "lineNbr": 974,
+      "author": {
+        "id": 1017133
+      },
+      "writtenOn": "2021-03-16T07:47:15Z",
+      "side": 1,
+      "message": "revert the changes introduced in this function gdf2_read_channels_header(). With the new version of the patch, these changes are useless (and misleading)",
+      "range": {
+        "startLine": 954,
+        "startChar": 0,
+        "endLine": 974,
+        "endChar": 2
+      },
+      "revId": "235a31104ee71826dd502fe7f21f3e398e73d7aa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
