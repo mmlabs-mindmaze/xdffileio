@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f03b4273_92794508",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1018289
+      },
+      "writtenOn": "2021-03-16T09:09:12Z",
+      "side": 1,
+      "message": "Made the changes from your comments\n\nand removed { } line 705 that were useless.",
+      "revId": "bce0c13249039b80aaeaa2a1321792697c61e717",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
